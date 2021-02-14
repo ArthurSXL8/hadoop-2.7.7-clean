@@ -217,28 +217,58 @@ import com.google.protobuf.BlockingService;
  * regularly with a single NameNode.  It also communicates
  * with client code and other DataNodes from time to time.
  *
+ * DataNode存储HDFS上block文件块，在一个文件系统里面可以有多个DataNode
+ * 每个DataNode周期性的跟NameNode进行通信，客户端也可以和DataNode进行交互
+ * 或者DataNode之间也可以进行互相通信。
+ *
  * DataNodes store a series of named blocks.  The DataNode
  * allows client code to read these blocks, or to write new
  * block data.  The DataNode may also, in response to instructions
  * from its NameNode, delete blocks or copy blocks to/from other
  * DataNodes.
  *
+ * DataNode存储了一系列block，DataNode允许客户端去读写block。
+ * DataNode也会去响应NameNode发送回的过来的一些指令，
+ * 比如：删除block、复制block等操作
+ *
  * The DataNode maintains just one critical table:
  *   block-> stream of bytes (of BLOCK_SIZE or less)
+ *
+ * DataNode管理重要一张表
+ *    block -> stream of bytes 一些元数据信息
  *
  * This info is stored on a local disk.  The DataNode
  * reports the table's contents to the NameNode upon startup
  * and every so often afterwards.
+ *
+ * 这些信息存储在本地磁盘，DataNode启动的时候会把这些信息汇报给NameNode，
+ * 集群启动后DataNode也会周期性的汇报。
  *
  * DataNodes spend their lives in an endless loop of asking
  * the NameNode for something to do.  A NameNode cannot connect
  * to a DataNode directly; a NameNode simply returns values from
  * functions invoked by a DataNode.
  *
+ * NameNode是不能直接去操作DataNode，DataNode启动后，会跟NameNode进行心跳，
+ * NameNode接收到心跳后，会通过心跳信息返回特定指令来操作DataNode执行特定操作，
+ * DataNode接收到心跳返回指令并解析执行
+ *
  * DataNodes maintain an open server socket so that client code 
  * or other DataNodes can read/write data.  The host/port for
  * this server is reported to the NameNode, which then sends that
  * information to clients or other DataNodes that might be interested.
+ *
+ * DataNode开放了socket服务，可以让客户端或者其他DataNode进行读写操作数据
+ * DataNode启动时会把自己的主机名和端口汇报给NameNode
+ * 如果client和DataNode访问某个DataNode进行数据操作，首先需要跟NameNode进行通信，
+ * 从NameNode获取DataNode主机名和端口号，才可以访问到对应的DataNode
+ *
+ *
+ * 总结：
+ *     （1）一个集群可以有多个DataNode节点，DataNode节点是用于存储数据
+ *     （2）DataNode启动后会周期性向NameNode进行通信（心跳、block块信息汇报）
+ *     （3）NameNode不能直接操作DataNode,而是通过心跳返回指令的方式进行操作DataNode
+ *     （4）DataNode启动以后开发socket服务（即RPC），等待client或DataNode进行调用来操作数据
  *
  **********************************************************/
 @InterfaceAudience.Private
@@ -426,6 +456,7 @@ public class DataNode extends ReconfigurableBase
     try {
       hostName = getHostName(conf);
       LOG.info("Configured hostname is " + hostName);
+      // TODO-ZH 启动DataNode
       startDataNode(conf, dataDirs, resources);
     } catch (IOException ie) {
       shutdown();
@@ -757,6 +788,7 @@ public class DataNode extends ReconfigurableBase
     ServerSocketChannel httpServerChannel = secureResources != null ?
         secureResources.getHttpServerChannel() : null;
 
+    // TODO-ZH 初始化HttpServer服务
     this.httpServer = new DatanodeHttpServer(conf, this, httpServerChannel);
     httpServer.start();
     if (httpServer.getHttpAddress() != null) {
@@ -799,6 +831,7 @@ public class DataNode extends ReconfigurableBase
           new ClientDatanodeProtocolServerSideTranslatorPB(this);
     BlockingService service = ClientDatanodeProtocolService
         .newReflectiveBlockingService(clientDatanodeProtocolXlator);
+    // 构建DataNode RPC 服务端
     ipcServer = new RPC.Builder(conf)
         .setProtocol(ClientDatanodeProtocolPB.class)
         .setInstance(service)
@@ -895,6 +928,7 @@ public class DataNode extends ReconfigurableBase
   
   private void initDataXceiver(Configuration conf) throws IOException {
     // find free port or use privileged port provided
+    // TODO-ZH 用于接收TCP请求
     TcpPeerServer tcpPeerServer;
     if (secureResources != null) {
       tcpPeerServer = new TcpPeerServer(secureResources);
@@ -912,7 +946,13 @@ public class DataNode extends ReconfigurableBase
     streamingAddr = tcpPeerServer.getStreamingAddr();
     LOG.info("Opened streaming server at " + streamingAddr);
     this.threadGroup = new ThreadGroup("dataXceiverServer");
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释：实例化DataXceiverServer服务
+     *      这个服务就是DataNode就是用来接收客户端和其他DataNode传来数据操作的服务
+     */
     xserver = new DataXceiverServer(tcpPeerServer, conf, this);
+    // 设置为后台线程
     this.dataXceiverServer = new Daemon(threadGroup, xserver);
     this.threadGroup.setDaemon(true); // auto destroy when empty
 
@@ -1139,7 +1179,9 @@ public class DataNode extends ReconfigurableBase
     
     // global DN settings
     registerMXBean();
+    // TODO-ZH 初始化DataXceiverServer服务
     initDataXceiver(conf);
+    // TODO-ZH 启动HttpServer服务
     startInfoServer(conf);
     pauseMonitor = new JvmPauseMonitor(conf);
     pauseMonitor.start();
@@ -1151,12 +1193,28 @@ public class DataNode extends ReconfigurableBase
     dnUserName = UserGroupInformation.getCurrentUser().getUserName();
     LOG.info("dnUserName = " + dnUserName);
     LOG.info("supergroup = " + supergroup);
+    // TODO-ZH 初始化RPC服务
     initIpcServer(conf);
 
     metrics = DataNodeMetrics.create(conf, getDisplayName());
     metrics.getJvmMetrics().setPauseMonitor(pauseMonitor);
-    
+
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释： 创建BlockPoolManager
+     * 正常集群中只有一个blockPool，如果是联邦机制，就会有多个NameNode，也就会有多个联邦
+     * 一个联邦就是一个blockPool
+     * 假设一个集群里面有4个NameNode、2个联邦
+     * 联邦一：Hadoop1（Active） Hadoop2（StandBy） blockPool是同一个
+     * 联邦二：Hadoop3（Active） Hadoop4（StandBy） blockPool是同一个
+     */
     blockPoolManager = new BlockPoolManager(this);
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释：
+     *      （1）向NameNode进行注册
+     *      （2）与NameNode进行心跳
+     */
     blockPoolManager.refreshNamenodes(conf);
 
     // Create the ReadaheadPool from the DataNode context so we can
@@ -1235,6 +1293,7 @@ public class DataNode extends ReconfigurableBase
    * @param nsInfo the namespace info from the first part of the NN handshake
    */
   DatanodeRegistration createBPRegistration(NamespaceInfo nsInfo) {
+    // 存储信息
     StorageInfo storageInfo = storage.getBPStorage(nsInfo.getBlockPoolID());
     if (storageInfo == null) {
       // it's null in the case of SimulatedDataSet
@@ -1244,6 +1303,7 @@ public class DataNode extends ReconfigurableBase
           NodeType.DATA_NODE);
     }
 
+    // DataNode信息
     DatanodeID dnId = new DatanodeID(
         streamingAddr.getAddress().getHostAddress(), hostName, 
         storage.getDatanodeUuid(), getXferPort(), getInfoPort(),
@@ -2298,6 +2358,7 @@ public class DataNode extends ReconfigurableBase
     UserGroupInformation.setConfiguration(conf);
     SecurityUtil.login(conf, DFS_DATANODE_KEYTAB_FILE_KEY,
         DFS_DATANODE_KERBEROS_PRINCIPAL_KEY);
+    // TODO-ZH 重要代码
     return makeInstance(dataLocations, conf, resources);
   }
 
@@ -2345,8 +2406,10 @@ public class DataNode extends ReconfigurableBase
   @InterfaceAudience.Private
   public static DataNode createDataNode(String args[], Configuration conf,
       SecureResources resources) throws IOException {
+    // TODO-ZH 实例化DataNode
     DataNode dn = instantiateDataNode(args, conf, resources);
     if (dn != null) {
+      // TODO-ZH 启动DataNode后台线程
       dn.runDatanodeDaemon();
     }
     return dn;
@@ -2411,6 +2474,7 @@ public class DataNode extends ReconfigurableBase
     DefaultMetricsSystem.initialize("DataNode");
 
     assert locations.size() > 0 : "number of data directories should be > 0";
+    // TODO-ZH 重要代码
     return new DataNode(conf, locations, resources);
   }
 
@@ -2527,6 +2591,7 @@ public class DataNode extends ReconfigurableBase
     int errorCode = 0;
     try {
       StringUtils.startupShutdownMessage(DataNode.class, args, LOG);
+      // TODO-ZH 初始化DataNode
       DataNode datanode = createDataNode(args, null, resources);
       if (datanode != null) {
         datanode.join();
@@ -2551,6 +2616,7 @@ public class DataNode extends ReconfigurableBase
       System.exit(0);
     }
 
+    // TODO-ZH 核心代码
     secureMain(args, null);
   }
 

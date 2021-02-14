@@ -269,7 +269,15 @@ class BPOfferService {
 
   //This must be called only by blockPoolManager
   void start() {
+    // TODO-ZH 遍历BPOfferService里面的BPServiceActor
     for (BPServiceActor actor : bpServices) {
+      /*****************************************************************************************************
+       *TODO-ZH starzy https://www.cnblogs.com/starzy
+       * 注释：通过遍历方式向多个NameNode进行注册心跳
+       *  例如一个联邦有两个NameNode对应关系如下
+       *  联邦一：NameNode1、NameNode2
+       *  联邦二：NameNode3、NameNode4
+       */
       actor.start();
     }
   }

@@ -128,7 +128,9 @@ class BlockPoolManager {
           new PrivilegedExceptionAction<Object>() {
             @Override
             public Object run() throws Exception {
+              // TODO-ZH 遍历所有的BPOfferService，即遍历所有联邦
               for (BPOfferService bpos : offerServices) {
+                // TODO-ZH 重要代码
                 bpos.start();
               }
               return null;
@@ -156,6 +158,7 @@ class BlockPoolManager {
             .getNNServiceRpcAddressesForCluster(conf);
 
     synchronized (refreshNamenodesLock) {
+      // TODO-ZH 重要代码
       doRefreshNamenodes(newAddressMap);
     }
   }
@@ -172,10 +175,21 @@ class BlockPoolManager {
       // Step 1. For each of the new nameservices, figure out whether
       // it's an update of the set of NNs for an existing NS,
       // or an entirely new nameservice.
+      /*****************************************************************************************************
+       *TODO-ZH starzy https://www.cnblogs.com/starzy
+       * 注释：
+       *      通常状况下，Hadoop集群架构是HA架构，此时只有一个NameService
+       *      如果Hadoop集群是联邦机制，则此时有多个NameService
+       *      例如：
+       *          Hadoop1，Hadoop2 -> 联邦1   NameService1
+       *          Hadoop3，Hadoop4 -> 联邦2   NameService2
+       *
+       */
       for (String nameserviceId : addrMap.keySet()) {
         if (bpByNameserviceId.containsKey(nameserviceId)) {
           toRefresh.add(nameserviceId);
         } else {
+          // TODO-ZH Hadoop集群有多少个联邦，toAdd里面就有多少个NameService
           toAdd.add(nameserviceId);
         }
       }
@@ -196,15 +210,28 @@ class BlockPoolManager {
       if (!toAdd.isEmpty()) {
         LOG.info("Starting BPOfferServices for nameservices: " +
             Joiner.on(",").useForNull("<default>").join(toAdd));
-      
+
+        /*****************************************************************************************************
+         *TODO-ZH starzy https://www.cnblogs.com/starzy
+         * 注释： 遍历所有联邦，一个联邦会有两个NameNode（HA）
+         *      如果有两个联邦，则此时toAdd就有两个值（即两个NameService）
+         *      BPOfferService 即代表一个联邦
+         */
         for (String nsToAdd : toAdd) {
           ArrayList<InetSocketAddress> addrs =
             Lists.newArrayList(addrMap.get(nsToAdd).values());
+          /*****************************************************************************************************
+           *TODO-ZH starzy https://www.cnblogs.com/starzy
+           * 注释：一个联邦对应一个BPOfferService
+           * 一个联邦里面的一个NamNode对应的就是BPServiceActor
+           * 正常一个BPOfferService（即联邦）包含两个BPServiceActor（即NameNode）
+           */
           BPOfferService bpos = createBPOS(addrs);
           bpByNameserviceId.put(nsToAdd, bpos);
           offerServices.add(bpos);
         }
       }
+      // TODO-ZH 重要代码
       startAll();
     }
 

@@ -1283,8 +1283,10 @@ class NameNodeRpcServer implements NamenodeProtocols {
   @Override // DatanodeProtocol
   public DatanodeRegistration registerDatanode(DatanodeRegistration nodeReg)
       throws IOException {
+      // 检查是否启动
     checkNNStartup();
     verifySoftwareVersion(nodeReg);
+    // TODO-ZH 注册DataNode
     namesystem.registerDatanode(nodeReg);
     return nodeReg;
   }

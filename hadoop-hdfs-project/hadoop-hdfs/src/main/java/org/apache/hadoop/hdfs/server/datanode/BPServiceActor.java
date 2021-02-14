@@ -204,6 +204,7 @@ class BPServiceActor implements Runnable {
 
   private void connectToNNAndHandshake() throws IOException {
     // get NN proxy
+    // TODO-ZH 获取NamNode代理
     bpNamenode = dn.connectToNN(nnAddr);
 
     // First phase of the handshake with NN - get the namespace
@@ -213,9 +214,11 @@ class BPServiceActor implements Runnable {
     // Verify that this matches the other NN in this HA pair.
     // This also initializes our block pool in the DN if we are
     // the first NN connection for this BP.
+    // TODO-ZH 校验NamespaceInfo信息
     bpos.verifyAndSetNamespaceInfo(nsInfo);
     
     // Second phase of the handshake with the NN.
+    // TODO-ZH 进行注册
     register(nsInfo);
   }
 
@@ -417,7 +420,8 @@ class BPServiceActor implements Runnable {
     }
     bpThread = new Thread(this, formatThreadName());
     bpThread.setDaemon(true); // needed for JUnit testing
-    bpThread.start();
+    // TODO-ZH 启动线程，观察run方法执行逻辑
+    bpThread.start(); //run
   }
   
   private String formatThreadName() {
@@ -579,6 +583,7 @@ class BPServiceActor implements Runnable {
   void register(NamespaceInfo nsInfo) throws IOException {
     // The handshake() phase loaded the block pool storage
     // off disk - so update the bpRegistration object from that info
+    // TODO-ZH 创建注册信息
     DatanodeRegistration newBpRegistration = bpos.createRegistration();
 
     LOG.info(this + " beginning handshake with NN");
@@ -586,6 +591,11 @@ class BPServiceActor implements Runnable {
     while (shouldRun()) {
       try {
         // Use returned registration from namenode with updated fields
+        /*****************************************************************************************************
+         *TODO-ZH starzy https://www.cnblogs.com/starzy
+         * 注释：调用服务端的registerDataNode方法进行注册
+         *      需要到NameNodeRpcServer实现逻辑
+         */
         newBpRegistration = bpNamenode.registerDatanode(newBpRegistration);
         newBpRegistration.setNamespaceInfo(nsInfo);
         bpRegistration = newBpRegistration;
@@ -629,11 +639,17 @@ class BPServiceActor implements Runnable {
   public void run() {
     LOG.info(this + " starting to offer service");
 
+    // TODO-ZH 注册 + 心跳
     try {
       while (true) {
         // init stuff
         try {
           // setup storage
+          /*****************************************************************************************************
+           *TODO-ZH starzy https://www.cnblogs.com/starzy
+           * 注释： 注册核心代码
+           * 通过while死循环方式尽可能保证注册成功，因为针对于分布式集群网络复杂，有可能导致注册失败
+           */
           connectToNNAndHandshake();
           break;
         } catch (IOException ioe) {
@@ -643,6 +659,7 @@ class BPServiceActor implements Runnable {
             // Retry until all namenode's of BPOS failed initialization
             LOG.error("Initialization failed for " + this + " "
                 + ioe.getLocalizedMessage());
+            // TODO-ZH 注册失败则休眠5秒再次进行注册
             sleepAndLogInterrupts(5000, "initializing");
           } else {
             runningState = RunningState.FAILED;

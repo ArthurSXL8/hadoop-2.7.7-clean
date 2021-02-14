@@ -598,16 +598,21 @@ public class DatanodeManager {
   }
 
   /** Add a datanode. */
+  // TODO-ZH 注册DataNode是向一些数据结构中添加信息
   void addDatanode(final DatanodeDescriptor node) {
     // To keep host2DatanodeMap consistent with datanodeMap,
     // remove  from host2DatanodeMap the datanodeDescriptor removed
     // from datanodeMap before adding node to host2DatanodeMap.
     synchronized(datanodeMap) {
+      // TODO-ZH DataNodeMap添加数据
       host2DatanodeMap.remove(datanodeMap.put(node.getDatanodeUuid(), node));
     }
 
+    // TODO-ZH 向数据结构里添加数据
     networktopology.add(node); // may throw InvalidTopologyException
+    // TODO-ZH 向内存里添加数据
     host2DatanodeMap.add(node);
+    // 如果以上内存数据结构数据添加成功则注册完成
     checkIfClusterIsNowMultiRack(node);
 
     if (LOG.isDebugEnabled()) {
@@ -964,10 +969,12 @@ public class DatanodeManager {
         nodeDescr.setSoftwareVersion(nodeReg.getSoftwareVersion());
   
         // register new datanode
+        // TODO-ZH 注册DataNode
         addDatanode(nodeDescr);
         // also treat the registration message as a heartbeat
         // no need to update its timestamp
         // because its is done when the descriptor is created
+        // TODO-ZH 把注册的DataNode加入到HeartbeatManager里，后台进行心跳
         heartbeatManager.addDatanode(nodeDescr);
         incrementVersionCount(nodeReg.getSoftwareVersion());
         startDecommissioningIfExcluded(nodeDescr);
