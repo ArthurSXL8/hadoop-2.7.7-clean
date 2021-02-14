@@ -683,6 +683,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
     long loadStart = monotonicNow();
     try {
+      // TODO-ZH 加载元数据
       namesystem.loadFSImage(startOpt);
     } catch (IOException ioe) {
       LOG.warn("Encountered exception loading fsimage", ioe);
@@ -981,6 +982,11 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       // We shouldn't be calling saveNamespace if we've come up in standby state.
       MetaRecoveryContext recovery = startOpt.createRecoveryContext();
       final boolean staleImage
+              /*****************************************************************************************************
+               *TODO-ZH starzy https://www.cnblogs.com/starzy
+               * 注释： 1) 合并元数据
+               *        fsImage + editlog = new fsImage
+               */
           = fsImage.recoverTransitionRead(startOpt, this, recovery);
       if (RollingUpgradeStartupOption.ROLLBACK.matches(startOpt) ||
           RollingUpgradeStartupOption.DOWNGRADE.matches(startOpt)) {
@@ -991,6 +997,10 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
           + " (staleImage=" + staleImage + ", haEnabled=" + haEnabled
           + ", isRollingUpgrade=" + isRollingUpgrade() + ")");
       if (needToSave) {
+        /*****************************************************************************************************
+         *TODO-ZH starzy https://www.cnblogs.com/starzy
+         * 注释： 2) 将合并后新的fsImage文件保存到磁盘
+         */
         fsImage.saveNamespace(this);
       } else {
         updateStorageVersionForRollingUpgrade(fsImage.getLayoutVersion(),
@@ -1004,6 +1014,10 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       // we shouldn't do it when coming up in standby state
       if (!haEnabled || (haEnabled && startOpt == StartupOption.UPGRADE)
           || (haEnabled && startOpt == StartupOption.UPGRADEONLY)) {
+        /*****************************************************************************************************
+         *TODO-ZH starzy https://www.cnblogs.com/starzy
+         * 注释： 3) 打开一个新的editLog开始继续写日志
+         */
         fsImage.openEditLogForWrite();
       }
       success = true;
@@ -1063,14 +1077,23 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     writeLock();
     this.haContext = haContext;
     try {
+      /*****************************************************************************************************
+       *TODO-ZH starzy https://www.cnblogs.com/starzy
+       * 注释： 进行资源检查，通过core-site.xml hdfs-site.xml文件获取元数据存储目录
+       *        （1）NameNode 的两个目录：存储fsImage目录、存储editLog目录。但是一般情况下这两个目录使用同一个目录
+       *
+       */
       nnResourceChecker = new NameNodeResourceChecker(conf);
+      // TODO-ZH 检查是否有足够粗盘存储元数据
       checkAvailableResources();
       assert safeMode != null && !isPopulatingReplQueues();
       StartupProgress prog = NameNode.getStartupProgress();
       prog.beginPhase(Phase.SAFEMODE);
       prog.setTotal(Phase.SAFEMODE, STEP_AWAITING_REPORTED_BLOCKS,
         getCompleteBlocksTotal());
+      // TODO-ZH HDFS的安全模式
       setBlockTotal();
+      // TODO-ZH 启动重要服务
       blockManager.activate(conf);
     } finally {
       writeUnlock("startCommonServices");
@@ -4554,6 +4577,11 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   void checkAvailableResources() {
     Preconditions.checkState(nnResourceChecker != null,
         "nnResourceChecker not initialized");
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释： 检查是否有足够空间
+     *        资源不足返回false，既hasResourcesAvailable = false
+     */
     hasResourcesAvailable = nnResourceChecker.hasAvailableDiskSpace();
   }
 
@@ -5292,9 +5320,24 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
      * There is no need to enter safe mode 
      * if DFS is empty or {@link #threshold} == 0
      */
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释： 判定是否需要进入安全模式
+     *        （1）条件一：threshold != 0 && blockSafe < blockThreshold
+     *                    DataNode汇报过来的complete的block个数占block总数是否达到设定阈值占比（默认0.99）
+     *                    若未达到此阈值则进入安全模式
+     *        （2）条件二：datanodeThreshold != 0 && getNumLiveDataNodes() < datanodeThreshold
+     *                    如果DataNode存活个数小于一定个数（默认为0）时则进入安全模式
+     *        （3）条件三：nameNodeHasResourcesAvailable()
+     *                    检查NameNode写元数据磁盘目录空间是否大于设定阈值（默认100M）
+     *                    若磁盘目录空间小于设定阈值则NameNodeHasResourceAvailable = false，此时HDFS进入安全模式
+     */
     private boolean needEnter() {
+              // TODO-ZH DataNode汇报block状态为complete状态数量
       return (threshold != 0 && blockSafe < blockThreshold) ||
+              // TODO-ZH 默认存活DataNode节点小于 datanodeThreshold（默认为0）
         (datanodeThreshold != 0 && getNumLiveDataNodes() < datanodeThreshold) ||
+              // TODO-ZH 元数据存储磁盘空间是不充足
         (!nameNodeHasResourcesAvailable());
     }
       
@@ -5310,7 +5353,9 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       }
       // if smmthread is already running, the block threshold must have been 
       // reached before, there is no need to enter the safe mode again
+      // TODO-ZH 是否进入安全模式
       if (smmthread == null && needEnter()) {
+        // TODO-ZH 进入安全模式
         enter();
         // check if we are ready to initialize replication queues
         if (canInitializeReplQueues() && !isPopulatingReplQueues()
@@ -5350,6 +5395,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
      */
     private synchronized void setBlockTotal(int total) {
       this.blockTotal = total;
+      // TODO-ZH 计算阈值
       this.blockThreshold = (int) (blockTotal * threshold);
       this.blockReplQueueThreshold = 
         (int) (blockTotal * replQueueThreshold);
@@ -5361,6 +5407,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       }
       if(blockSafe < 0)
         this.blockSafe = 0;
+      // TODO-ZH 检查安全模式
       checkMode();
     }
       
@@ -5371,7 +5418,8 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
      */
     private synchronized void incrementSafeBlockCount(short replication) {
       if (replication == safeReplication) {
-        this.blockSafe++;
+        // DataNode 向 NameNode 进行汇报block信息
+        this.blockSafe++; //累计计算DataNode汇报过来的block块
 
         // Report startup progress only if we haven't completed startup yet.
         StartupProgress prog = NameNode.getStartupProgress();
@@ -5706,6 +5754,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     SafeModeInfo safeMode = this.safeMode;
     if (safeMode == null)
       return;
+    // TODO-ZH 设置安全模式
     safeMode.setBlockTotal((int)getCompleteBlocksTotal());
   }
 
@@ -5715,6 +5764,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   @Override // FSNamesystemMBean
   @Metric
   public long getBlocksTotal() {
+    // 获取所有block信息
     return blockManager.getTotalBlocks();
   }
 
@@ -5722,12 +5772,21 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
    * Get the total number of COMPLETE blocks in the system.
    * For safe mode only complete blocks are counted.
    */
+  /*****************************************************************************************************
+   *TODO-ZH starzy https://www.cnblogs.com/starzy
+   * 注释： 在HDFS集群里面block的状态分为两种类型：
+   *        （1）complete 类型：正常可用的block
+   *        （2）underconstuction 类型：处于正在构建的block
+   *
+   * 返回就是历史所有已经complete状态的block个数
+   */
   private long getCompleteBlocksTotal() {
     // Calculate number of blocks under construction
     long numUCBlocks = 0;
     readLock();
+    // 获取所有正在构建的block
     numUCBlocks = leaseManager.getNumUnderConstructionBlocks();
-    try {
+    try { // 正常使用block个数 = 所有block个数 - 正在构建的block个数
       return getBlocksTotal() - numUCBlocks;
     } finally {
       readUnlock("getCompleteBlocksTotal");

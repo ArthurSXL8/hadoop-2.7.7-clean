@@ -61,6 +61,7 @@ final class NameNodeResourcePolicy {
         }
       } else {
         requiredResourceCount++;
+        // TODO-ZH 判断磁盘资源是否充足
         if (!resource.isResourceAvailable()) {
           // Short circuit - a required resource is not available.
           return false;

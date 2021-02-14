@@ -80,11 +80,13 @@ public class NameNodeResourceChecker {
 
     @Override
     public boolean isResourceAvailable() {
+      // TODO-ZH 获取当前磁盘目录空间大小
       long availableSpace = df.getAvailable();
       if (LOG.isDebugEnabled()) {
         LOG.debug("Space available on volume '" + volume + "' is "
             + availableSpace);
       }
+      // TODO-ZH 如果磁盘空间大小小于100M则返回false
       if (availableSpace < duReserved) {
         LOG.warn("Space available on volume '" + volume + "' is "
             + availableSpace +
@@ -110,6 +112,7 @@ public class NameNodeResourceChecker {
     this.conf = conf;
     volumes = new HashMap<String, CheckedVolume>();
 
+    // TODO-ZH 检查资源是否充足阈值
     duReserved = conf.getLong(DFSConfigKeys.DFS_NAMENODE_DU_RESERVED_KEY,
         DFSConfigKeys.DFS_NAMENODE_DU_RESERVED_DEFAULT);
     
@@ -130,6 +133,11 @@ public class NameNodeResourceChecker {
 
     // Add all the local edits dirs, marking some as required if they are
     // configured as such.
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释： 添加需要监控磁盘目录
+     *        localEditDirs --> hdfs-site.xml core-site.xml
+     */
     for (URI editsDirToCheck : localEditDirs) {
       addDirToCheck(editsDirToCheck,
           FSNamesystem.getRequiredNamespaceEditsDirs(conf).contains(
@@ -161,10 +169,12 @@ public class NameNodeResourceChecker {
     if (!dir.exists()) {
       throw new IOException("Missing directory "+dir.getAbsolutePath());
     }
-    
+
+    // 一个目录就是一个checkVolume对象
     CheckedVolume newVolume = new CheckedVolume(dir, required);
     CheckedVolume volume = volumes.get(newVolume.getVolume());
     if (volume == null || !volume.isRequired()) {
+      //volumes里面就会有多个目录
       volumes.put(newVolume.getVolume(), newVolume);
     }
   }
@@ -178,6 +188,11 @@ public class NameNodeResourceChecker {
    *         otherwise.
    */
   public boolean hasAvailableDiskSpace() {
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释：存储磁盘检查，资源不足则返回false
+     *      volumes里存放的就是需要检查的目录集合
+     */
     return NameNodeResourcePolicy.areResourcesAvailable(volumes.values(),
         minimumRedundantVolumes);
   }

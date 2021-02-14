@@ -138,9 +138,15 @@ import static org.apache.hadoop.util.ToolRunner.confirmPrompt;
  * running in any DFS deployment.  (Well, except when there
  * is a second backup/failover NameNode, or when using federated NameNodes.)
  *
+ * NameNode服务既管理了HDFS集群命名空间（目录树）和 “iNode table”。一个HDFS集群里面只有一个NameNode（除了HA方案和联邦）
+ *
  * The NameNode controls two critical tables:
  *   1)  filename->blocksequence (namespace)
  *   2)  block->machinelist ("inodes")
+ *
+ * NameNode管理了两张重要表：
+ * 1. 一张表管理了文件与block块之间的关系
+ * 2. 另一张表管理了block文件块与DataNode主机之间的关系
  *
  * The first table is stored on disk and is very precious.
  * The second table is rebuilt every time the NameNode comes up.
@@ -150,6 +156,13 @@ import static org.apache.hadoop.util.ToolRunner.confirmPrompt;
  * management.  The majority of the 'NameNode' class itself is concerned
  * with exposing the IPC interface and the HTTP server to the outside world,
  * plus some configuration management.
+ *
+ * NameNode服务由三个重要类构成：
+ * 1）NameNode 类：管理配置的参数 hdfs-site.xml core-site.xml
+ * 2)NameNodeServer:
+ *    IPC Server：NameNodeRPCServer开放端口，等待调用，比如8020、9000
+ *    HTTP Server：NameNodeHttpServer开放50070端口界面服务，可以通过此界面了解HDFS运行情况
+ * 3）FSNameSystem：管理HDFS元数据
  *
  * NameNode implements the
  * {@link org.apache.hadoop.hdfs.protocol.ClientProtocol} interface, which
@@ -325,7 +338,8 @@ public class NameNode implements NameNodeStatusMXBean {
   protected NamenodeRegistration nodeRegistration;
   /** Activated plug-ins. */
   private List<ServicePlugin> plugins;
-  
+
+  // TODO-ZH
   private NameNodeRpcServer rpcServer;
 
   private JvmPauseMonitor pauseMonitor;
@@ -564,6 +578,10 @@ public class NameNode implements NameNodeStatusMXBean {
    * @return
    */
   protected InetSocketAddress getHttpServerBindAddress(Configuration conf) {
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释： 设置httpserver端口，默认端口设置为50070
+     */
     InetSocketAddress bindAddress = getHttpServerAddress(conf);
 
     // If DFS_NAMENODE_HTTP_BIND_HOST_KEY exists then it overrides the
@@ -583,6 +601,7 @@ public class NameNode implements NameNodeStatusMXBean {
   }
 
   protected void loadNamesystem(Configuration conf) throws IOException {
+    // TODO-ZH
     this.namesystem = FSNamesystem.loadFromDisk(conf);
   }
 
@@ -637,14 +656,17 @@ public class NameNode implements NameNodeStatusMXBean {
     StartupProgressMetrics.register(startupProgress);
 
     if (NamenodeRole.NAMENODE == role) {
+      // TODO-ZH 启动HttpServer开启端口50070，通过浏览器访问此端口可以查看Hadoop运行情况
       startHttpServer(conf);
     }
 
     this.spanReceiverHost =
       SpanReceiverHost.get(conf, DFSConfigKeys.DFS_SERVER_HTRACE_PREFIX);
 
+    // TODO-ZH 加载元数据
     loadNamesystem(conf);
 
+    // TODO-ZH 创建Hadoop RPC Server
     rpcServer = createRpcServer(conf);
     if (clientNamenodeAddress == null) {
       // This is expected for MiniDFSCluster. Set it now using 
@@ -662,7 +684,12 @@ public class NameNode implements NameNodeStatusMXBean {
     pauseMonitor = new JvmPauseMonitor(conf);
     pauseMonitor.start();
     metrics.getJvmMetrics().setPauseMonitor(pauseMonitor);
-    
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释： 启动一些公共服务。NameNode RPC 服务就是在里面启动的
+     *        （1）进行资源检查，检查磁盘是否有足够空间存储元数据
+     *        （2）进入安全模式检查，检查是否可以退出安全模式
+     */
     startCommonServices(conf);
   }
   
@@ -677,6 +704,7 @@ public class NameNode implements NameNodeStatusMXBean {
 
   /** Start the services common to active and standby states */
   private void startCommonServices(Configuration conf) throws IOException {
+    // TODO-ZH 元数据管理
     namesystem.startCommonServices(conf, haContext);
     registerNNSMXBean();
     if (NamenodeRole.NAMENODE != role) {
@@ -757,7 +785,15 @@ public class NameNode implements NameNodeStatusMXBean {
   }
   
   private void startHttpServer(final Configuration conf) throws IOException {
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释： getHttpServerBindAddress 里设置主机名和端口号
+     */
     httpServer = new NameNodeHttpServer(conf, this, getHttpServerBindAddress(conf));
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释： 启动HTTP服务
+     */
     httpServer.start();
     httpServer.setStartupProgress(startupProgress);
   }
@@ -817,6 +853,10 @@ public class NameNode implements NameNodeStatusMXBean {
     this.haContext = createHAContext();
     try {
       initializeGenericKeys(conf, nsId, namenodeId);
+      /*****************************************************************************************************
+       *TODO-ZH starzy https://www.cnblogs.com/starzy
+       * 注释： 初始化NameNode方法
+       */
       initialize(conf);
       try {
         haContext.writeLock();
@@ -1445,6 +1485,10 @@ public class NameNode implements NameNodeStatusMXBean {
     GenericOptionsParser hParser = new GenericOptionsParser(conf, argv);
     argv = hParser.getRemainingArgs();
     // Parse the rest, NN specific args.
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释： 解析参数，根据不同参数配置进行执行不同方法
+     */
     StartupOption startOpt = parseArguments(argv);
     if (startOpt == null) {
       printUsage(System.err);
@@ -1453,7 +1497,7 @@ public class NameNode implements NameNodeStatusMXBean {
     setStartupOption(conf, startOpt);
 
     switch (startOpt) {
-      case FORMAT: {
+      case FORMAT: {  //集群格式化
         boolean aborted = format(conf, startOpt.getForceFormat(),
             startOpt.getInteractiveFormat());
         terminate(aborted ? 1 : 0);
@@ -1513,6 +1557,10 @@ public class NameNode implements NameNodeStatusMXBean {
       }
       default: {
         DefaultMetricsSystem.initialize("NameNode");
+        /*****************************************************************************************************
+         *TODO-ZH starzy https://www.cnblogs.com/starzy
+         * 注释： 启动NameNode
+         */
         return new NameNode(conf);
       }
     }
@@ -1570,15 +1618,26 @@ public class NameNode implements NameNodeStatusMXBean {
     return DFSUtil.getNamenodeNameServiceId(conf);
   }
   
-  /**
+
+  /*****************************************************************************************************
+   *TODO-ZH starzy https://www.cnblogs.com/starzy
+   * 注释：场景驱动方式（目标明确，非关键代码不需要看）
+   *       现场景是NameNode是如何启动的？
    */
   public static void main(String argv[]) throws Exception {
+    //解析参数
     if (DFSUtil.parseHelpArgument(argv, NameNode.USAGE, System.out, true)) {
+      //参数解析异常进行退出
       System.exit(0);
     }
 
     try {
       StringUtils.startupShutdownMessage(NameNode.class, argv, LOG);
+      /*****************************************************************************************************
+       *TODO-ZH starzy https://www.cnblogs.com/starzy
+       * 注释：创建NameNode核心代码
+       *       NameNode是RPC的服务端
+       */
       NameNode namenode = createNameNode(argv, null);
       if (namenode != null) {
         namenode.join();

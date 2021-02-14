@@ -118,6 +118,10 @@ public class NameNodeHttpServer {
       }
     }
 
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释： 封装HttpServer既HttpServer2服务
+     */
     HttpServer2.Builder builder = DFSUtil.httpServerTemplateForNNAndJN(conf,
         httpAddr, httpsAddr, "hdfs",
         DFSConfigKeys.DFS_NAMENODE_KERBEROS_INTERNAL_SPNEGO_PRINCIPAL_KEY,
@@ -138,7 +142,9 @@ public class NameNodeHttpServer {
 
     httpServer.setAttribute(NAMENODE_ATTRIBUTE_KEY, nn);
     httpServer.setAttribute(JspHelper.CURRENT_CONF, conf);
+    // TODO-ZH 绑定Servlet
     setupServlets(httpServer, conf);
+    // TODO-ZH 启动HttpServer服务对外开放50070端口
     httpServer.start();
 
     int connIdx = 0;
@@ -250,8 +256,14 @@ public class NameNodeHttpServer {
         CancelDelegationTokenServlet.class, true);
     httpServer.addInternalServlet("fsck", "/fsck", FsckServlet.class,
         true);
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释：上传元数据请求服务
+     * SecondaryNameNode/StandByNameNode 合并出来的的FSImage需要替换Active NameNode的Fsimage发送的HTTP请求，请求就会转发给这个servlet
+     */
     httpServer.addInternalServlet("imagetransfer", ImageServlet.PATH_SPEC,
         ImageServlet.class, true);
+    // TODO-ZH 浏览目录信息服务
     httpServer.addInternalServlet("listPaths", "/listPaths/*",
         ListPathsServlet.class, false);
     httpServer.addInternalServlet("data", "/data/*",
