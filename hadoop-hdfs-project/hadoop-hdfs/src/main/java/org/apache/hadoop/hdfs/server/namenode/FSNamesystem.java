@@ -5708,9 +5708,8 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   }
 
   private boolean shouldPopulateReplQueues() {
-    if(haContext == null || haContext.getState() == null)
-      return false;
-    return haContext.getState().shouldPopulateReplQueues();
+    return haContext != null && haContext.getState() != null
+      && haContext.getState().shouldPopulateReplQueues();
   }
 
   @Override

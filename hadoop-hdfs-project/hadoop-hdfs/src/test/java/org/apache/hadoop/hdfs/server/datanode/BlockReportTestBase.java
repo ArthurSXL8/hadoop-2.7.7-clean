@@ -804,19 +804,6 @@ public abstract class BlockReportTestBase {
   }
 
   private void printStats() {
-    BlockManagerTestUtil.updateState(cluster.getNamesystem().getBlockManager());
-    if(LOG.isDebugEnabled()) {
-      LOG.debug("Missing " + cluster.getNamesystem().getMissingBlocksCount());
-      LOG.debug("Corrupted " + cluster.getNamesystem().getCorruptReplicaBlocks());
-      LOG.debug("Under-replicated " + cluster.getNamesystem().
-          getUnderReplicatedBlocks());
-      LOG.debug("Pending delete " + cluster.getNamesystem().
-          getPendingDeletionBlocks());
-      LOG.debug("Pending replications " + cluster.getNamesystem().
-          getPendingReplicationBlocks());
-      LOG.debug("Excess " + cluster.getNamesystem().getExcessBlocks());
-      LOG.debug("Total " + cluster.getNamesystem().getBlocksTotal());
-    }
   }
 
   private ArrayList<Block> locatedToBlocks(final List<LocatedBlock> locatedBlks,
