@@ -204,7 +204,7 @@ class BPServiceActor implements Runnable {
 
   private void connectToNNAndHandshake() throws IOException {
     // get NN proxy
-    // TODO-ZH 获取NamNode代理
+    // TODO-ZH 获取NamNode的RPC服务端代理
     bpNamenode = dn.connectToNN(nnAddr);
 
     // First phase of the handshake with NN - get the namespace
@@ -390,6 +390,7 @@ class BPServiceActor implements Runnable {
   }
   
   HeartbeatResponse sendHeartBeat() throws IOException {
+    // TODO-ZH 每隔3秒执行一次，设定下次发送心跳时间
     scheduler.scheduleNextHeartbeat();
     StorageReport[] reports =
         dn.getFSDataset().getStorageReports(bpos.getBlockPoolId());
@@ -402,6 +403,7 @@ class BPServiceActor implements Runnable {
         .getVolumeFailureSummary();
     int numFailedVolumes = volumeFailureSummary != null ?
         volumeFailureSummary.getFailedStorageLocations().length : 0;
+    // TODO-ZH 发送心跳，通过获取NameNode的RPC代理发送心跳，转向NameNodeRpcServer
     return bpNamenode.sendHeartbeat(bpRegistration,
         reports,
         dn.getFSDataset().getCacheCapacity(),
@@ -484,6 +486,7 @@ class BPServiceActor implements Runnable {
     //
     // Now loop for a long time....
     //
+    // TODO-ZH 周期性心跳
     while (shouldRun()) {
       try {
         final long startTime = scheduler.monotonicNow();
@@ -491,6 +494,7 @@ class BPServiceActor implements Runnable {
         //
         // Every so often, send heartbeat or block-report
         //
+        // TODO-ZH 心跳是每3秒进行一次
         final boolean sendHeartbeat = scheduler.isHeartbeatDue(startTime);
         if (sendHeartbeat) {
           //
@@ -501,6 +505,12 @@ class BPServiceActor implements Runnable {
           // -- Bytes remaining
           //
           if (!dn.areHeartbeatsDisabledForTests()) {
+            /*****************************************************************************************************
+             *TODO-ZH starzy https://www.cnblogs.com/starzy
+             * 注释： 发送心跳，并接收NameNode返回指令
+             * NameNode不是直接跟DataNode进行连接，而是通过接收到DataNode心跳后并返回执行指令，
+             * 通过心跳方式发送指令的方式来操作DataNode节点
+             */
             HeartbeatResponse resp = sendHeartBeat();
             assert resp != null;
             dn.getMetrics().addHeartbeat(scheduler.monotonicNow() - startTime);
@@ -520,6 +530,7 @@ class BPServiceActor implements Runnable {
             }
 
             long startProcessCommands = monotonicNow();
+            // TODO-ZH 获取NameNode发送过来的指令
             if (!processCommand(resp.getCommands()))
               continue;
             long endProcessCommands = monotonicNow();
@@ -673,6 +684,7 @@ class BPServiceActor implements Runnable {
 
       while (shouldRun()) {
         try {
+          // TODO-ZH 发送心跳
           offerService();
         } catch (Exception ex) {
           LOG.error("Exception in BPOfferService for " + this, ex);
@@ -832,6 +844,7 @@ class BPServiceActor implements Runnable {
       return nextHeartbeatTime;
     }
 
+    // TODO-ZH 判定当前是否需要发送心跳
     boolean isHeartbeatDue(long startTime) {
       return (nextHeartbeatTime - startTime <= 0);
     }

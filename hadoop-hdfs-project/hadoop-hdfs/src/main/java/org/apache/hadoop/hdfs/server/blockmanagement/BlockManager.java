@@ -469,7 +469,9 @@ public class BlockManager {
   }
 
   public void activate(Configuration conf) {
+    // TODO-ZH 启动复制线程
     pendingReplications.start();
+    // TODO-ZH 启动管理心跳服务
     datanodeManager.activate(conf);
     this.replicationThread.start();
     this.blockReportThread.start();

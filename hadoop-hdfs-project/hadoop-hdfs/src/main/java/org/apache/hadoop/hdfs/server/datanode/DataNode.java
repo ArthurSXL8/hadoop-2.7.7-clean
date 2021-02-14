@@ -1205,8 +1205,8 @@ public class DataNode extends ReconfigurableBase
      * 正常集群中只有一个blockPool，如果是联邦机制，就会有多个NameNode，也就会有多个联邦
      * 一个联邦就是一个blockPool
      * 假设一个集群里面有4个NameNode、2个联邦
-     * 联邦一：Hadoop1（Active） Hadoop2（StandBy） blockPool是同一个
-     * 联邦二：Hadoop3（Active） Hadoop4（StandBy） blockPool是同一个
+     * 联邦一：NameNode1（Active） NameNode2（StandBy） blockPool是同一个
+     * 联邦二：NameNode3（Active） NameNode4（StandBy） blockPool是同一个
      */
     blockPoolManager = new BlockPoolManager(this);
     /*****************************************************************************************************

@@ -91,6 +91,7 @@ class HeartbeatManager implements DatanodeStatistics {
   }
 
   void activate(Configuration conf) {
+    // TODO-ZH 启动线程管理心跳，转向run方法
     heartbeatThread.start();
   }
 
@@ -224,6 +225,7 @@ class HeartbeatManager implements DatanodeStatistics {
       int xceiverCount, int failedVolumes,
       VolumeFailureSummary volumeFailureSummary) {
     stats.subtract(node);
+    // TODO-ZH 重要代码
     node.updateHeartbeat(reports, cacheCapacity, cacheUsed,
       xceiverCount, failedVolumes, volumeFailureSummary);
     stats.add(node);
@@ -308,11 +310,18 @@ class HeartbeatManager implements DatanodeStatistics {
       int numOfStaleNodes = 0;
       int numOfStaleStorages = 0;
       synchronized(this) {
+        /*****************************************************************************************************
+         *TODO-ZH starzy https://www.cnblogs.com/starzy
+         * 注释： 遍历DataNode集合
+         * 在DataNode启动时将DataNode信息已经添加到datanodes集合，
+         * DataNode心跳过程中也会更新集合中DataNode节点信息
+         */
         for (DatanodeDescriptor d : datanodes) {
           // check if an excessive GC pause has occurred
           if (shouldAbortHeartbeatCheck(0)) {
             return;
           }
+          // TODO-ZH 判定DataNode是否Dead
           if (dead == null && dm.isDatanodeDead(d)) {
             stats.incrExpiredHeartbeats();
             dead = d;
@@ -384,7 +393,8 @@ class HeartbeatManager implements DatanodeStatistics {
         restartHeartbeatStopWatch();
         try {
           final long now = Time.monotonicNow();
-          if (lastHeartbeatCheck + heartbeatRecheckInterval < now) {
+          if (lastHeartbeatCheck + heartbeatRecheckInterval < now) { // 每隔5秒检查一次
+            // TODO-ZH 心跳检查
             heartbeatCheck();
             lastHeartbeatCheck = now;
           }

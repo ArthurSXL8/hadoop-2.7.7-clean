@@ -227,6 +227,7 @@ public class DatanodeManager {
     final long heartbeatIntervalSeconds = conf.getLong(
         DFSConfigKeys.DFS_HEARTBEAT_INTERVAL_KEY,
         DFSConfigKeys.DFS_HEARTBEAT_INTERVAL_DEFAULT);
+    // 心跳超时时间间隔则此DataNode节点已经Dead
     final int heartbeatRecheckInterval = conf.getInt(
         DFSConfigKeys.DFS_NAMENODE_HEARTBEAT_RECHECK_INTERVAL_KEY, 
         DFSConfigKeys.DFS_NAMENODE_HEARTBEAT_RECHECK_INTERVAL_DEFAULT); // 5 minutes
@@ -307,7 +308,9 @@ public class DatanodeManager {
   }
   
   void activate(final Configuration conf) {
+    // 启动管理下线DataNode服务
     decomManager.activate(conf);
+    // TODO-ZH 管理心跳
     heartbeatManager.activate(conf);
   }
 
@@ -593,6 +596,7 @@ public class DatanodeManager {
 
   /** Is the datanode dead? */
   boolean isDatanodeDead(DatanodeDescriptor node) {
+    // 如果心跳超过10分钟30秒都没有进行更新则判定此DataNode已经Dead
     return (node.getLastUpdateMonotonic() <
             (monotonicNow() - heartbeatExpireInterval));
   }
@@ -1337,6 +1341,12 @@ public class DatanodeManager {
       synchronized (datanodeMap) {
         DatanodeDescriptor nodeinfo = null;
         try {
+          /*****************************************************************************************************
+           *TODO-ZH starzy https://www.cnblogs.com/starzy
+           * 注释： 从已有DataNodeMap中获取到已经注册的DataNode信息
+           * 如果能获取到DataNode信息则说明已经注册过
+           * 如果是第一次注册则DataNodeMap中没有此信息
+           */
           nodeinfo = getDatanode(nodeReg);
         } catch(UnregisteredNodeException e) {
           return new DatanodeCommand[]{RegisterCommand.REGISTER};
@@ -1352,6 +1362,7 @@ public class DatanodeManager {
           return new DatanodeCommand[]{RegisterCommand.REGISTER};
         }
 
+        // TODO-ZH 更新DataNode心跳信息
         heartbeatManager.updateHeartbeat(nodeinfo, reports,
                                          cacheCapacity, cacheUsed,
                                          xceiverCount, failedVolumes,

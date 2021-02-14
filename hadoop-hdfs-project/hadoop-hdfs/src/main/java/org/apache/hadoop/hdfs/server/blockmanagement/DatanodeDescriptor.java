@@ -353,6 +353,7 @@ public class DatanodeDescriptor extends DatanodeInfo {
   public void updateHeartbeat(StorageReport[] reports, long cacheCapacity,
       long cacheUsed, int xceiverCount, int volFailures,
       VolumeFailureSummary volumeFailureSummary) {
+    // TODO-ZH 重要代码
     updateHeartbeatState(reports, cacheCapacity, cacheUsed, xceiverCount,
         volFailures, volumeFailureSummary);
     heartbeatedSinceRegistration = true;
@@ -364,8 +365,18 @@ public class DatanodeDescriptor extends DatanodeInfo {
   public void updateHeartbeatState(StorageReport[] reports, long cacheCapacity,
       long cacheUsed, int xceiverCount, int volFailures,
       VolumeFailureSummary volumeFailureSummary) {
+    // TODO-ZH 更新存储信息
     updateStorageStats(reports, cacheCapacity, cacheUsed, xceiverCount,
         volFailures, volumeFailureSummary);
+    /*****************************************************************************************************
+     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     * 注释：更新上次心跳时间
+     * DataNode1   -->   NameNode 心跳   -->   2021-02-14  14:35:16
+     * DataNode2   -->   NameNode 心跳   -->   2021-02-14  14:35:15
+     * DataNode3   -->   NameNode 心跳   -->   2021-02-14  14:35:10
+     * 假如超过10分钟30秒未进行心跳，则认为此DataNode节点已经Dead
+     * 通过在NameNode中启动一个线程进行检测DataNode更新时间是不距离当前超过10分钟30秒，若超过此时间则判定DataNode为Dead
+     */
     setLastUpdate(Time.now());
     setLastUpdateMonotonic(Time.monotonicNow());
     rollBlocksScheduled(getLastUpdateMonotonic());
@@ -417,6 +428,7 @@ public class DatanodeDescriptor extends DatanodeInfo {
           storageMap.values());
     }
 
+    // TODO-ZH 更新存储信息
     setCacheCapacity(cacheCapacity);
     setCacheUsed(cacheUsed);
     setXceiverCount(xceiverCount);

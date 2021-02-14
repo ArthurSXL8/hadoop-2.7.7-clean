@@ -181,8 +181,8 @@ class BlockPoolManager {
        *      通常状况下，Hadoop集群架构是HA架构，此时只有一个NameService
        *      如果Hadoop集群是联邦机制，则此时有多个NameService
        *      例如：
-       *          Hadoop1，Hadoop2 -> 联邦1   NameService1
-       *          Hadoop3，Hadoop4 -> 联邦2   NameService2
+       *          NameNode1，NameNode2 -> 联邦1   NameService1
+       *          NameNode2，NameNode4 -> 联邦2   NameService2
        *
        */
       for (String nameserviceId : addrMap.keySet()) {
