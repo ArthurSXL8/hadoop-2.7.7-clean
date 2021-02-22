@@ -581,7 +581,7 @@ public class BlockManager {
     Collection<DatanodeDescriptor> corruptNodes = 
                                   corruptReplicas.getNodes(block);
     
-    for (DatanodeStorageInfo storage : blocksMap.getStorages(block)) {
+    for (DatanodeStorageInfo storage : blocksMap.getStorageIterator(block)) {
       final DatanodeDescriptor node = storage.getDatanodeDescriptor();
       String state = "";
       if (corruptNodes != null && corruptNodes.contains(node)) {
@@ -815,7 +815,7 @@ public class BlockManager {
   private List<DatanodeStorageInfo> getValidLocations(Block block) {
     final List<DatanodeStorageInfo> locations
         = new ArrayList<DatanodeStorageInfo>(blocksMap.numNodes(block));
-    for(DatanodeStorageInfo storage : blocksMap.getStorages(block)) {
+    for(DatanodeStorageInfo storage : blocksMap.getStorageIterator(block)) {
       // filter invalidate replicas
       if(!invalidateBlocks.contains(storage.getDatanodeDescriptor(), block)) {
         locations.add(storage);
@@ -911,7 +911,7 @@ public class BlockManager {
     final DatanodeStorageInfo[] machines = new DatanodeStorageInfo[numMachines];
     int j = 0;
     if (numMachines > 0) {
-      for(DatanodeStorageInfo storage : blocksMap.getStorages(blk)) {
+      for(DatanodeStorageInfo storage : blocksMap.getStorageIterator(blk)) {
         final DatanodeDescriptor d = storage.getDatanodeDescriptor();
         final boolean replicaCorrupt = corruptReplicas.isReplicaCorrupt(blk, d);
         if (isCorrupt || (!replicaCorrupt))
@@ -1161,7 +1161,7 @@ public class BlockManager {
       return;
     }
     StringBuilder datanodes = new StringBuilder();
-    for(DatanodeStorageInfo storage : blocksMap.getStorages(b, State.NORMAL)) {
+    for(DatanodeStorageInfo storage : blocksMap.getStorageIterator(b, State.NORMAL)) {
       final DatanodeDescriptor node = storage.getDatanodeDescriptor();
       invalidateBlocks.add(b, node, false);
       datanodes.append(node).append(" ");
@@ -1409,7 +1409,7 @@ public class BlockManager {
         for (int priority = 0; priority < blocksToReplicate.size(); priority++) {
           for (Block block : blocksToReplicate.get(priority)) {
             // block should belong to a file
-            bc = blocksMap.getBlockCollection(block);
+            bc = blocksMap.getBlockSet(block);
             // abandoned block or block reopened for append
             if(bc == null || (bc.isUnderConstruction() && block.equals(bc.getLastBlock()))) {
               neededReplications.remove(block, priority); // remove from neededReplications
@@ -1493,7 +1493,7 @@ public class BlockManager {
           int priority = rw.priority;
           // Recheck since global lock was released
           // block should belong to a file
-          bc = blocksMap.getBlockCollection(block);
+          bc = blocksMap.getBlockSet(block);
           // abandoned block or block reopened for append
           if(bc == null || (bc.isUnderConstruction() && block.equals(bc.getLastBlock()))) {
             neededReplications.remove(block, priority); // remove from neededReplications
@@ -1695,7 +1695,7 @@ public class BlockManager {
     int excess = 0;
     
     Collection<DatanodeDescriptor> nodesCorrupt = corruptReplicas.getNodes(block);
-    for(DatanodeStorageInfo storage : blocksMap.getStorages(block)) {
+    for(DatanodeStorageInfo storage : blocksMap.getStorageIterator(block)) {
       final DatanodeDescriptor node = storage.getDatanodeDescriptor();
       LightWeightLinkedSet<Block> excessBlocks =
         excessReplicateMap.get(node.getDatanodeUuid());
@@ -2738,7 +2738,7 @@ public class BlockManager {
     long nrInvalid = 0, nrOverReplicated = 0;
     long nrUnderReplicated = 0, nrPostponed = 0, nrUnderConstruction = 0;
     long startTimeMisReplicatedScan = Time.monotonicNow();
-    Iterator<BlockNeighborInfo> blocksItr = blocksMap.getBlocks().iterator();
+    Iterator<BlockNeighborInfo> blocksItr = blocksMap.getBlockAndNeighborSet().iterator();
     long totalBlocks = blocksMap.size();
     replicationQueuesInitProgress = 0;
     long totalProcessed = 0;
@@ -2909,7 +2909,7 @@ public class BlockManager {
     Collection<DatanodeStorageInfo> nonExcess = new ArrayList<DatanodeStorageInfo>();
     Collection<DatanodeDescriptor> corruptNodes = corruptReplicas
         .getNodes(block);
-    for(DatanodeStorageInfo storage : blocksMap.getStorages(block, State.NORMAL)) {
+    for(DatanodeStorageInfo storage : blocksMap.getStorageIterator(block, State.NORMAL)) {
       final DatanodeDescriptor cur = storage.getDatanodeDescriptor();
       if (storage.areBlockContentsStale()) {
         LOG.trace("BLOCK* processOverReplicatedBlock: Postponing {}"
@@ -3017,7 +3017,7 @@ public class BlockManager {
       // necessary. In that case, put block on a possibly-will-
       // be-replicated list.
       //
-      BlockSet bc = blocksMap.getBlockCollection(block);
+      BlockSet bc = blocksMap.getBlockSet(block);
       if (bc != null) {
         namesystem.decrementSafeBlockCount(block);
         updateNeededReplications(block, -1, 0);
@@ -3238,7 +3238,7 @@ public class BlockManager {
     int excess = 0;
     int stale = 0;
     Collection<DatanodeDescriptor> nodesCorrupt = corruptReplicas.getNodes(b);
-    for(DatanodeStorageInfo storage : blocksMap.getStorages(b, State.NORMAL)) {
+    for(DatanodeStorageInfo storage : blocksMap.getStorageIterator(b, State.NORMAL)) {
       final DatanodeDescriptor node = storage.getDatanodeDescriptor();
       if ((nodesCorrupt != null) && (nodesCorrupt.contains(node))) {
         corrupt++;
@@ -3279,7 +3279,7 @@ public class BlockManager {
     // else proceed with fast case
     int live = 0;
     Collection<DatanodeDescriptor> nodesCorrupt = corruptReplicas.getNodes(b);
-    for(DatanodeStorageInfo storage : blocksMap.getStorages(b, State.NORMAL)) {
+    for(DatanodeStorageInfo storage : blocksMap.getStorageIterator(b, State.NORMAL)) {
       final DatanodeDescriptor node = storage.getDatanodeDescriptor();
       if ((nodesCorrupt == null) || (!nodesCorrupt.contains(node)))
         live++;
@@ -3301,7 +3301,7 @@ public class BlockManager {
     int numOverReplicated = 0;
     while(it.hasNext()) {
       final Block block = it.next();
-      BlockSet bc = blocksMap.getBlockCollection(block);
+      BlockSet bc = blocksMap.getBlockSet(block);
       short expectedReplication = bc.getBlockReplication();
       NumberReplicas num = countNodes(block);
       int numCurrentReplica = num.liveReplicas();
@@ -3354,7 +3354,7 @@ public class BlockManager {
   public DatanodeStorageInfo[] getStorages(BlockNeighborInfo block) {
     final DatanodeStorageInfo[] storages = new DatanodeStorageInfo[block.numNodes()];
     int i = 0;
-    for(DatanodeStorageInfo s : blocksMap.getStorages(block)) {
+    for(DatanodeStorageInfo s : blocksMap.getStorageIterator(block)) {
       storages[i++] = s;
     }
     return storages;
@@ -3439,7 +3439,7 @@ public class BlockManager {
    *         otherwise, return the replication factor of the block.
    */
   private int getReplication(Block block) {
-    final BlockSet bc = blocksMap.getBlockCollection(block);
+    final BlockSet bc = blocksMap.getBlockSet(block);
     return bc == null? 0: bc.getBlockReplication();
   }
 
@@ -3488,7 +3488,7 @@ public class BlockManager {
     List<DatanodeDescriptor> liveNodes = new ArrayList<>();
     Collection<DatanodeDescriptor> corruptNodes = corruptReplicas
         .getNodes(b);
-    for (DatanodeStorageInfo storage : blocksMap.getStorages(b)) {
+    for (DatanodeStorageInfo storage : blocksMap.getStorageIterator(b)) {
       final DatanodeDescriptor cur = storage.getDatanodeDescriptor();
       if (!cur.isDecommissionInProgress() && !cur.isDecommissioned()
           && ((corruptNodes == null) || !corruptNodes.contains(cur))) {
@@ -3531,12 +3531,12 @@ public class BlockManager {
   }
 
   public BlockSet getBlockCollection(Block b) {
-    return blocksMap.getBlockCollection(b);
+    return blocksMap.getBlockSet(b);
   }
 
   /** @return an iterator of the datanodes. */
   public Iterable<DatanodeStorageInfo> getStorages(final Block block) {
-    return blocksMap.getStorages(block);
+    return blocksMap.getStorageIterator(block);
   }
 
   public int numCorruptReplicas(Block block) {
@@ -3554,7 +3554,7 @@ public class BlockManager {
    * If a block is removed from blocksMap, remove it from excessReplicateMap.
    */
   private void removeFromExcessReplicateMap(Block block) {
-    for (DatanodeStorageInfo info : blocksMap.getStorages(block)) {
+    for (DatanodeStorageInfo info : blocksMap.getStorageIterator(block)) {
       String uuid = info.getDatanodeDescriptor().getDatanodeUuid();
       LightWeightLinkedSet<Block> excessReplicas = excessReplicateMap.get(uuid);
       if (excessReplicas != null) {

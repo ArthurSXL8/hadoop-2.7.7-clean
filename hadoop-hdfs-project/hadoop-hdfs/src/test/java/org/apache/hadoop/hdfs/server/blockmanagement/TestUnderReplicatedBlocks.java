@@ -52,7 +52,7 @@ public class TestUnderReplicatedBlocks {
       // but the block does not get put into the under-replicated blocks queue
       final BlockManager bm = cluster.getNamesystem().getBlockManager();
       ExtendedBlock b = DFSTestUtil.getFirstBlock(fs, FILE_PATH);
-      DatanodeDescriptor dn = bm.blocksMap.getStorages(b.getLocalBlock())
+      DatanodeDescriptor dn = bm.blocksMap.getStorageIterator(b.getLocalBlock())
           .iterator().next().getDatanodeDescriptor();
       bm.addToInvalidates(b.getLocalBlock(), dn);
       Thread.sleep(5000);
@@ -119,7 +119,7 @@ public class TestUnderReplicatedBlocks {
       final BlockManager bm = cluster.getNamesystem().getBlockManager();
       ExtendedBlock b = DFSTestUtil.getFirstBlock(fs, FILE_PATH);
       Iterator<DatanodeStorageInfo> storageInfos =
-          bm.blocksMap.getStorages(b.getLocalBlock())
+          bm.blocksMap.getStorageIterator(b.getLocalBlock())
           .iterator();
       DatanodeDescriptor firstDn = storageInfos.next().getDatanodeDescriptor();
       DatanodeDescriptor secondDn = storageInfos.next().getDatanodeDescriptor();

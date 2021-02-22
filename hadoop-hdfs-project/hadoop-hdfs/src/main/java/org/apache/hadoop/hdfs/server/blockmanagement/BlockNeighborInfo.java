@@ -85,7 +85,7 @@ public class BlockNeighborInfo extends Block
     return bc;
   }
 
-  public void setBlockCollection(BlockSet bc) {
+  public void setBlockSet(BlockSet bc) {
     this.bc = bc;
   }
 
@@ -379,7 +379,7 @@ public class BlockNeighborInfo extends Block
       BlockNeighborInfoUnderConstruction ucBlock =
           new BlockNeighborInfoUnderConstruction(this,
           getBlockCollection().getBlockReplication(), s, targets);
-      ucBlock.setBlockCollection(getBlockCollection());
+      ucBlock.setBlockSet(getBlockCollection());
       return ucBlock;
     }
     // the block is already under construction
@@ -387,7 +387,7 @@ public class BlockNeighborInfo extends Block
         (BlockNeighborInfoUnderConstruction)this;
     ucBlock.setBlockUCState(s);
     ucBlock.setExpectedLocations(targets);
-    ucBlock.setBlockCollection(getBlockCollection());
+    ucBlock.setBlockSet(getBlockCollection());
     return ucBlock;
   }
 

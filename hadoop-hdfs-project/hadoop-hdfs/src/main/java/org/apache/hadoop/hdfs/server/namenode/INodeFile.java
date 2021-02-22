@@ -445,7 +445,7 @@ public class INodeFile extends INodeWithAdditionalFields
   void updateBlockCollection() {
     if (blocks != null) {
       for(BlockNeighborInfo b : blocks) {
-        b.setBlockCollection(this);
+        b.setBlockSet(this);
       }
     }
   }
@@ -528,7 +528,7 @@ public class INodeFile extends INodeWithAdditionalFields
     if (blocks != null && collectedBlocks != null) {
       for (BlockNeighborInfo blk : blocks) {
         collectedBlocks.addDeleteBlock(blk);
-        blk.setBlockCollection(null);
+        blk.setBlockSet(null);
       }
     }
     setBlocks(BlockNeighborInfo.EMPTY_ARRAY);

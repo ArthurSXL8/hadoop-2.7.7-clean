@@ -578,7 +578,7 @@ public class DecommissionManager {
           it.remove();
           continue;
         }
-        BlockSet bc = blockManager.blocksMap.getBlockCollection(block);
+        BlockSet bc = blockManager.blocksMap.getBlockSet(block);
         if (bc == null) {
           // Orphan block, will be invalidated eventually. Skip.
           continue;
@@ -619,7 +619,7 @@ public class DecommissionManager {
         // Log if this is our first time through
         if (firstReplicationLog) {
           logBlockReplicationInfo(block, bc, datanode, num,
-              blockManager.blocksMap.getStorages(block));
+              blockManager.blocksMap.getStorageIterator(block));
           firstReplicationLog = false;
         }
         // Update various counts

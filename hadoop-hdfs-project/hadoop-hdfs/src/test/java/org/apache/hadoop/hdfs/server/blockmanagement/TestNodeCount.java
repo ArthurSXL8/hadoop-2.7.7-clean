@@ -98,7 +98,7 @@ public class TestNodeCount {
       
       // find out a non-excess node
       DatanodeDescriptor nonExcessDN = null;
-      for(DatanodeStorageInfo storage : bm.blocksMap.getStorages(block.getLocalBlock())) {
+      for(DatanodeStorageInfo storage : bm.blocksMap.getStorageIterator(block.getLocalBlock())) {
         final DatanodeDescriptor dn = storage.getDatanodeDescriptor();
         Collection<Block> blocks = bm.excessReplicateMap.get(dn.getDatanodeUuid());
         if (blocks == null || !blocks.contains(block.getLocalBlock()) ) {

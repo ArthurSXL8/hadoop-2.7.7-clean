@@ -66,7 +66,7 @@ public class TestCommitBlockSynchronization {
     FSNamesystem namesystemSpy = spy(namesystem);
     BlockNeighborInfoUnderConstruction blockInfo = new BlockNeighborInfoUnderConstruction(
         block, (short) 1, HdfsServerConstants.BlockUCState.UNDER_CONSTRUCTION, targets);
-    blockInfo.setBlockCollection(file);
+    blockInfo.setBlockSet(file);
     blockInfo.setGenerationStamp(genStamp);
     blockInfo.initializeBlockRecovery(genStamp, true);
     doReturn(true).when(file).removeLastBlock(any(Block.class));
@@ -105,7 +105,7 @@ public class TestCommitBlockSynchronization {
 
     // Simulate 'completing' the block.
     BlockNeighborInfo completedBlockInfo = new BlockNeighborInfo(block, (short) 1);
-    completedBlockInfo.setBlockCollection(file);
+    completedBlockInfo.setBlockSet(file);
     completedBlockInfo.setGenerationStamp(genStamp);
     doReturn(completedBlockInfo).when(namesystemSpy)
         .getStoredBlock(any(Block.class));
@@ -177,7 +177,7 @@ public class TestCommitBlockSynchronization {
         lastBlock, genStamp, length, true, false, newTargets, null);
 
     BlockNeighborInfo completedBlockInfo = new BlockNeighborInfo(block, (short) 1);
-    completedBlockInfo.setBlockCollection(file);
+    completedBlockInfo.setBlockSet(file);
     completedBlockInfo.setGenerationStamp(genStamp);
     doReturn(completedBlockInfo).when(namesystemSpy)
         .getStoredBlock(any(Block.class));

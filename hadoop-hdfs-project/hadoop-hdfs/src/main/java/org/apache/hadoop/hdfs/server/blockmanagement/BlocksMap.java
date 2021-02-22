@@ -31,7 +31,7 @@ import com.google.common.collect.Iterables;
 
 /**
  * This class maintains the map from a block to its metadata.
- * block's metadata currently includes blockCollection it belongs to and
+ * block's metadata currently includes blockSet it belongs to and
  * the datanodes that store the block.
  */
 class BlocksMap {
@@ -63,12 +63,12 @@ class BlocksMap {
   /** Constant {@link LightWeightGSet} capacity. */
   private final int capacity;
   
-  private GSet<Block, BlockNeighborInfo> blocks;
+  private GSet<Block, BlockNeighborInfo> blockAndNeighborSet;
 
   BlocksMap(int capacity) {
     // Use 2% of total memory to size the GSet capacity
     this.capacity = capacity;
-    this.blocks = new LightWeightGSet<Block, BlockNeighborInfo>(capacity) {
+    this.blockAndNeighborSet = new LightWeightGSet<Block, BlockNeighborInfo>(capacity) {
       @Override
       public Iterator<BlockNeighborInfo> iterator() {
         SetIterator iterator = new SetIterator();
@@ -87,31 +87,31 @@ class BlocksMap {
 
   void close() {
     clear();
-    blocks = null;
+    blockAndNeighborSet = null;
   }
   
   void clear() {
-    if (blocks != null) {
-      blocks.clear();
+    if (blockAndNeighborSet != null) {
+      blockAndNeighborSet.clear();
     }
   }
 
-  BlockSet getBlockCollection(Block b) {
-    BlockNeighborInfo info = blocks.get(b);
+  BlockSet getBlockSet(Block block) {
+    BlockNeighborInfo info = blockAndNeighborSet.get(block);
     return (info != null) ? info.getBlockCollection() : null;
   }
 
   /**
-   * Add block b belonging to the specified block collection to the map.
+   * Add block b belonging to the specified block set to the map.
    */
-  BlockNeighborInfo addBlockCollection(BlockNeighborInfo b, BlockSet bc) {
-    BlockNeighborInfo info = blocks.get(b);
-    if (info != b) {
-      info = b;
-      blocks.put(info);
+  BlockNeighborInfo addBlockCollection(BlockNeighborInfo b, BlockSet blockSet) {
+    BlockNeighborInfo blockNeighborInfo = blockAndNeighborSet.get(b);
+    if (blockNeighborInfo != b) {
+      blockNeighborInfo = b;
+      blockAndNeighborSet.put(blockNeighborInfo);
     }
-    info.setBlockCollection(bc);
-    return info;
+    blockNeighborInfo.setBlockSet(blockSet);
+    return blockNeighborInfo;
   }
 
   /**
@@ -120,28 +120,28 @@ class BlocksMap {
    * and remove all data-node locations associated with the block.
    */
   void removeBlock(Block block) {
-    BlockNeighborInfo blockInfo = blocks.remove(block);
-    if (blockInfo == null)
+    BlockNeighborInfo blockNeighborInfo = blockAndNeighborSet.remove(block);
+    if (blockNeighborInfo == null)
       return;
 
-    blockInfo.setBlockCollection(null);
-    for(int idx = blockInfo.numNodes()-1; idx >= 0; idx--) {
-      DatanodeDescriptor dn = blockInfo.getDatanode(idx);
-      dn.removeBlock(blockInfo); // remove from the list and wipe the location
+    blockNeighborInfo.setBlockSet(null);
+    for(int idx = blockNeighborInfo.numNodes()-1; idx >= 0; idx--) {
+      DatanodeDescriptor dn = blockNeighborInfo.getDatanode(idx);
+      dn.removeBlock(blockNeighborInfo); // remove from the list and wipe the location
     }
   }
   
   /** Returns the block object it it exists in the map. */
-  BlockNeighborInfo getStoredBlock(Block b) {
-    return blocks.get(b);
+  BlockNeighborInfo getStoredBlock(Block block) {
+    return blockAndNeighborSet.get(block);
   }
 
   /**
    * Searches for the block in the BlocksMap and 
    * returns {@link Iterable} of the storages the block belongs to.
    */
-  Iterable<DatanodeStorageInfo> getStorages(Block b) {
-    return getStorages(blocks.get(b));
+  Iterable<DatanodeStorageInfo> getStorageIterator(Block block) {
+    return getStorageIterator(blockAndNeighborSet.get(block));
   }
 
   /**
@@ -151,8 +151,8 @@ class BlocksMap {
    * 
    * @param state DatanodeStorage state by which to filter the returned Iterable
    */
-  Iterable<DatanodeStorageInfo> getStorages(Block b, final DatanodeStorage.State state) {
-    return Iterables.filter(getStorages(blocks.get(b)), new Predicate<DatanodeStorageInfo>() {
+  Iterable<DatanodeStorageInfo> getStorageIterator(Block block, final DatanodeStorage.State state) {
+    return Iterables.filter(getStorageIterator(blockAndNeighborSet.get(block)), new Predicate<DatanodeStorageInfo>() {
       @Override
       public boolean apply(DatanodeStorageInfo storage) {
         return storage.getState() == state;
@@ -164,18 +164,18 @@ class BlocksMap {
    * For a block that has already been retrieved from the BlocksMap
    * returns {@link Iterable} of the storages the block belongs to.
    */
-  Iterable<DatanodeStorageInfo> getStorages(final BlockNeighborInfo storedBlock) {
+  Iterable<DatanodeStorageInfo> getStorageIterator(final BlockNeighborInfo blockNeighborInfo) {
     return new Iterable<DatanodeStorageInfo>() {
       @Override
       public Iterator<DatanodeStorageInfo> iterator() {
-        return new StorageIterator(storedBlock);
+        return new StorageIterator(blockNeighborInfo);
       }
     };
   }
 
   /** counts number of containing nodes. Better than using iterator. */
   int numNodes(Block b) {
-    BlockNeighborInfo info = blocks.get(b);
+    BlockNeighborInfo info = blockAndNeighborSet.get(b);
     return info == null ? 0 : info.numNodes();
   }
 
@@ -185,7 +185,7 @@ class BlocksMap {
    * only if it does not belong to any file and data-nodes.
    */
   boolean removeNode(Block b, DatanodeDescriptor node) {
-    BlockNeighborInfo info = blocks.get(b);
+    BlockNeighborInfo info = blockAndNeighborSet.get(b);
     if (info == null)
       return false;
 
@@ -194,21 +194,21 @@ class BlocksMap {
 
     if (info.getDatanode(0) == null     // no datanodes left
               && info.getBlockCollection() == null) {  // does not belong to a file
-      blocks.remove(b);  // remove block from the map
+      blockAndNeighborSet.remove(b);  // remove block from the map
     }
     return removed;
   }
 
   int size() {
-    if (blocks != null) {
-      return blocks.size();
+    if (blockAndNeighborSet != null) {
+      return blockAndNeighborSet.size();
     } else {
       return 0;
     }
   }
 
-  Iterable<BlockNeighborInfo> getBlocks() {
-    return blocks;
+  Iterable<BlockNeighborInfo> getBlockAndNeighborSet() {
+    return blockAndNeighborSet;
   }
   
   /** Get the capacity of the HashMap that stores blocks */
@@ -223,13 +223,13 @@ class BlocksMap {
    * @return new block
    */
   BlockNeighborInfo replaceBlock(BlockNeighborInfo newBlock) {
-    BlockNeighborInfo currentBlock = blocks.get(newBlock);
-    assert currentBlock != null : "the block if not in blocksMap";
+    BlockNeighborInfo oldBlock = blockAndNeighborSet.get(newBlock);
+    assert oldBlock != null : "the block if not in blocksMap";
     // replace block in data-node lists
-    for (int i = currentBlock.numNodes() - 1; i >= 0; i--) {
-      final DatanodeDescriptor dn = currentBlock.getDatanode(i);
-      final DatanodeStorageInfo storage = currentBlock.findStorageInfo(dn);
-      final boolean removed = storage.removeBlock(currentBlock);
+    for (int i = oldBlock.numNodes() - 1; i >= 0; i--) {
+      final DatanodeDescriptor dn = oldBlock.getDatanode(i);
+      final DatanodeStorageInfo storage = oldBlock.findStorageInfo(dn);
+      final boolean removed = storage.removeBlock(oldBlock);
       Preconditions.checkState(removed, "currentBlock not found.");
 
       final AddBlockResult result = storage.addBlock(newBlock);
@@ -237,7 +237,7 @@ class BlocksMap {
           "newBlock already exists.");
     }
     // replace block in the map itself
-    blocks.put(newBlock);
+    blockAndNeighborSet.put(newBlock);
     return newBlock;
   }
 }
