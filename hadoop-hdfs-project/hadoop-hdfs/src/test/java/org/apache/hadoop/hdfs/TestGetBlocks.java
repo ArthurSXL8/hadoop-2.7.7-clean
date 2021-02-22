@@ -38,7 +38,7 @@ import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants.DatanodeReportType;
 import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.hdfs.protocol.LocatedBlocks;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguous;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfo;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockManagerTestUtil;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeDescriptor;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeStorageInfo;
@@ -304,7 +304,7 @@ public class TestGetBlocks {
     DatanodeStorageInfo[] storages = dnd.getStorageInfos();
     assertEquals("DataNode should have 4 storages", 4, storages.length);
 
-    Iterator<BlockInfoContiguous> dnBlockIt = null;
+    Iterator<BlockNeighborInfo> dnBlockIt = null;
     // check illegal start block number
     try {
       dnBlockIt = BlockManagerTestUtil.getBlockIterator(
@@ -317,10 +317,10 @@ public class TestGetBlocks {
 
     // form an array of all DataNode blocks
     int numBlocks = dnd.numBlocks();
-    BlockInfoContiguous[] allBlocks = new BlockInfoContiguous[numBlocks];
+    BlockNeighborInfo[] allBlocks = new BlockNeighborInfo[numBlocks];
     int idx = 0;
     for(DatanodeStorageInfo s : storages) {
-      Iterator<BlockInfoContiguous> storageBlockIt =
+      Iterator<BlockNeighborInfo> storageBlockIt =
           BlockManagerTestUtil.getBlockIterator(s);
       while(storageBlockIt.hasNext()) {
         allBlocks[idx++] = storageBlockIt.next();

@@ -100,7 +100,7 @@ public class DecommissionManager {
    * reports or other events. Before being finally marking as decommissioned,
    * another check is done with the actual block map.
    */
-  private final TreeMap<DatanodeDescriptor, AbstractList<BlockInfoContiguous>>
+  private final TreeMap<DatanodeDescriptor, AbstractList<BlockNeighborInfo>>
       decomNodeBlocks;
 
   /**
@@ -248,9 +248,9 @@ public class DecommissionManager {
    * Full-strength replication is not always necessary, hence "sufficient".
    * @return true if sufficient, else false.
    */
-  private boolean isSufficientlyReplicated(BlockInfoContiguous block, 
-      BlockCollection bc,
-      NumberReplicas numberReplicas) {
+  private boolean isSufficientlyReplicated(BlockNeighborInfo block,
+                                           BlockSet bc,
+                                           NumberReplicas numberReplicas) {
     final int numExpected = bc.getBlockReplication();
     final int numLive = numberReplicas.liveReplicas();
     if (numLive >= numExpected
@@ -285,7 +285,7 @@ public class DecommissionManager {
     return false;
   }
 
-  private static void logBlockReplicationInfo(Block block, BlockCollection bc,
+  private static void logBlockReplicationInfo(Block block, BlockSet bc,
       DatanodeDescriptor srcNode, NumberReplicas num,
       Iterable<DatanodeStorageInfo> storages) {
     int curReplicas = num.liveReplicas();
@@ -418,17 +418,17 @@ public class DecommissionManager {
     }
 
     private void check() {
-      final Iterator<Map.Entry<DatanodeDescriptor, AbstractList<BlockInfoContiguous>>>
+      final Iterator<Map.Entry<DatanodeDescriptor, AbstractList<BlockNeighborInfo>>>
           it = new CyclicIteration<>(decomNodeBlocks, iterkey).iterator();
       final LinkedList<DatanodeDescriptor> toRemove = new LinkedList<>();
 
       while (it.hasNext() && !exceededNumBlocksPerCheck()
           && !exceededNumNodesPerCheck() && namesystem.isRunning()) {
         numNodesChecked++;
-        final Map.Entry<DatanodeDescriptor, AbstractList<BlockInfoContiguous>>
+        final Map.Entry<DatanodeDescriptor, AbstractList<BlockNeighborInfo>>
             entry = it.next();
         final DatanodeDescriptor dn = entry.getKey();
-        AbstractList<BlockInfoContiguous> blocks = entry.getValue();
+        AbstractList<BlockNeighborInfo> blocks = entry.getValue();
         boolean fullScan = false;
         if (blocks == null) {
           // This is a newly added datanode, run through its list to schedule 
@@ -500,7 +500,7 @@ public class DecommissionManager {
      * datanode.
      */
     private void pruneSufficientlyReplicated(final DatanodeDescriptor datanode,
-        AbstractList<BlockInfoContiguous> blocks) {
+        AbstractList<BlockNeighborInfo> blocks) {
       processBlocksForDecomInternal(datanode, blocks.iterator(), null, true);
     }
 
@@ -514,9 +514,9 @@ public class DecommissionManager {
      * @param datanode
      * @return List of insufficiently replicated blocks 
      */
-    private AbstractList<BlockInfoContiguous> handleInsufficientlyReplicated(
+    private AbstractList<BlockNeighborInfo> handleInsufficientlyReplicated(
         final DatanodeDescriptor datanode) {
-      AbstractList<BlockInfoContiguous> insufficient = new ChunkedArrayList<>();
+      AbstractList<BlockNeighborInfo> insufficient = new ChunkedArrayList<>();
       processBlocksForDecomInternal(datanode, datanode.getBlockIterator(),
           insufficient, false);
       return insufficient;
@@ -540,8 +540,8 @@ public class DecommissionManager {
      */
     private void processBlocksForDecomInternal(
         final DatanodeDescriptor datanode,
-        final Iterator<BlockInfoContiguous> it,
-        final List<BlockInfoContiguous> insufficientlyReplicated,
+        final Iterator<BlockNeighborInfo> it,
+        final List<BlockNeighborInfo> insufficientlyReplicated,
         boolean pruneSufficientlyReplicated) {
       boolean firstReplicationLog = true;
       int underReplicatedBlocks = 0;
@@ -570,7 +570,7 @@ public class DecommissionManager {
         }
         numBlocksChecked++;
         numBlocksCheckedPerLock++;
-        final BlockInfoContiguous block = it.next();
+        final BlockNeighborInfo block = it.next();
         // Remove the block from the list if it's no longer in the block map,
         // e.g. the containing file has been deleted
         if (blockManager.blocksMap.getStoredBlock(block) == null) {
@@ -578,7 +578,7 @@ public class DecommissionManager {
           it.remove();
           continue;
         }
-        BlockCollection bc = blockManager.blocksMap.getBlockCollection(block);
+        BlockSet bc = blockManager.blocksMap.getBlockCollection(block);
         if (bc == null) {
           // Orphan block, will be invalidated eventually. Skip.
           continue;

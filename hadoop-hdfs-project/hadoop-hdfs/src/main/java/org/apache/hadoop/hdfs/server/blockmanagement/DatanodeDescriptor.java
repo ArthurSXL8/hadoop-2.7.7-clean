@@ -200,8 +200,8 @@ public class DatanodeDescriptor extends DatanodeInfo {
   /** A queue of blocks to be replicated by this datanode */
   private final BlockQueue<BlockTargetPair> replicateBlocks = new BlockQueue<BlockTargetPair>();
   /** A queue of blocks to be recovered by this datanode */
-  private final BlockQueue<BlockInfoContiguousUnderConstruction> recoverBlocks =
-                                new BlockQueue<BlockInfoContiguousUnderConstruction>();
+  private final BlockQueue<BlockNeighborInfoUnderConstruction> recoverBlocks =
+                                new BlockQueue<BlockNeighborInfoUnderConstruction>();
   /** A set of blocks to be invalidated by this datanode */
   private final LightWeightHashSet<Block> invalidateBlocks = new LightWeightHashSet<Block>();
 
@@ -289,7 +289,7 @@ public class DatanodeDescriptor extends DatanodeInfo {
    * Remove block from the list of blocks belonging to the data-node. Remove
    * data-node from the block.
    */
-  boolean removeBlock(BlockInfoContiguous b) {
+  boolean removeBlock(BlockNeighborInfo b) {
     final DatanodeStorageInfo s = b.findStorageInfo(this);
     // if block exists on this datanode
     if (s != null) {
@@ -302,7 +302,7 @@ public class DatanodeDescriptor extends DatanodeInfo {
    * Remove block from the list of blocks belonging to the data-node. Remove
    * data-node from the block.
    */
-  boolean removeBlock(String storageID, BlockInfoContiguous b) {
+  boolean removeBlock(String storageID, BlockNeighborInfo b) {
     DatanodeStorageInfo s = getStorageInfo(storageID);
     if (s != null) {
       return s.removeBlock(b);
@@ -509,9 +509,9 @@ public class DatanodeDescriptor extends DatanodeInfo {
     }
   }
 
-  private static class BlockIterator implements Iterator<BlockInfoContiguous> {
+  private static class BlockIterator implements Iterator<BlockNeighborInfo> {
     private int index = 0;
-    private final List<Iterator<BlockInfoContiguous>> iterators;
+    private final List<Iterator<BlockNeighborInfo>> iterators;
     
     private BlockIterator(final int startBlock,
                           final DatanodeStorageInfo... storages) {
@@ -519,7 +519,7 @@ public class DatanodeDescriptor extends DatanodeInfo {
         throw new IllegalArgumentException(
             "Illegal value startBlock = " + startBlock);
       }
-      List<Iterator<BlockInfoContiguous>> iterators = new ArrayList<Iterator<BlockInfoContiguous>>();
+      List<Iterator<BlockNeighborInfo>> iterators = new ArrayList<Iterator<BlockNeighborInfo>>();
       int s = startBlock;
       int sumBlocks = 0;
       for (DatanodeStorageInfo e : storages) {
@@ -545,7 +545,7 @@ public class DatanodeDescriptor extends DatanodeInfo {
     }
 
     @Override
-    public BlockInfoContiguous next() {
+    public BlockNeighborInfo next() {
       update();
       return iterators.get(index).next();
     }
@@ -562,14 +562,14 @@ public class DatanodeDescriptor extends DatanodeInfo {
     }
   }
 
-  Iterator<BlockInfoContiguous> getBlockIterator() {
+  Iterator<BlockNeighborInfo> getBlockIterator() {
     return getBlockIterator(0);
   }
 
   /**
    * Get iterator, which starts iterating from the specified block.
    */
-  Iterator<BlockInfoContiguous> getBlockIterator(final int startBlock) {
+  Iterator<BlockNeighborInfo> getBlockIterator(final int startBlock) {
     return new BlockIterator(startBlock, getStorageInfos());
   }
 
@@ -592,7 +592,7 @@ public class DatanodeDescriptor extends DatanodeInfo {
   /**
    * Store block recovery work.
    */
-  void addBlockToBeRecovered(BlockInfoContiguousUnderConstruction block) {
+  void addBlockToBeRecovered(BlockNeighborInfoUnderConstruction block) {
     if(recoverBlocks.contains(block)) {
       // this prevents adding the same block twice to the recovery queue
       BlockManager.LOG.info(block + " is already in the recovery queue");
@@ -634,11 +634,11 @@ public class DatanodeDescriptor extends DatanodeInfo {
     return replicateBlocks.poll(maxTransfers);
   }
 
-  public BlockInfoContiguousUnderConstruction[] getLeaseRecoveryCommand(int maxTransfers) {
-    List<BlockInfoContiguousUnderConstruction> blocks = recoverBlocks.poll(maxTransfers);
+  public BlockNeighborInfoUnderConstruction[] getLeaseRecoveryCommand(int maxTransfers) {
+    List<BlockNeighborInfoUnderConstruction> blocks = recoverBlocks.poll(maxTransfers);
     if(blocks == null)
       return null;
-    return blocks.toArray(new BlockInfoContiguousUnderConstruction[blocks.size()]);
+    return blocks.toArray(new BlockNeighborInfoUnderConstruction[blocks.size()]);
   }
 
   /**

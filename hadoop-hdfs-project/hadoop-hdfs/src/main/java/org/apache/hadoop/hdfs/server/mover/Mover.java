@@ -34,9 +34,9 @@ import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.protocol.*;
-import org.apache.hadoop.hdfs.server.balancer.Dispatcher;
-import org.apache.hadoop.hdfs.server.balancer.Dispatcher.*;
-import org.apache.hadoop.hdfs.server.balancer.Dispatcher.DDatanode.StorageGroup;
+import org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher;
+import org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.*;
+import org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DDatanode.StorageGroup;
 import org.apache.hadoop.hdfs.server.balancer.ExitStatus;
 import org.apache.hadoop.hdfs.server.balancer.Matcher;
 import org.apache.hadoop.hdfs.server.balancer.NameNodeConnector;
@@ -53,7 +53,6 @@ import org.apache.hadoop.util.ToolRunner;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -106,7 +105,7 @@ public class Mover {
     }
   }
 
-  private final Dispatcher dispatcher;
+  private final BlockReplicaDispatcher blockReplicaDispatcher;
   private final StorageMap storages;
   private final List<Path> targetPaths;
   private final int retryMaxAttempts;
@@ -131,7 +130,7 @@ public class Mover {
         DFSConfigKeys.DFS_MOVER_RETRY_MAX_ATTEMPTS_KEY,
         DFSConfigKeys.DFS_MOVER_RETRY_MAX_ATTEMPTS_DEFAULT);
     this.retryCount = retryCount;
-    this.dispatcher = new Dispatcher(nnc, Collections.<String> emptySet(),
+    this.blockReplicaDispatcher = new BlockReplicaDispatcher(nnc, Collections.<String> emptySet(),
         Collections.<String> emptySet(), movedWinWidth, moverThreads, 0,
         maxConcurrentMovesPerNode, maxNoMoveInterval, conf);
     this.storages = new StorageMap();
@@ -142,11 +141,11 @@ public class Mover {
 
   void init() throws IOException {
     initStoragePolicies();
-    final List<DatanodeStorageReport> reports = dispatcher.init();
+    final List<DatanodeStorageReport> reports = blockReplicaDispatcher.init();
     for(DatanodeStorageReport r : reports) {
-      final DDatanode dn = dispatcher.newDatanode(r.getDatanodeInfo());
+      final DDatanode dn = blockReplicaDispatcher.newDatanode(r.getDatanodeInfo());
       for(StorageType t : StorageType.getMovableTypes()) {
-        final Source source = dn.addSource(t, Long.MAX_VALUE, dispatcher);
+        final Source source = dn.addSource(t, Long.MAX_VALUE, blockReplicaDispatcher);
         final long maxRemaining = getMaxRemaining(r, t);
         final StorageGroup target = maxRemaining > 0L ? dn.addTarget(t,
             maxRemaining) : null;
@@ -156,7 +155,7 @@ public class Mover {
   }
 
   private void initStoragePolicies() throws IOException {
-    BlockStoragePolicy[] policies = dispatcher.getDistributedFileSystem()
+    BlockStoragePolicy[] policies = blockReplicaDispatcher.getDistributedFileSystem()
         .getStoragePolicies();
     for (BlockStoragePolicy policy : policies) {
       this.blockStoragePolicies[policy.getId()] = policy;
@@ -175,7 +174,7 @@ public class Mover {
       System.out.println(e + ".  Exiting ...");
       return ExitStatus.IO_EXCEPTION;
     } finally {
-      dispatcher.shutdownNow();
+      blockReplicaDispatcher.shutdownNow();
     }
   }
 
@@ -223,7 +222,7 @@ public class Mover {
     private final List<String> snapshottableDirs = new ArrayList<String>();
 
     Processor() {
-      dfs = dispatcher.getDistributedFileSystem().getClient();
+      dfs = blockReplicaDispatcher.getDistributedFileSystem().getClient();
     }
 
     private void getSnapshottableDirs() {
@@ -272,7 +271,7 @@ public class Mover {
         hasRemaining |= processPath(target.toUri().getPath());
       }
       // wait for pending move to finish and retry the failed migration
-      boolean hasFailed = Dispatcher.waitForMoveCompletion(storages.targets
+      boolean hasFailed = BlockReplicaDispatcher.waitForMoveCompletion(storages.targets
           .values());
       if (hasFailed) {
         if (retryCount.get() == retryMaxAttempts) {
@@ -420,7 +419,7 @@ public class Mover {
         return true;
       }
 
-      if (dispatcher.getCluster().isNodeGroupAware()) {
+      if (blockReplicaDispatcher.getCluster().isNodeGroupAware()) {
         if (chooseTarget(db, source, targetTypes, Matcher.SAME_NODE_GROUP)) {
           return true;
         }
@@ -447,7 +446,7 @@ public class Mover {
         }
         final PendingMove pm = source.addPendingMove(db, target);
         if (pm != null) {
-          dispatcher.executePendingMove(pm);
+          blockReplicaDispatcher.executePendingMove(pm);
           return true;
         }
       }
@@ -456,7 +455,7 @@ public class Mover {
 
     boolean chooseTarget(DBlock db, Source source,
         List<StorageType> targetTypes, Matcher matcher) {
-      final NetworkTopology cluster = dispatcher.getCluster(); 
+      final NetworkTopology cluster = blockReplicaDispatcher.getCluster();
       for (StorageType t : targetTypes) {
         final List<StorageGroup> targets = storages.getTargetStorages(t);
         Collections.shuffle(targets);
@@ -465,7 +464,7 @@ public class Mover {
               target.getDatanodeInfo())) {
             final PendingMove pm = source.addPendingMove(db, target);
             if (pm != null) {
-              dispatcher.executePendingMove(pm);
+              blockReplicaDispatcher.executePendingMove(pm);
               return true;
             }
           }

@@ -32,7 +32,6 @@ import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.StorageType;
 import org.apache.hadoop.hdfs.protocol.BlockStoragePolicy;
@@ -50,7 +49,7 @@ import org.apache.hadoop.hdfs.protocol.HdfsLocatedFileStatus;
 import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.hdfs.protocol.LocatedBlocks;
 import org.apache.hadoop.hdfs.protocol.datatransfer.DataTransferProtocol;
-import org.apache.hadoop.hdfs.server.balancer.Dispatcher;
+import org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher;
 import org.apache.hadoop.hdfs.server.balancer.ExitStatus;
 import org.apache.hadoop.hdfs.server.balancer.TestBalancer;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockPlacementPolicy;
@@ -68,8 +67,6 @@ import org.junit.Test;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
-import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_DATANODE_LAZY_WRITER_INTERVAL_SEC;
-
 /**
  * Test the data migration tool (for Archival Storage)
  */
@@ -78,7 +75,7 @@ public class TestStorageMover {
   static {
     ((Log4JLogger)LogFactory.getLog(BlockPlacementPolicy.class)
         ).getLogger().setLevel(Level.ALL);
-    ((Log4JLogger)LogFactory.getLog(Dispatcher.class)
+    ((Log4JLogger)LogFactory.getLog(BlockReplicaDispatcher.class)
         ).getLogger().setLevel(Level.ALL);
     ((Log4JLogger)LogFactory.getLog(DataTransferProtocol.class)).getLogger()
         .setLevel(Level.ALL);
@@ -105,7 +102,7 @@ public class TestStorageMover {
     WARM = DEFAULT_POLICIES.getPolicy(HdfsConstants.WARM_STORAGE_POLICY_NAME);
     COLD = DEFAULT_POLICIES.getPolicy(HdfsConstants.COLD_STORAGE_POLICY_NAME);
     TestBalancer.initTestSetup();
-    Dispatcher.setDelayAfterErrors(1000L);
+    BlockReplicaDispatcher.setDelayAfterErrors(1000L);
   }
 
   /**

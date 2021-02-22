@@ -53,14 +53,13 @@ import org.apache.hadoop.hdfs.protocol.QuotaExceededException;
 import org.apache.hadoop.hdfs.protocol.SnapshotAccessControlException;
 import org.apache.hadoop.hdfs.protocol.proto.HdfsProtos;
 import org.apache.hadoop.hdfs.protocolPB.PBHelper;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguous;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguousUnderConstruction;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfo;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfoUnderConstruction;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockManager;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeStorageInfo;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockStoragePolicySuite;
 import org.apache.hadoop.hdfs.server.common.HdfsServerConstants.BlockUCState;
 import org.apache.hadoop.hdfs.server.namenode.INode.BlocksMapUpdateInfo;
-import org.apache.hadoop.hdfs.server.namenode.snapshot.FileWithSnapshotFeature;
 import org.apache.hadoop.hdfs.util.ByteArray;
 import org.apache.hadoop.hdfs.util.EnumCounters;
 import org.apache.hadoop.security.AccessControlException;
@@ -406,7 +405,7 @@ public class FSDirectory implements Closeable {
       long mtime, long atime, short replication, long preferredBlockSize,
       byte storagePolicyId) {
     return new INodeFile(id, null, permissions, mtime, atime,
-        BlockInfoContiguous.EMPTY_ARRAY, replication, preferredBlockSize,
+        BlockNeighborInfo.EMPTY_ARRAY, replication, preferredBlockSize,
         storagePolicyId);
   }
 
@@ -486,8 +485,8 @@ public class FSDirectory implements Closeable {
   /**
    * Add a block to the file. Returns a reference to the added block.
    */
-  BlockInfoContiguous addBlock(String path, INodesInPath inodesInPath,
-      Block block, DatanodeStorageInfo[] targets) throws IOException {
+  BlockNeighborInfo addBlock(String path, INodesInPath inodesInPath,
+                             Block block, DatanodeStorageInfo[] targets) throws IOException {
     writeLock();
     try {
       final INodeFile fileINode = inodesInPath.getLastINode().asFile();
@@ -498,8 +497,8 @@ public class FSDirectory implements Closeable {
           fileINode.getBlockReplication(), true);
 
       // associate new last block for the file
-      BlockInfoContiguousUnderConstruction blockInfo =
-        new BlockInfoContiguousUnderConstruction(
+      BlockNeighborInfoUnderConstruction blockInfo =
+        new BlockNeighborInfoUnderConstruction(
             block,
             fileINode.getFileReplication(),
             BlockUCState.UNDER_CONSTRUCTION,
@@ -803,8 +802,8 @@ public class FSDirectory implements Closeable {
    * @param inodes - INodes in path to file containing completeBlk; if null
    *                 this will be resolved internally
    */
-  public void updateSpaceForCompleteBlock(BlockInfoContiguous completeBlk,
-      INodesInPath inodes) throws IOException {
+  public void updateSpaceForCompleteBlock(BlockNeighborInfo completeBlk,
+                                          INodesInPath inodes) throws IOException {
     assert namesystem.hasWriteLock();
     INodesInPath iip = inodes != null ? inodes :
         INodesInPath.fromINode((INodeFile) completeBlk.getBlockCollection());
@@ -1103,7 +1102,7 @@ public class FSDirectory implements Closeable {
         unprotectedTruncate(iip, newLength, collectedBlocks, mtime, null);
 
     if(! onBlockBoundary) {
-      BlockInfoContiguous oldBlock = file.getLastBlock();
+      BlockNeighborInfo oldBlock = file.getLastBlock();
       Block tBlk =
       getFSNamesystem().prepareFileForTruncate(iip,
           clientName, clientMachine, file.computeFileSize() - newLength,

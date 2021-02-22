@@ -22,8 +22,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.protocol.Block;
 import org.apache.hadoop.hdfs.protocol.DatanodeID;
 import org.apache.hadoop.hdfs.protocol.ExtendedBlock;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguous;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguousUnderConstruction;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfo;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfoUnderConstruction;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeStorageInfo;
 import org.apache.hadoop.hdfs.server.common.HdfsServerConstants;
 import org.junit.Test;
@@ -64,19 +64,19 @@ public class TestCommitBlockSynchronization {
     namesystem.dir.getINodeMap().put(file);
 
     FSNamesystem namesystemSpy = spy(namesystem);
-    BlockInfoContiguousUnderConstruction blockInfo = new BlockInfoContiguousUnderConstruction(
+    BlockNeighborInfoUnderConstruction blockInfo = new BlockNeighborInfoUnderConstruction(
         block, (short) 1, HdfsServerConstants.BlockUCState.UNDER_CONSTRUCTION, targets);
     blockInfo.setBlockCollection(file);
     blockInfo.setGenerationStamp(genStamp);
     blockInfo.initializeBlockRecovery(genStamp, true);
     doReturn(true).when(file).removeLastBlock(any(Block.class));
     doReturn(true).when(file).isUnderConstruction();
-    doReturn(new BlockInfoContiguous[1]).when(file).getBlocks();
+    doReturn(new BlockNeighborInfo[1]).when(file).getBlocks();
 
     doReturn(blockInfo).when(namesystemSpy).getStoredBlock(any(Block.class));
     doReturn(blockInfo).when(file).getLastBlock();
     doNothing().when(namesystemSpy).closeFileCommitBlocks(
-        any(String.class), any(INodeFile.class), any(BlockInfoContiguous.class));
+        any(String.class), any(INodeFile.class), any(BlockNeighborInfo.class));
     doReturn(mock(FSEditLog.class)).when(namesystemSpy).getEditLog();
 
     return namesystemSpy;
@@ -104,7 +104,7 @@ public class TestCommitBlockSynchronization {
         lastBlock, genStamp, length, false, false, newTargets, null);
 
     // Simulate 'completing' the block.
-    BlockInfoContiguous completedBlockInfo = new BlockInfoContiguous(block, (short) 1);
+    BlockNeighborInfo completedBlockInfo = new BlockNeighborInfo(block, (short) 1);
     completedBlockInfo.setBlockCollection(file);
     completedBlockInfo.setGenerationStamp(genStamp);
     doReturn(completedBlockInfo).when(namesystemSpy)
@@ -176,7 +176,7 @@ public class TestCommitBlockSynchronization {
     namesystemSpy.commitBlockSynchronization(
         lastBlock, genStamp, length, true, false, newTargets, null);
 
-    BlockInfoContiguous completedBlockInfo = new BlockInfoContiguous(block, (short) 1);
+    BlockNeighborInfo completedBlockInfo = new BlockNeighborInfo(block, (short) 1);
     completedBlockInfo.setBlockCollection(file);
     completedBlockInfo.setGenerationStamp(genStamp);
     doReturn(completedBlockInfo).when(namesystemSpy)

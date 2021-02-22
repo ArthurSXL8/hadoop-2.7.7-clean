@@ -206,10 +206,10 @@ import org.apache.hadoop.hdfs.security.token.block.BlockTokenSecretManager.Acces
 import org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenSecretManager;
 import org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenSecretManager.SecretManagerState;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockCollection;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockSet;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockIdManager;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguous;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguousUnderConstruction;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfo;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfoUnderConstruction;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockManager;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeDescriptor;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeManager;
@@ -2113,10 +2113,10 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     }
 
     // Check if the file is already being truncated with the same length
-    final BlockInfoContiguous last = file.getLastBlock();
+    final BlockNeighborInfo last = file.getLastBlock();
     if (last != null && last.getBlockUCState() == BlockUCState.UNDER_RECOVERY) {
       final Block truncateBlock
-          = ((BlockInfoContiguousUnderConstruction)last).getTruncateBlock();
+          = ((BlockNeighborInfoUnderConstruction)last).getTruncateBlock();
       if (truncateBlock != null) {
         final long truncateLength = file.computeFileSize(false, false)
             + truncateBlock.getNumBytes();
@@ -2188,7 +2188,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     leaseManager.addLease(
         file.getFileUnderConstructionFeature().getClientName(), src);
     boolean shouldRecoverNow = (newBlock == null);
-    BlockInfoContiguous oldBlock = file.getLastBlock();
+    BlockNeighborInfo oldBlock = file.getLastBlock();
     boolean shouldCopyOnTruncate = shouldCopyOnTruncate(file, oldBlock);
     if(newBlock == null) {
       newBlock = (shouldCopyOnTruncate) ? createNewBlock() :
@@ -2196,11 +2196,11 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
               nextGenerationStamp(blockIdManager.isLegacyBlock(oldBlock)));
     }
 
-    BlockInfoContiguousUnderConstruction truncatedBlockUC;
+    BlockNeighborInfoUnderConstruction truncatedBlockUC;
     if(shouldCopyOnTruncate) {
       // Add new truncateBlock into blocksMap and
       // use oldBlock as a source for copy-on-truncate recovery
-      truncatedBlockUC = new BlockInfoContiguousUnderConstruction(newBlock,
+      truncatedBlockUC = new BlockNeighborInfoUnderConstruction(newBlock,
           file.getBlockReplication());
       truncatedBlockUC.setNumBytes(oldBlock.getNumBytes() - lastBlockDelta);
       truncatedBlockUC.setTruncateBlock(oldBlock);
@@ -2216,8 +2216,8 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       blockManager.convertLastBlockToUnderConstruction(file, lastBlockDelta);
       oldBlock = file.getLastBlock();
       assert !oldBlock.isComplete() : "oldBlock should be under construction";
-      truncatedBlockUC = (BlockInfoContiguousUnderConstruction) oldBlock;
-      truncatedBlockUC.setTruncateBlock(new BlockInfoContiguous(oldBlock,
+      truncatedBlockUC = (BlockNeighborInfoUnderConstruction) oldBlock;
+      truncatedBlockUC.setTruncateBlock(new BlockNeighborInfo(oldBlock,
           file.getBlockReplication()));
       truncatedBlockUC.getTruncateBlock().setNumBytes(
           oldBlock.getNumBytes() - lastBlockDelta);
@@ -2241,7 +2241,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
    * Defines if a replica needs to be copied on truncate or
    * can be truncated in place.
    */
-  boolean shouldCopyOnTruncate(INodeFile file, BlockInfoContiguous blk) {
+  boolean shouldCopyOnTruncate(INodeFile file, BlockNeighborInfo blk) {
     if(!isUpgradeFinalized()) {
       return true;
     }
@@ -2735,7 +2735,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       recoverLeaseInternal(RecoverLeaseOp.APPEND_FILE,
           iip, src, holder, clientMachine, false);
       
-      final BlockInfoContiguous lastBlock = myFile.getLastBlock();
+      final BlockNeighborInfo lastBlock = myFile.getLastBlock();
       // Check that the block has at least minimum replication.
       if(lastBlock != null && lastBlock.isComplete() &&
           !getBlockManager().isSufficientlyReplicated(lastBlock)) {
@@ -2791,7 +2791,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
         }
       }
     } else {
-      BlockInfoContiguous lastBlock = file.getLastBlock();
+      BlockNeighborInfo lastBlock = file.getLastBlock();
       if (lastBlock != null) {
         ExtendedBlock blk = new ExtendedBlock(this.getBlockPoolId(), lastBlock);
         ret = new LocatedBlock(blk, new DatanodeInfo[0]);
@@ -2833,7 +2833,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   /** Compute quota change for converting a complete block to a UC block */
   private QuotaCounts computeQuotaDeltaForUCBlock(INodeFile file) {
     final QuotaCounts delta = new QuotaCounts.Builder().build();
-    final BlockInfoContiguous lastBlock = file.getLastBlock();
+    final BlockNeighborInfo lastBlock = file.getLastBlock();
     if (lastBlock != null) {
       final long diff = file.getPreferredBlockSize() - lastBlock.getNumBytes();
       final short repl = file.getBlockReplication();
@@ -2971,7 +2971,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
                     "lease recovery is in progress. Try again later."));
           }
         } else {
-          final BlockInfoContiguous lastBlock = file.getLastBlock();
+          final BlockNeighborInfo lastBlock = file.getLastBlock();
           if (lastBlock != null
               && lastBlock.getBlockUCState() == BlockUCState.UNDER_RECOVERY) {
             throw new RecoveryInProgressException(
@@ -3191,8 +3191,8 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
           return onRetryBlock[0];
         } else {
           // add new chosen targets to already allocated block and return
-          BlockInfoContiguous lastBlockInFile = pendingFile.getLastBlock();
-          ((BlockInfoContiguousUnderConstruction) lastBlockInFile)
+          BlockNeighborInfo lastBlockInFile = pendingFile.getLastBlock();
+          ((BlockNeighborInfoUnderConstruction) lastBlockInFile)
               .setExpectedLocations(targets);
           offset = pendingFile.computeFileSize();
           return makeLocatedBlock(lastBlockInFile, targets, offset);
@@ -3264,7 +3264,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
     Block previousBlock = ExtendedBlock.getLocalBlock(previous);
     final INodeFile pendingFile = checkLease(iip, clientName, fileId);
-    BlockInfoContiguous lastBlockInFile = pendingFile.getLastBlock();
+    BlockNeighborInfo lastBlockInFile = pendingFile.getLastBlock();
     if (!Block.matchingIdAndGenStamp(previousBlock, lastBlockInFile)) {
       // The block that the client claims is the current last block
       // doesn't match up with what we think is the last block. There are
@@ -3292,7 +3292,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       //    changed the namesystem state yet.
       //    We run this analysis again in Part II where case 4 is impossible.
 
-      BlockInfoContiguous penultimateBlock = pendingFile.getPenultimateBlock();
+      BlockNeighborInfo penultimateBlock = pendingFile.getPenultimateBlock();
       if (previous == null &&
           lastBlockInFile != null &&
           lastBlockInFile.getNumBytes() >= pendingFile.getPreferredBlockSize() &&
@@ -3317,7 +3317,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
             src + ". Returning previously allocated block " + lastBlockInFile);
         long offset = pendingFile.computeFileSize();
         onRetryBlock[0] = makeLocatedBlock(lastBlockInFile,
-            ((BlockInfoContiguousUnderConstruction)lastBlockInFile).getExpectedStorageLocations(),
+            ((BlockNeighborInfoUnderConstruction)lastBlockInFile).getExpectedStorageLocations(),
             offset);
         return new FileState(pendingFile, src, iip);
       } else {
@@ -3562,11 +3562,11 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
    * @param targets target datanodes where replicas of the new block is placed
    * @throws QuotaExceededException If addition of block exceeds space quota
    */
-  BlockInfoContiguous saveAllocatedBlock(String src, INodesInPath inodesInPath,
-      Block newBlock, DatanodeStorageInfo[] targets)
+  BlockNeighborInfo saveAllocatedBlock(String src, INodesInPath inodesInPath,
+                                       Block newBlock, DatanodeStorageInfo[] targets)
           throws IOException {
     assert hasWriteLock();
-    BlockInfoContiguous b = dir.addBlock(src, inodesInPath, newBlock, targets);
+    BlockNeighborInfo b = dir.addBlock(src, inodesInPath, newBlock, targets);
     NameNode.stateChangeLog.info("BLOCK* allocate " + b + " for " + src);
     DatanodeStorageInfo.incrementBlocksScheduled(targets);
     return b;
@@ -3591,14 +3591,14 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   boolean checkFileProgress(String src, INodeFile v, boolean checkall) {
     if (checkall) {
       // check all blocks of the file.
-      for (BlockInfoContiguous block: v.getBlocks()) {
+      for (BlockNeighborInfo block: v.getBlocks()) {
         if (!isCompleteBlock(src, block, blockManager.minReplication)) {
           return false;
         }
       }
     } else {
       // check the penultimate block of this file
-      BlockInfoContiguous b = v.getPenultimateBlock();
+      BlockNeighborInfo b = v.getPenultimateBlock();
       if (b != null
           && !isCompleteBlock(src, b, blockManager.minReplication)) {
         return false;
@@ -3607,9 +3607,9 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     return true;
   }
 
-  private static boolean isCompleteBlock(String src, BlockInfoContiguous b, int minRepl) {
+  private static boolean isCompleteBlock(String src, BlockNeighborInfo b, int minRepl) {
     if (!b.isComplete()) {
-      final BlockInfoContiguousUnderConstruction uc = (BlockInfoContiguousUnderConstruction)b;
+      final BlockNeighborInfoUnderConstruction uc = (BlockNeighborInfoUnderConstruction)b;
       final int numNodes = b.numNodes();
       LOG.info("BLOCK* " + b + " is not COMPLETE (ucState = "
           + uc.getBlockUCState() + ", replication# = " + numNodes
@@ -3800,7 +3800,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
     for (Block b : blocks.getToDeleteList()) {
       if (trackBlockCounts) {
-        BlockInfoContiguous bi = getStoredBlock(b);
+        BlockNeighborInfo bi = getStoredBlock(b);
         if (bi.isComplete()) {
           numRemovedComplete++;
           if (bi.numNodes() >= blockManager.minReplication) {
@@ -4021,10 +4021,10 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
     final INodeFile pendingFile = iip.getLastINode().asFile();
     int nrBlocks = pendingFile.numBlocks();
-    BlockInfoContiguous[] blocks = pendingFile.getBlocks();
+    BlockNeighborInfo[] blocks = pendingFile.getBlocks();
 
     int nrCompleteBlocks;
-    BlockInfoContiguous curBlock = null;
+    BlockNeighborInfo curBlock = null;
     for(nrCompleteBlocks = 0; nrCompleteBlocks < nrBlocks; nrCompleteBlocks++) {
       curBlock = blocks[nrCompleteBlocks];
       if(!curBlock.isComplete())
@@ -4059,9 +4059,9 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
     // The last block is not COMPLETE, and
     // that the penultimate block if exists is either COMPLETE or COMMITTED
-    final BlockInfoContiguous lastBlock = pendingFile.getLastBlock();
+    final BlockNeighborInfo lastBlock = pendingFile.getLastBlock();
     BlockUCState lastBlockState = lastBlock.getBlockUCState();
-    BlockInfoContiguous penultimateBlock = pendingFile.getPenultimateBlock();
+    BlockNeighborInfo penultimateBlock = pendingFile.getPenultimateBlock();
 
     // If penultimate block doesn't exist then its minReplication is met
     boolean penultimateBlockMinReplication = penultimateBlock == null ? true :
@@ -4094,9 +4094,9 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       throw new AlreadyBeingCreatedException(message);
     case UNDER_CONSTRUCTION:
     case UNDER_RECOVERY:
-      final BlockInfoContiguousUnderConstruction uc = (BlockInfoContiguousUnderConstruction)lastBlock;
+      final BlockNeighborInfoUnderConstruction uc = (BlockNeighborInfoUnderConstruction)lastBlock;
       // determine if last block was intended to be truncated
-      BlockInfoContiguous recoveryBlock = uc.getTruncateBlock();
+      BlockNeighborInfo recoveryBlock = uc.getTruncateBlock();
       boolean truncateRecovery = recoveryBlock != null;
       boolean copyOnTruncate = truncateRecovery &&
           recoveryBlock.getBlockId() != uc.getBlockId();
@@ -4197,14 +4197,14 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   }
 
   @VisibleForTesting
-  BlockInfoContiguous getStoredBlock(Block block) {
+  BlockNeighborInfo getStoredBlock(Block block) {
     return blockManager.getStoredBlock(block);
   }
   
   @Override
-  public boolean isInSnapshot(BlockInfoContiguousUnderConstruction blockUC) {
+  public boolean isInSnapshot(BlockNeighborInfoUnderConstruction blockUC) {
     assert hasReadLock();
-    final BlockCollection bc = blockUC.getBlockCollection();
+    final BlockSet bc = blockUC.getBlockCollection();
     if (bc == null || !(bc instanceof INodeFile)
         || !bc.isUnderConstruction()) {
       return false;
@@ -4255,7 +4255,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   
       checkNameNodeSafeMode(
           "Cannot commitBlockSynchronization while in safe mode");
-      final BlockInfoContiguous storedBlock = getStoredBlock(
+      final BlockNeighborInfo storedBlock = getStoredBlock(
           ExtendedBlock.getLocalBlock(oldBlock));
       if (storedBlock == null) {
         if (deleteblock) {
@@ -4283,13 +4283,13 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       // this method to add a CloseOp to the edit log for an already deleted
       // file (See HDFS-6825).
       //
-      BlockCollection blockCollection = storedBlock.getBlockCollection();
-      if (blockCollection == null) {
+      BlockSet blockSet = storedBlock.getBlockCollection();
+      if (blockSet == null) {
         throw new IOException("The blockCollection of " + storedBlock
             + " is null, likely because the file owning this block was"
             + " deleted and the block removal is delayed");
       }
-      INodeFile iFile = ((INode)blockCollection).asFile();
+      INodeFile iFile = ((INode) blockSet).asFile();
       src = iFile.getFullPathName();
       if (isFileDeleted(iFile)) {
         throw new FileNotFoundException("File not found: "
@@ -4305,8 +4305,8 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
         return;
       }
 
-      BlockInfoContiguousUnderConstruction truncatedBlock =
-          (BlockInfoContiguousUnderConstruction) iFile.getLastBlock();
+      BlockNeighborInfoUnderConstruction truncatedBlock =
+          (BlockNeighborInfoUnderConstruction) iFile.getLastBlock();
       long recoveryId = truncatedBlock.getBlockRecoveryId();
       boolean copyTruncate =
           truncatedBlock.getBlockId() != storedBlock.getBlockId();
@@ -4419,7 +4419,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
    */
   @VisibleForTesting
   void closeFileCommitBlocks(String src, INodeFile pendingFile,
-      BlockInfoContiguous storedBlock) throws IOException {
+      BlockNeighborInfo storedBlock) throws IOException {
     final INodesInPath iip = INodesInPath.fromINode(pendingFile);
 
     // commit the last block and complete it if it has minimum replicas
@@ -4718,7 +4718,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
       BlockStoragePolicy lpPolicy = blockManager.getStoragePolicy("LAZY_PERSIST");
 
-      List<BlockCollection> filesToDelete = new ArrayList<>();
+      List<BlockSet> filesToDelete = new ArrayList<>();
       boolean changed = false;
       writeLock();
       try {
@@ -4726,7 +4726,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
         while (it.hasNext()) {
           Block b = it.next();
-          BlockInfoContiguous blockInfo = blockManager.getStoredBlock(b);
+          BlockNeighborInfo blockInfo = blockManager.getStoredBlock(b);
           if (blockInfo == null) {
             LOG.info("Cannot find block info for block " + b);
           } else {
@@ -4737,7 +4737,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
           }
         }
 
-        for (BlockCollection bc : filesToDelete) {
+        for (BlockSet bc : filesToDelete) {
           LOG.warn("Removing lazyPersist file " + bc.getName() + " with no replicas.");
           BlocksMapUpdateInfo toRemoveBlocks =
               FSDirDeleteOp.deleteInternal(
@@ -5727,7 +5727,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     SafeModeInfo safeMode = this.safeMode;
     if (safeMode == null) // mostly true
       return;
-    BlockInfoContiguous storedBlock = getStoredBlock(b);
+    BlockNeighborInfo storedBlock = getStoredBlock(b);
     if (storedBlock.isComplete()) {
       safeMode.decrementSafeBlockCount((short)blockManager.countNodes(b).liveReplicas());
     }
@@ -6295,7 +6295,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
         + "access token for block " + block);
     
     // check stored block state
-    BlockInfoContiguous storedBlock = getStoredBlock(ExtendedBlock.getLocalBlock(block));
+    BlockNeighborInfo storedBlock = getStoredBlock(ExtendedBlock.getLocalBlock(block));
     if (storedBlock == null || 
         storedBlock.getBlockUCState() != BlockUCState.UNDER_CONSTRUCTION) {
         throw new IOException(block + 
@@ -6425,8 +6425,8 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     // check the vadility of the block and lease holder name
     final INodeFile pendingFile = checkUCBlock(oldBlock, clientName);
     final String src = pendingFile.getFullPathName();
-    final BlockInfoContiguousUnderConstruction blockinfo
-        = (BlockInfoContiguousUnderConstruction)pendingFile.getLastBlock();
+    final BlockNeighborInfoUnderConstruction blockinfo
+        = (BlockNeighborInfoUnderConstruction)pendingFile.getLastBlock();
 
     // check new GS & length: this is not expected
     if (newBlock.getGenerationStamp() <= blockinfo.getGenerationStamp() ||

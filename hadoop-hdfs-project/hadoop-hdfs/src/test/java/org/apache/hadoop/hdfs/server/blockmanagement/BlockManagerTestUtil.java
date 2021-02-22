@@ -54,8 +54,8 @@ public class BlockManagerTestUtil {
     }
   }
 
-  public static Iterator<BlockInfoContiguous> getBlockIterator(final FSNamesystem ns,
-      final String storageID, final int startBlock) {
+  public static Iterator<BlockNeighborInfo> getBlockIterator(final FSNamesystem ns,
+                                                             final String storageID, final int startBlock) {
     ns.readLock();
     try {
       DatanodeDescriptor dn =
@@ -66,7 +66,7 @@ public class BlockManagerTestUtil {
     }
   }
 
-  public static Iterator<BlockInfoContiguous> getBlockIterator(DatanodeStorageInfo s) {
+  public static Iterator<BlockNeighborInfo> getBlockIterator(DatanodeStorageInfo s) {
     return s.getBlockIterator();
   }
 

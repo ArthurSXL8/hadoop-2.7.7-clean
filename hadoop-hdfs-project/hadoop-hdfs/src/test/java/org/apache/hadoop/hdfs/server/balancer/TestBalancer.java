@@ -119,7 +119,7 @@ public class TestBalancer {
 
   static {
     ((Log4JLogger)Balancer.LOG).getLogger().setLevel(Level.ALL);
-    ((Log4JLogger)Dispatcher.LOG).getLogger().setLevel(Level.DEBUG);
+    ((Log4JLogger) BlockReplicaDispatcher.LOG).getLogger().setLevel(Level.DEBUG);
   }
 
   final static long CAPACITY = 5000L;
@@ -506,12 +506,12 @@ public class TestBalancer {
       for (DatanodeInfo datanode : datanodeReport) {
         double nodeUtilization = ((double)datanode.getDfsUsed())
             / datanode.getCapacity();
-        if (Dispatcher.Util.isExcluded(p.nodesToBeExcluded, datanode)) {
+        if (BlockReplicaDispatcher.Util.isExcluded(p.nodesToBeExcluded, datanode)) {
           assertTrue(nodeUtilization == 0);
           actualExcludedNodeCount++;
           continue;
         }
-        if (!Dispatcher.Util.isIncluded(p.nodesToBeIncluded, datanode)) {
+        if (!BlockReplicaDispatcher.Util.isIncluded(p.nodesToBeIncluded, datanode)) {
           assertTrue(nodeUtilization == 0);
           actualExcludedNodeCount++;
           continue;

@@ -44,11 +44,11 @@ import org.apache.hadoop.fs.StorageType;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
-import org.apache.hadoop.hdfs.server.balancer.Dispatcher.DDatanode;
-import org.apache.hadoop.hdfs.server.balancer.Dispatcher.DDatanode.StorageGroup;
-import org.apache.hadoop.hdfs.server.balancer.Dispatcher.Source;
-import org.apache.hadoop.hdfs.server.balancer.Dispatcher.Task;
-import org.apache.hadoop.hdfs.server.balancer.Dispatcher.Util;
+import org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DDatanode;
+import org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DDatanode.StorageGroup;
+import org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.Source;
+import org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.Task;
+import org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.Util;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockPlacementPolicy;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockPlacementPolicyDefault;
 import org.apache.hadoop.hdfs.server.namenode.UnsupportedActionException;
@@ -190,7 +190,7 @@ public class Balancer {
       + "This is usually not desired since it will not affect used space "
       + "on over-utilized machines.";
 
-  private final Dispatcher dispatcher;
+  private final BlockReplicaDispatcher blockReplicaDispatcher;
   private final NameNodeConnector nnc;
   private final BalancingPolicy policy;
   private final boolean runDuringUpgrade;
@@ -270,7 +270,7 @@ public class Balancer {
         DFSConfigKeys.DFS_BALANCER_MAX_NO_MOVE_INTERVAL_DEFAULT);
 
     this.nnc = theblockpool;
-    this.dispatcher = new Dispatcher(theblockpool, p.nodesToBeIncluded,
+    this.blockReplicaDispatcher = new BlockReplicaDispatcher(theblockpool, p.nodesToBeIncluded,
         p.nodesToBeExcluded, movedWinWidth, moverThreads, dispatcherThreads,
         maxConcurrentMovesPerNode, getBlocksSize, getBlocksMinBlockSize,
         blockMoveTimeout,maxNoMoveInterval, conf);
@@ -323,7 +323,7 @@ public class Balancer {
     //   over-utilized, above-average, below-average and under-utilized.
     long overLoadedBytes = 0L, underLoadedBytes = 0L;
     for(DatanodeStorageReport r : reports) {
-      final DDatanode dn = dispatcher.newDatanode(r.getDatanodeInfo());
+      final DDatanode dn = blockReplicaDispatcher.newDatanode(r.getDatanodeInfo());
       for(StorageType t : StorageType.getMovableTypes()) {
         final Double utilization = policy.getUtilization(r, t);
         if (utilization == null) { // datanode does not have such storage type 
@@ -338,7 +338,7 @@ public class Balancer {
 
         final StorageGroup g;
         if (utilizationDiff > 0) {
-          final Source s = dn.addSource(t, maxSize2Move, dispatcher);
+          final Source s = dn.addSource(t, maxSize2Move, blockReplicaDispatcher);
           if (thresholdDiff <= 0) { // within threshold
             aboveAvgUtilized.add(s);
           } else {
@@ -355,13 +355,13 @@ public class Balancer {
             underUtilized.add(g);
           }
         }
-        dispatcher.getStorageGroupMap().put(g);
+        blockReplicaDispatcher.getStorageGroupMap().put(g);
       }
     }
 
     logUtilizationCollections();
     
-    Preconditions.checkState(dispatcher.getStorageGroupMap().size()
+    Preconditions.checkState(blockReplicaDispatcher.getStorageGroupMap().size()
         == overUtilized.size() + underUtilized.size() + aboveAvgUtilized.size()
            + belowAvgUtilized.size(),
         "Mismatched number of storage groups");
@@ -410,7 +410,7 @@ public class Balancer {
    */
   private long chooseStorageGroups() {
     // First, match nodes on the same node group if cluster is node group aware
-    if (dispatcher.getCluster().isNodeGroupAware()) {
+    if (blockReplicaDispatcher.getCluster().isNodeGroupAware()) {
       chooseStorageGroups(Matcher.SAME_NODE_GROUP);
     }
     
@@ -419,7 +419,7 @@ public class Balancer {
     // At last, match all remaining nodes
     chooseStorageGroups(Matcher.ANY_OTHER);
     
-    return dispatcher.bytesToMove();
+    return blockReplicaDispatcher.bytesToMove();
   }
 
   /** Decide all <source, target> pairs according to the matcher. */
@@ -492,7 +492,7 @@ public class Balancer {
     final Task task = new Task(target, size);
     source.addTask(task);
     target.incScheduledSize(task.getSize());
-    dispatcher.add(source, target);
+    blockReplicaDispatcher.add(source, target);
     LOG.info("Decided to move "+StringUtils.byteDesc(size)+" bytes from "
         + source.getDisplayName() + " to " + target.getDisplayName());
   }
@@ -516,7 +516,7 @@ public class Balancer {
   private boolean matchStorageGroups(StorageGroup left, StorageGroup right,
       Matcher matcher) {
     return left.getStorageType() == right.getStorageType()
-        && matcher.match(dispatcher.getCluster(),
+        && matcher.match(blockReplicaDispatcher.getCluster(),
             left.getDatanodeInfo(), right.getDatanodeInfo());
   }
 
@@ -527,7 +527,7 @@ public class Balancer {
     this.belowAvgUtilized.clear();
     this.underUtilized.clear();
     this.policy.reset();
-    dispatcher.reset(conf);;
+    blockReplicaDispatcher.reset(conf);;
   }
 
   static class Result {
@@ -555,17 +555,17 @@ public class Balancer {
 
   Result newResult(ExitStatus exitStatus, long bytesLeftToMove, long bytesBeingMoved) {
     return new Result(exitStatus, bytesLeftToMove, bytesBeingMoved,
-        dispatcher.getBytesMoved());
+        blockReplicaDispatcher.getBytesMoved());
   }
 
   Result newResult(ExitStatus exitStatus) {
-    return new Result(exitStatus, -1, -1, dispatcher.getBytesMoved());
+    return new Result(exitStatus, -1, -1, blockReplicaDispatcher.getBytesMoved());
   }
 
   /** Run an iteration for all datanodes. */
   Result runOneIteration() {
     try {
-      final List<DatanodeStorageReport> reports = dispatcher.init();
+      final List<DatanodeStorageReport> reports = blockReplicaDispatcher.init();
       final long bytesLeftToMove = init(reports);
       if (bytesLeftToMove == 0) {
         System.out.println("The cluster is balanced. Exiting...");
@@ -601,7 +601,7 @@ public class Balancer {
        * available to move.
        * Exit no byte has been moved for 5 consecutive iterations.
        */
-      if (!dispatcher.dispatchAndCheckContinue()) {
+      if (!blockReplicaDispatcher.dispatchAndCheckContinue()) {
         return newResult(ExitStatus.NO_MOVE_PROGRESS, bytesLeftToMove, bytesBeingMoved);
       }
 
@@ -616,7 +616,7 @@ public class Balancer {
       System.out.println(e + ".  Exiting ...");
       return newResult(ExitStatus.INTERRUPTED);
     } finally {
-      dispatcher.shutdownNow();
+      blockReplicaDispatcher.shutdownNow();
     }
   }
 

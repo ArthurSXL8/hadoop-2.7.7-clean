@@ -37,7 +37,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.UnresolvedLinkException;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguous;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfo;
 import org.apache.hadoop.hdfs.server.common.HdfsServerConstants;
 import org.apache.hadoop.util.Daemon;
 
@@ -124,10 +124,10 @@ public class LeaseManager {
         } catch (UnresolvedLinkException e) {
           throw new AssertionError("Lease files should reside on this FS");
         }
-        BlockInfoContiguous[] blocks = cons.getBlocks();
+        BlockNeighborInfo[] blocks = cons.getBlocks();
         if(blocks == null)
           continue;
-        for(BlockInfoContiguous b : blocks) {
+        for(BlockNeighborInfo b : blocks) {
           if(!b.isComplete())
             numUCBlocks++;
         }

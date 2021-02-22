@@ -47,7 +47,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.CommonConfigurationKeys;
 import org.apache.hadoop.fs.StorageType;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
@@ -65,7 +64,7 @@ import org.apache.hadoop.hdfs.protocol.datatransfer.sasl.SaslDataTransferClient;
 import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.BlockOpResponseProto;
 import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.Status;
 import org.apache.hadoop.hdfs.security.token.block.BlockTokenIdentifier;
-import org.apache.hadoop.hdfs.server.balancer.Dispatcher.DDatanode.StorageGroup;
+import org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DDatanode.StorageGroup;
 import org.apache.hadoop.hdfs.server.common.HdfsServerConstants;
 import org.apache.hadoop.hdfs.server.protocol.BlocksWithLocations;
 import org.apache.hadoop.hdfs.server.protocol.BlocksWithLocations.BlockWithLocations;
@@ -83,8 +82,8 @@ import com.google.common.base.Preconditions;
 
 /** Dispatching block replica moves between datanodes. */
 @InterfaceAudience.Private
-public class Dispatcher {
-  static final Log LOG = LogFactory.getLog(Dispatcher.class);
+public class BlockReplicaDispatcher {
+  static final Log LOG = LogFactory.getLog(BlockReplicaDispatcher.class);
 
   /**
    * the period of time to delay the usage of a DataNode after hitting
@@ -92,7 +91,7 @@ public class Dispatcher {
    */
   private static long delayAfterErrors = 10 * 1000;
 
-  private final NameNodeConnector nnc;
+  private final NameNodeConnector nameNodeConnector;
   private final SaslDataTransferClient saslClient;
 
   /** Set of datanodes to be excluded. */
@@ -349,9 +348,9 @@ public class Dispatcher {
 
         OutputStream unbufOut = sock.getOutputStream();
         InputStream unbufIn = sock.getInputStream();
-        ExtendedBlock eb = new ExtendedBlock(nnc.getBlockpoolID(),
+        ExtendedBlock eb = new ExtendedBlock(nameNodeConnector.getBlockpoolID(),
             block.getBlock());
-        final KeyManager km = nnc.getKeyManager(); 
+        final KeyManager km = nameNodeConnector.getKeyManager();
         Token<BlockTokenIdentifier> accessToken = km.getAccessToken(eb);
         IOStreamPair saslStreams = saslClient.socketSend(sock, unbufOut,
             unbufIn, km, accessToken, target.getDatanodeInfo());
@@ -364,7 +363,7 @@ public class Dispatcher {
 
         sendRequest(out, eb, accessToken);
         receiveResponse(in);
-        nnc.getBytesMoved().addAndGet(block.getNumBytes());
+        nameNodeConnector.getBytesMoved().addAndGet(block.getNumBytes());
         LOG.info("Successfully moved " + this);
       } catch (IOException e) {
         LOG.warn("Failed to move " + this + ": " + e.getMessage());
@@ -386,8 +385,8 @@ public class Dispatcher {
         synchronized (this) {
           reset();
         }
-        synchronized (Dispatcher.this) {
-          Dispatcher.this.notifyAll();
+        synchronized (BlockReplicaDispatcher.this) {
+          BlockReplicaDispatcher.this.notifyAll();
         }
       }
     }
@@ -604,7 +603,7 @@ public class Dispatcher {
       return g;
     }
 
-    public Source addSource(StorageType storageType, long maxSize2Move, Dispatcher d) {
+    public Source addSource(StorageType storageType, long maxSize2Move, BlockReplicaDispatcher d) {
       final Source s = d.new Source(storageType, maxSize2Move, this);
       put(storageType, s, sourceMap);
       return s;
@@ -653,7 +652,7 @@ public class Dispatcher {
     private long blocksToReceive = 0L;
     private final long startTime = Time.monotonicNow();
     /**
-     * Source blocks point to the objects in {@link Dispatcher#globalBlocks}
+     * Source blocks point to the objects in {@link BlockReplicaDispatcher#globalBlocks}
      * because we want to keep one copy of a block and be aware that the
      * locations are changing over time.
      */
@@ -685,13 +684,13 @@ public class Dispatcher {
 
     /**
      * Fetch new blocks of this source from namenode and update this source's
-     * block list & {@link Dispatcher#globalBlocks}.
+     * block list & {@link BlockReplicaDispatcher#globalBlocks}.
      * 
      * @return the total size of the received blocks in the number of bytes.
      */
     private long getBlockList() throws IOException {
       final long size = Math.min(getBlocksSize, blocksToReceive);
-      final BlocksWithLocations newBlocks = nnc.getBlocks(getDatanodeInfo(), size);
+      final BlocksWithLocations newBlocks = nameNodeConnector.getBlocks(getDatanodeInfo(), size);
 
       if (LOG.isTraceEnabled()) {
         LOG.trace("getBlocks(" + getDatanodeInfo() + ", "
@@ -739,7 +738,7 @@ public class Dispatcher {
       // source and target must have the same storage type
       final StorageType sourceStorageType = getStorageType();
       for (Task t : tasks) {
-        if (Dispatcher.this.isGoodBlockCandidate(this, t.target,
+        if (BlockReplicaDispatcher.this.isGoodBlockCandidate(this, t.target,
             sourceStorageType, block)) {
           return true;
         }
@@ -866,8 +865,8 @@ public class Dispatcher {
         // Now we can not schedule any block to move and there are
         // no new blocks added to the source block list, so we wait.
         try {
-          synchronized (Dispatcher.this) {
-            Dispatcher.this.wait(1000); // wait for targets/sources to be idle
+          synchronized (BlockReplicaDispatcher.this) {
+            BlockReplicaDispatcher.this.wait(1000); // wait for targets/sources to be idle
           }
           // Didn't find a possible move in this iteration of the while loop,
           // adding a small delay before choosing next move again.
@@ -894,21 +893,21 @@ public class Dispatcher {
   }
 
   /** Constructor called by Mover. */
-  public Dispatcher(NameNodeConnector nnc, Set<String> includedNodes,
-      Set<String> excludedNodes, long movedWinWidth, int moverThreads,
-      int dispatcherThreads, int maxConcurrentMovesPerNode,
-      int maxNoMoveInterval, Configuration conf) {
-    this(nnc, includedNodes, excludedNodes, movedWinWidth,
+  public BlockReplicaDispatcher(NameNodeConnector nameNodeConnector, Set<String> includedNodes,
+                                Set<String> excludedNodes, long movedWinWidth, int moverThreads,
+                                int dispatcherThreads, int maxConcurrentMovesPerNode,
+                                int maxNoMoveInterval, Configuration conf) {
+    this(nameNodeConnector, includedNodes, excludedNodes, movedWinWidth,
         moverThreads, dispatcherThreads, maxConcurrentMovesPerNode,
         0L, 0L, 0, maxNoMoveInterval, conf);
   }
 
-  Dispatcher(NameNodeConnector nnc, Set<String> includedNodes,
-      Set<String> excludedNodes, long movedWinWidth, int moverThreads,
-      int dispatcherThreads, int maxConcurrentMovesPerNode,
-      long getBlocksSize, long getBlocksMinBlockSize,
-      int blockMoveTimeout, int maxNoMoveInterval, Configuration conf) {
-    this.nnc = nnc;
+  BlockReplicaDispatcher(NameNodeConnector nameNodeConnector, Set<String> includedNodes,
+                         Set<String> excludedNodes, long movedWinWidth, int moverThreads,
+                         int dispatcherThreads, int maxConcurrentMovesPerNode,
+                         long getBlocksSize, long getBlocksMinBlockSize,
+                         int blockMoveTimeout, int maxNoMoveInterval, Configuration conf) {
+    this.nameNodeConnector = nameNodeConnector;
     this.excludedNodes = excludedNodes;
     this.includedNodes = includedNodes;
     this.movedBlocks = new MovedBlocks<StorageGroup>(movedWinWidth);
@@ -928,11 +927,11 @@ public class Dispatcher {
 
     this.saslClient = new SaslDataTransferClient(conf,
         DataTransferSaslUtil.getSaslPropertiesResolver(conf),
-        TrustedChannelResolver.getInstance(conf), nnc.fallbackToSimpleAuth);
+        TrustedChannelResolver.getInstance(conf), nameNodeConnector.fallbackToSimpleAuth);
   }
 
   public DistributedFileSystem getDistributedFileSystem() {
-    return nnc.getDistributedFileSystem();
+    return nameNodeConnector.getDistributedFileSystem();
   }
 
   public StorageGroupMap<StorageGroup> getStorageGroupMap() {
@@ -944,7 +943,7 @@ public class Dispatcher {
   }
   
   long getBytesMoved() {
-    return nnc.getBytesMoved().get();
+    return nameNodeConnector.getBytesMoved().get();
   }
 
   long bytesToMove() {
@@ -988,7 +987,7 @@ public class Dispatcher {
 
   /** Get live datanode storage reports and then build the network topology. */
   public List<DatanodeStorageReport> init() throws IOException {
-    final DatanodeStorageReport[] reports = nnc.getLiveDatanodeStorageReport();
+    final DatanodeStorageReport[] reports = nameNodeConnector.getLiveDatanodeStorageReport();
     final List<DatanodeStorageReport> trimmed = new ArrayList<DatanodeStorageReport>(); 
     // create network topology and classify utilization collections:
     // over-utilized, above-average, below-average and under-utilized.
@@ -1034,7 +1033,7 @@ public class Dispatcher {
   }
 
   public boolean dispatchAndCheckContinue() throws InterruptedException {
-    return nnc.shouldContinue(dispatchBlockMoves());
+    return nameNodeConnector.shouldContinue(dispatchBlockMoves());
   }
 
   /**

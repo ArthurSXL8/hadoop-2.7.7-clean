@@ -36,7 +36,7 @@ import org.apache.hadoop.yarn.server.resourcemanager.scheduler.event.SchedulerEv
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestRMDispatcher {
+public class TestRMBlockReplicaDispatcher {
 
   @SuppressWarnings("unchecked")
   @Test(timeout=10000)

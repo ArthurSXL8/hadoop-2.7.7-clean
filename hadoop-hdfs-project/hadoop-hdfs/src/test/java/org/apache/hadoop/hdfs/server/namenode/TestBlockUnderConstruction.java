@@ -35,8 +35,8 @@ import org.apache.hadoop.hdfs.TestFileCreation;
 import org.apache.hadoop.hdfs.protocol.Block;
 import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.hdfs.protocol.LocatedBlocks;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguous;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguousUnderConstruction;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfo;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfoUnderConstruction;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockManager;
 import org.apache.hadoop.hdfs.server.common.HdfsServerConstants.BlockUCState;
 import org.apache.hadoop.hdfs.server.protocol.NamenodeProtocols;
@@ -92,12 +92,12 @@ public class TestBlockUnderConstruction {
         " isUnderConstruction = " + inode.isUnderConstruction() +
         " expected to be " + isFileOpen,
         inode.isUnderConstruction() == isFileOpen);
-    BlockInfoContiguous[] blocks = inode.getBlocks();
+    BlockNeighborInfo[] blocks = inode.getBlocks();
     assertTrue("File does not have blocks: " + inode.toString(),
         blocks != null && blocks.length > 0);
     
     int idx = 0;
-    BlockInfoContiguous curBlock;
+    BlockNeighborInfo curBlock;
     // all blocks but the last two should be regular blocks
     for(; idx < blocks.length - 2; idx++) {
       curBlock = blocks[idx];
@@ -171,7 +171,7 @@ public class TestBlockUnderConstruction {
       final List<LocatedBlock> blocks = lb.getLocatedBlocks();
       assertEquals(i, blocks.size());
       final Block b = blocks.get(blocks.size() - 1).getBlock().getLocalBlock();
-      assertTrue(b instanceof BlockInfoContiguousUnderConstruction);
+      assertTrue(b instanceof BlockNeighborInfoUnderConstruction);
 
       if (++i < NUM_BLOCKS) {
         // write one more block
@@ -207,7 +207,7 @@ public class TestBlockUnderConstruction {
 
     // fake a block recovery
     long blockRecoveryId = fsn.getBlockIdManager().nextGenerationStamp(false);
-    BlockInfoContiguousUnderConstruction uc = bm.getStoredBlock(b).
+    BlockNeighborInfoUnderConstruction uc = bm.getStoredBlock(b).
         convertToBlockUnderConstruction(BlockUCState.UNDER_CONSTRUCTION, null);
     uc.initializeBlockRecovery(blockRecoveryId, false);
 

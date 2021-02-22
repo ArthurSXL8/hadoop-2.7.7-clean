@@ -5790,7 +5790,7 @@ order written.</p>]]>
   <!-- end class org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenSecretManager.SecretManagerState -->
 </package>
 <package name="org.apache.hadoop.hdfs.server.balancer">
-  <!-- start class org.apache.hadoop.hdfs.server.balancer.Dispatcher.DBlock -->
+  <!-- start class org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DBlock -->
   <class name="Dispatcher.DBlock" extends="org.apache.hadoop.hdfs.server.balancer.MovedBlocks.Locations"
     abstract="false"
     static="true" final="false" visibility="public"
@@ -5803,14 +5803,14 @@ order written.</p>]]>
       abstract="false" native="false" synchronized="true"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
-      <param name="loc" type="org.apache.hadoop.hdfs.server.balancer.Dispatcher.DDatanode.StorageGroup"/>
+      <param name="loc" type="org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DDatanode.StorageGroup"/>
     </method>
     <doc>
     <![CDATA[A class for keeping track of block locations in the dispatcher.]]>
     </doc>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.balancer.Dispatcher.DBlock -->
-  <!-- start class org.apache.hadoop.hdfs.server.balancer.Dispatcher.DDatanode -->
+  <!-- end class org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DBlock -->
+  <!-- start class org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DDatanode -->
   <class name="Dispatcher.DDatanode" extends="java.lang.Object"
     abstract="false"
     static="true" final="false" visibility="public"
@@ -5825,20 +5825,20 @@ order written.</p>]]>
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
     </method>
-    <method name="addTarget" return="org.apache.hadoop.hdfs.server.balancer.Dispatcher.DDatanode.StorageGroup"
+    <method name="addTarget" return="org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DDatanode.StorageGroup"
       abstract="false" native="false" synchronized="false"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
       <param name="storageType" type="org.apache.hadoop.hdfs.StorageType"/>
       <param name="maxSize2Move" type="long"/>
     </method>
-    <method name="addSource" return="org.apache.hadoop.hdfs.server.balancer.Dispatcher.Source"
+    <method name="addSource" return="org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.Source"
       abstract="false" native="false" synchronized="false"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
       <param name="storageType" type="org.apache.hadoop.hdfs.StorageType"/>
       <param name="maxSize2Move" type="long"/>
-      <param name="d" type="org.apache.hadoop.hdfs.server.balancer.Dispatcher"/>
+      <param name="d" type="org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher"/>
     </method>
     <field name="delayUntil" type="long"
       transient="false" volatile="false"
@@ -5849,8 +5849,8 @@ order written.</p>]]>
     <![CDATA[A class that keeps track of a datanode.]]>
     </doc>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.balancer.Dispatcher.DDatanode -->
-  <!-- start class org.apache.hadoop.hdfs.server.balancer.Dispatcher.DDatanode.StorageGroup -->
+  <!-- end class org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DDatanode -->
+  <!-- start class org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DDatanode.StorageGroup -->
   <class name="Dispatcher.DDatanode.StorageGroup" extends="java.lang.Object"
     abstract="false"
     static="false" final="false" visibility="public"
@@ -5883,8 +5883,8 @@ order written.</p>]]>
     <![CDATA[A group of storages in a datanode with the same storage type.]]>
     </doc>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.balancer.Dispatcher.DDatanode.StorageGroup -->
-  <!-- start class org.apache.hadoop.hdfs.server.balancer.Dispatcher.PendingMove -->
+  <!-- end class org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DDatanode.StorageGroup -->
+  <!-- start class org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.PendingMove -->
   <class name="Dispatcher.PendingMove" extends="java.lang.Object"
     abstract="false"
     static="false" final="false" visibility="public"
@@ -5898,18 +5898,18 @@ order written.</p>]]>
     <![CDATA[This class keeps track of a scheduled block move]]>
     </doc>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.balancer.Dispatcher.PendingMove -->
-  <!-- start class org.apache.hadoop.hdfs.server.balancer.Dispatcher.Source -->
-  <class name="Dispatcher.Source" extends="org.apache.hadoop.hdfs.server.balancer.Dispatcher.DDatanode.StorageGroup"
+  <!-- end class org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.PendingMove -->
+  <!-- start class org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.Source -->
+  <class name="Dispatcher.Source" extends="org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DDatanode.StorageGroup"
     abstract="false"
     static="false" final="false" visibility="public"
     deprecated="not deprecated">
-    <method name="addPendingMove" return="org.apache.hadoop.hdfs.server.balancer.Dispatcher.PendingMove"
+    <method name="addPendingMove" return="org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.PendingMove"
       abstract="false" native="false" synchronized="false"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
-      <param name="block" type="org.apache.hadoop.hdfs.server.balancer.Dispatcher.DBlock"/>
-      <param name="target" type="org.apache.hadoop.hdfs.server.balancer.Dispatcher.DDatanode.StorageGroup"/>
+      <param name="block" type="org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DBlock"/>
+      <param name="target" type="org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.DDatanode.StorageGroup"/>
       <doc>
       <![CDATA[Add a pending move]]>
       </doc>
@@ -5918,8 +5918,8 @@ order written.</p>]]>
     <![CDATA[A node that can be the sources of a block move]]>
     </doc>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.balancer.Dispatcher.Source -->
-  <!-- start class org.apache.hadoop.hdfs.server.balancer.Dispatcher.StorageGroupMap -->
+  <!-- end class org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.Source -->
+  <!-- start class org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.StorageGroupMap -->
   <class name="Dispatcher.StorageGroupMap" extends="java.lang.Object"
     abstract="false"
     static="true" final="false" visibility="public"
@@ -5947,7 +5947,7 @@ order written.</p>]]>
       deprecated="not deprecated">
     </method>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.balancer.Dispatcher.StorageGroupMap -->
+  <!-- end class org.apache.hadoop.hdfs.server.balancer.BlockReplicaDispatcher.StorageGroupMap -->
   <!-- start class org.apache.hadoop.hdfs.server.balancer.ExitStatus -->
   <class name="ExitStatus" extends="java.lang.Enum"
     abstract="false"
@@ -6814,7 +6814,7 @@ order written.</p>]]>
   <interface name="MutableBlockCollection"    abstract="true"
     static="false" final="false" visibility="public"
     deprecated="not deprecated">
-    <implements name="org.apache.hadoop.hdfs.server.blockmanagement.BlockCollection"/>
+    <implements name="org.apache.hadoop.hdfs.server.blockmanagement.BlockSet"/>
     <method name="setBlock"
       abstract="false" native="false" synchronized="false"
       static="false" final="false" visibility="public"

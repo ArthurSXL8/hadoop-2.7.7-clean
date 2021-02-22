@@ -49,7 +49,7 @@ public class TestBlockInfo {
 
   @Test
   public void testAddStorage() throws Exception {
-    BlockInfoContiguous blockInfo = new BlockInfoContiguous((short) 3);
+    BlockNeighborInfo blockInfo = new BlockNeighborInfo((short) 3);
 
     final DatanodeStorageInfo storage = DFSTestUtil.createDatanodeStorageInfo("storageID", "127.0.0.1");
 
@@ -67,11 +67,11 @@ public class TestBlockInfo {
     final DatanodeStorageInfo storage1 = DFSTestUtil.createDatanodeStorageInfo("storageID1", "127.0.0.1");
     final DatanodeStorageInfo storage2 = new DatanodeStorageInfo(storage1.getDatanodeDescriptor(), new DatanodeStorage("storageID2"));
     final int NUM_BLOCKS = 10;
-    BlockInfoContiguous[] blockInfos = new BlockInfoContiguous[NUM_BLOCKS];
+    BlockNeighborInfo[] blockInfos = new BlockNeighborInfo[NUM_BLOCKS];
 
     // Create a few dummy blocks and add them to the first storage.
     for (int i = 0; i < NUM_BLOCKS; ++i) {
-      blockInfos[i] = new BlockInfoContiguous((short) 3);
+      blockInfos[i] = new BlockNeighborInfo((short) 3);
       storage1.addBlock(blockInfos[i]);
     }
 
@@ -90,14 +90,14 @@ public class TestBlockInfo {
 
     DatanodeStorageInfo dd = DFSTestUtil.createDatanodeStorageInfo("s1", "1.1.1.1");
     ArrayList<Block> blockList = new ArrayList<Block>(MAX_BLOCKS);
-    ArrayList<BlockInfoContiguous> blockInfoList = new ArrayList<BlockInfoContiguous>();
+    ArrayList<BlockNeighborInfo> blockInfoList = new ArrayList<BlockNeighborInfo>();
     int headIndex;
     int curIndex;
 
     LOG.info("Building block list...");
     for (int i = 0; i < MAX_BLOCKS; i++) {
       blockList.add(new Block(i, 0, GenerationStamp.LAST_RESERVED_STAMP));
-      blockInfoList.add(new BlockInfoContiguous(blockList.get(i), (short) 3));
+      blockInfoList.add(new BlockNeighborInfo(blockList.get(i), (short) 3));
       dd.addBlock(blockInfoList.get(i));
 
       // index of the datanode should be 0
@@ -108,7 +108,7 @@ public class TestBlockInfo {
     // list length should be equal to the number of blocks we inserted
     LOG.info("Checking list length...");
     assertEquals("Length should be MAX_BLOCK", MAX_BLOCKS, dd.numBlocks());
-    Iterator<BlockInfoContiguous> it = dd.getBlockIterator();
+    Iterator<BlockNeighborInfo> it = dd.getBlockIterator();
     int len = 0;
     while (it.hasNext()) {
       it.next();
@@ -130,7 +130,7 @@ public class TestBlockInfo {
     // move head of the list to the head - this should not change the list
     LOG.info("Moving head to the head...");
 
-    BlockInfoContiguous temp = dd.getBlockListHeadForTesting();
+    BlockNeighborInfo temp = dd.getBlockListHeadForTesting();
     curIndex = 0;
     headIndex = 0;
     dd.moveBlockToHead(temp, curIndex, headIndex);

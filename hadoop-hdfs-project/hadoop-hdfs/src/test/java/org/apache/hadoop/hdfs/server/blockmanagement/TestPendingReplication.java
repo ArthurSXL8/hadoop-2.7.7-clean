@@ -159,7 +159,7 @@ public class TestPendingReplication {
         DFSConfigKeys.DFS_NAMENODE_REPLICATION_PENDING_TIMEOUT_SEC_KEY, TIMEOUT);
     MiniDFSCluster cluster = null;
     Block block;
-    BlockInfoContiguous blockInfo;
+    BlockNeighborInfo blockInfo;
     try {
       cluster =
           new MiniDFSCluster.Builder(conf).numDataNodes(DATANODE_COUNT).build();
@@ -178,12 +178,12 @@ public class TestPendingReplication {
       //
 
       block = new Block(1, 1, 0);
-      blockInfo = new BlockInfoContiguous(block, (short) 3);
+      blockInfo = new BlockNeighborInfo(block, (short) 3);
 
       pendingReplications.increment(block,
           DatanodeStorageInfo.toDatanodeDescriptors(
               DFSTestUtil.createDatanodeStorageInfos(1)));
-      BlockCollection bc = Mockito.mock(BlockCollection.class);
+      BlockSet bc = Mockito.mock(BlockSet.class);
       Mockito.doReturn((short) 3).when(bc).getBlockReplication();
       // Place into blocksmap with GenerationStamp = 1
       blockInfo.setGenerationStamp(1);

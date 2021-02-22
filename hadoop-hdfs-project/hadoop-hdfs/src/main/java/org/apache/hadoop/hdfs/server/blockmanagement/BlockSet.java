@@ -27,11 +27,11 @@ import org.apache.hadoop.fs.ContentSummary;
  * few characteristics of a collection of Block/BlockUnderConstruction.
  */
 @InterfaceAudience.Private
-public interface BlockCollection {
+public interface BlockSet {
   /**
    * Get the last block of the collection.
    */
-  public BlockInfoContiguous getLastBlock();
+  public BlockNeighborInfo getLastBlock();
 
   /** 
    * Get content summary.
@@ -46,7 +46,7 @@ public interface BlockCollection {
   /**
    * Get the blocks.
    */
-  public BlockInfoContiguous[] getBlocks();
+  public BlockNeighborInfo[] getBlocks();
 
   /**
    * Get preferred block size for the collection 
@@ -73,14 +73,14 @@ public interface BlockCollection {
   /**
    * Set the block at the given index.
    */
-  public void setBlock(int index, BlockInfoContiguous blk);
+  public void setBlock(int index, BlockNeighborInfo blk);
 
   /**
    * Convert the last block of the collection to an under-construction block
    * and set the locations.
    */
-  public BlockInfoContiguousUnderConstruction setLastBlock(BlockInfoContiguous lastBlock,
-      DatanodeStorageInfo[] targets) throws IOException;
+  public BlockNeighborInfoUnderConstruction setLastBlock(BlockNeighborInfo lastBlock,
+                                                         DatanodeStorageInfo[] targets) throws IOException;
 
   /**
    * @return whether the block collection is under construction.

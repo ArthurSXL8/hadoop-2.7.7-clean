@@ -29,15 +29,15 @@ import org.apache.hadoop.util.LightWeightGSet;
  * the {@link INodeFile} it is part of and datanodes where the replicas of 
  * the block are stored.
  * BlockInfo class maintains for a given block
- * the {@link BlockCollection} it is part of and datanodes where the replicas of 
+ * the {@link BlockSet} it is part of and datanodes where the replicas of
  * the block are stored.
  */
 @InterfaceAudience.Private
-public class BlockInfoContiguous extends Block
+public class BlockNeighborInfo extends Block
     implements LightWeightGSet.LinkedElement {
-  public static final BlockInfoContiguous[] EMPTY_ARRAY = {};
+  public static final BlockNeighborInfo[] EMPTY_ARRAY = {};
 
-  private BlockCollection bc;
+  private BlockSet bc;
 
   /** For implementing {@link LightWeightGSet.LinkedElement} interface */
   private LightWeightGSet.LinkedElement nextLinkedElement;
@@ -60,12 +60,12 @@ public class BlockInfoContiguous extends Block
    * Construct an entry for blocksmap
    * @param replication the block's replication factor
    */
-  public BlockInfoContiguous(short replication) {
+  public BlockNeighborInfo(short replication) {
     this.triplets = new Object[3*replication];
     this.bc = null;
   }
   
-  public BlockInfoContiguous(Block blk, short replication) {
+  public BlockNeighborInfo(Block blk, short replication) {
     super(blk);
     this.triplets = new Object[3*replication];
     this.bc = null;
@@ -76,16 +76,16 @@ public class BlockInfoContiguous extends Block
    * This is used to convert BlockInfoUnderConstruction
    * @param from BlockInfo to copy from.
    */
-  protected BlockInfoContiguous(BlockInfoContiguous from) {
+  protected BlockNeighborInfo(BlockNeighborInfo from) {
     this(from, from.bc.getBlockReplication());
     this.bc = from.bc;
   }
 
-  public BlockCollection getBlockCollection() {
+  public BlockSet getBlockCollection() {
     return bc;
   }
 
-  public void setBlockCollection(BlockCollection bc) {
+  public void setBlockCollection(BlockSet bc) {
     this.bc = bc;
   }
 
@@ -100,22 +100,22 @@ public class BlockInfoContiguous extends Block
     return (DatanodeStorageInfo)triplets[index*3];
   }
 
-  private BlockInfoContiguous getPrevious(int index) {
+  private BlockNeighborInfo getPrevious(int index) {
     assert this.triplets != null : "BlockInfo is not initialized";
     assert index >= 0 && index*3+1 < triplets.length : "Index is out of bound";
-    BlockInfoContiguous info = (BlockInfoContiguous)triplets[index*3+1];
+    BlockNeighborInfo info = (BlockNeighborInfo)triplets[index*3+1];
     assert info == null || 
-        info.getClass().getName().startsWith(BlockInfoContiguous.class.getName()) :
+        info.getClass().getName().startsWith(BlockNeighborInfo.class.getName()) :
               "BlockInfo is expected at " + index*3;
     return info;
   }
 
-  BlockInfoContiguous getNext(int index) {
+  BlockNeighborInfo getNext(int index) {
     assert this.triplets != null : "BlockInfo is not initialized";
     assert index >= 0 && index*3+2 < triplets.length : "Index is out of bound";
-    BlockInfoContiguous info = (BlockInfoContiguous)triplets[index*3+2];
+    BlockNeighborInfo info = (BlockNeighborInfo)triplets[index*3+2];
     assert info == null || info.getClass().getName().startsWith(
-        BlockInfoContiguous.class.getName()) :
+        BlockNeighborInfo.class.getName()) :
         "BlockInfo is expected at " + index*3;
     return info;
   }
@@ -134,10 +134,10 @@ public class BlockInfoContiguous extends Block
    * @param to - block to be set to previous on the list of blocks
    * @return current previous block on the list of blocks
    */
-  private BlockInfoContiguous setPrevious(int index, BlockInfoContiguous to) {
+  private BlockNeighborInfo setPrevious(int index, BlockNeighborInfo to) {
     assert this.triplets != null : "BlockInfo is not initialized";
     assert index >= 0 && index*3+1 < triplets.length : "Index is out of bound";
-    BlockInfoContiguous info = (BlockInfoContiguous)triplets[index*3+1];
+    BlockNeighborInfo info = (BlockNeighborInfo)triplets[index*3+1];
     triplets[index*3+1] = to;
     return info;
   }
@@ -150,10 +150,10 @@ public class BlockInfoContiguous extends Block
    * @param to - block to be set to next on the list of blocks
    *    * @return current next block on the list of blocks
    */
-  private BlockInfoContiguous setNext(int index, BlockInfoContiguous to) {
+  private BlockNeighborInfo setNext(int index, BlockNeighborInfo to) {
     assert this.triplets != null : "BlockInfo is not initialized";
     assert index >= 0 && index*3+2 < triplets.length : "Index is out of bound";
-    BlockInfoContiguous info = (BlockInfoContiguous)triplets[index*3+2];
+    BlockNeighborInfo info = (BlockNeighborInfo)triplets[index*3+2];
     triplets[index*3+2] = to;
     return info;
   }
@@ -286,8 +286,8 @@ public class BlockInfoContiguous extends Block
    * If the head is null then form a new list.
    * @return current block as the new head of the list.
    */
-  BlockInfoContiguous listInsert(BlockInfoContiguous head,
-      DatanodeStorageInfo storage) {
+  BlockNeighborInfo listInsert(BlockNeighborInfo head,
+                               DatanodeStorageInfo storage) {
     int dnIndex = this.findStorageInfo(storage);
     assert dnIndex >= 0 : "Data node is not found: current";
     assert getPrevious(dnIndex) == null && getNext(dnIndex) == null : 
@@ -307,16 +307,16 @@ public class BlockInfoContiguous extends Block
    * @return the new head of the list or null if the list becomes
    * empy after deletion.
    */
-  BlockInfoContiguous listRemove(BlockInfoContiguous head,
-      DatanodeStorageInfo storage) {
+  BlockNeighborInfo listRemove(BlockNeighborInfo head,
+                               DatanodeStorageInfo storage) {
     if(head == null)
       return null;
     int dnIndex = this.findStorageInfo(storage);
     if(dnIndex < 0) // this block is not on the data-node list
       return head;
 
-    BlockInfoContiguous next = this.getNext(dnIndex);
-    BlockInfoContiguous prev = this.getPrevious(dnIndex);
+    BlockNeighborInfo next = this.getNext(dnIndex);
+    BlockNeighborInfo prev = this.getPrevious(dnIndex);
     this.setNext(dnIndex, null);
     this.setPrevious(dnIndex, null);
     if(prev != null)
@@ -334,13 +334,13 @@ public class BlockInfoContiguous extends Block
    *
    * @return the new head of the list.
    */
-  public BlockInfoContiguous moveBlockToHead(BlockInfoContiguous head,
-      DatanodeStorageInfo storage, int curIndex, int headIndex) {
+  public BlockNeighborInfo moveBlockToHead(BlockNeighborInfo head,
+                                           DatanodeStorageInfo storage, int curIndex, int headIndex) {
     if (head == this) {
       return this;
     }
-    BlockInfoContiguous next = this.setNext(curIndex, head);
-    BlockInfoContiguous prev = this.setPrevious(curIndex, null);
+    BlockNeighborInfo next = this.setNext(curIndex, head);
+    BlockNeighborInfo prev = this.setPrevious(curIndex, null);
 
     head.setPrevious(headIndex, this);
     prev.setNext(prev.findStorageInfo(storage), next);
@@ -353,7 +353,7 @@ public class BlockInfoContiguous extends Block
   /**
    * BlockInfo represents a block that is not being constructed.
    * In order to start modifying the block, the BlockInfo should be converted
-   * to {@link BlockInfoContiguousUnderConstruction}.
+   * to {@link BlockNeighborInfoUnderConstruction}.
    * @return {@link BlockUCState#COMPLETE}
    */
   public BlockUCState getBlockUCState() {
@@ -373,18 +373,18 @@ public class BlockInfoContiguous extends Block
    * Convert a complete block to an under construction block.
    * @return BlockInfoUnderConstruction -  an under construction block.
    */
-  public BlockInfoContiguousUnderConstruction convertToBlockUnderConstruction(
+  public BlockNeighborInfoUnderConstruction convertToBlockUnderConstruction(
       BlockUCState s, DatanodeStorageInfo[] targets) {
     if(isComplete()) {
-      BlockInfoContiguousUnderConstruction ucBlock =
-          new BlockInfoContiguousUnderConstruction(this,
+      BlockNeighborInfoUnderConstruction ucBlock =
+          new BlockNeighborInfoUnderConstruction(this,
           getBlockCollection().getBlockReplication(), s, targets);
       ucBlock.setBlockCollection(getBlockCollection());
       return ucBlock;
     }
     // the block is already under construction
-    BlockInfoContiguousUnderConstruction ucBlock =
-        (BlockInfoContiguousUnderConstruction)this;
+    BlockNeighborInfoUnderConstruction ucBlock =
+        (BlockNeighborInfoUnderConstruction)this;
     ucBlock.setBlockUCState(s);
     ucBlock.setExpectedLocations(targets);
     ucBlock.setBlockCollection(getBlockCollection());

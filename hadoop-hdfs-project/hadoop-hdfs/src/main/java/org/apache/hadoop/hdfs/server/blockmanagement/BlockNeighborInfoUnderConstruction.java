@@ -31,7 +31,7 @@ import org.apache.hadoop.hdfs.server.namenode.NameNode;
  * Represents a block that is currently being constructed.<br>
  * This is usually the last block of a file opened for write or append.
  */
-public class BlockInfoContiguousUnderConstruction extends BlockInfoContiguous {
+public class BlockNeighborInfoUnderConstruction extends BlockNeighborInfo {
   /** Block state. See {@link BlockUCState} */
   private BlockUCState blockUCState;
 
@@ -57,7 +57,7 @@ public class BlockInfoContiguousUnderConstruction extends BlockInfoContiguous {
   /**
    * The block source to use in the event of copy-on-write truncate.
    */
-  private BlockInfoContiguous truncateBlock;
+  private BlockNeighborInfo truncateBlock;
 
   /**
    * ReplicaUnderConstruction contains information about replicas while
@@ -158,14 +158,14 @@ public class BlockInfoContiguousUnderConstruction extends BlockInfoContiguous {
    * Create block and set its state to
    * {@link BlockUCState#UNDER_CONSTRUCTION}.
    */
-  public BlockInfoContiguousUnderConstruction(Block blk, short replication) {
+  public BlockNeighborInfoUnderConstruction(Block blk, short replication) {
     this(blk, replication, BlockUCState.UNDER_CONSTRUCTION, null);
   }
 
   /**
    * Create a block that is currently being constructed.
    */
-  public BlockInfoContiguousUnderConstruction(Block blk, short replication, BlockUCState state, DatanodeStorageInfo[] targets) {
+  public BlockNeighborInfoUnderConstruction(Block blk, short replication, BlockUCState state, DatanodeStorageInfo[] targets) {
     super(blk, replication);
     assert getBlockUCState() != BlockUCState.COMPLETE :
       "BlockInfoUnderConstruction cannot be in COMPLETE state";
@@ -182,10 +182,10 @@ public class BlockInfoContiguousUnderConstruction extends BlockInfoContiguous {
    * the client or it does not have at least a minimal number of replicas 
    * reported from data-nodes. 
    */
-  BlockInfoContiguous convertToCompleteBlock() throws IOException {
+  BlockNeighborInfo convertToCompleteBlock() throws IOException {
     assert getBlockUCState() != BlockUCState.COMPLETE :
       "Trying to convert a COMPLETE block";
-    return new BlockInfoContiguous(this);
+    return new BlockNeighborInfo(this);
   }
 
   /** Set expected locations */
@@ -245,11 +245,11 @@ public class BlockInfoContiguousUnderConstruction extends BlockInfoContiguous {
   }
 
   /** Get recover block */
-  public BlockInfoContiguous getTruncateBlock() {
+  public BlockNeighborInfo getTruncateBlock() {
     return truncateBlock;
   }
 
-  public void setTruncateBlock(BlockInfoContiguous recoveryBlock) {
+  public void setTruncateBlock(BlockNeighborInfo recoveryBlock) {
     this.truncateBlock = recoveryBlock;
   }
 

@@ -21,7 +21,7 @@ import java.util.List;
 
 import org.apache.hadoop.fs.StorageType;
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguous;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfo;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockStoragePolicySuite;
 import org.apache.hadoop.hdfs.server.namenode.AclFeature;
 import org.apache.hadoop.hdfs.server.namenode.INode;
@@ -226,7 +226,7 @@ public class FileWithSnapshotFeature implements INode.Feature {
 
     // Collect blocks that should be deleted
     FileDiff last = diffs.getLast();
-    BlockInfoContiguous[] snapshotBlocks = last == null ? null : last.getBlocks();
+    BlockNeighborInfo[] snapshotBlocks = last == null ? null : last.getBlocks();
     if(snapshotBlocks == null)
       file.collectBlocksBeyondMax(max, info);
     else
