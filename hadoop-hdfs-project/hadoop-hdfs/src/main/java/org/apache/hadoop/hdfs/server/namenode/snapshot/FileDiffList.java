@@ -54,7 +54,7 @@ public class FileDiffList extends
     final FileDiff diff =
         super.saveSelf2Snapshot(latestSnapshotId, iNodeFile, snapshotCopy);
     if(withBlocks)  // Store blocks if this is the first update
-      diff.setBlocks(iNodeFile.getBlocks());
+      diff.setBlocks(iNodeFile.getBlockNeighborInfos());
   }
 
   public BlockNeighborInfo[] findEarlierSnapshotBlocks(int snapshotId) {
@@ -117,7 +117,7 @@ public class FileDiffList extends
         (earlierDiff == null ? new BlockNeighborInfo[]{} : earlierDiff.getBlocks());
     // Find later snapshot (or file itself) with blocks
     BlockNeighborInfo[] laterBlocks = findLaterSnapshotBlocks(removed.getSnapshotId());
-    laterBlocks = (laterBlocks==null) ? file.getBlocks() : laterBlocks;
+    laterBlocks = (laterBlocks==null) ? file.getBlockNeighborInfos() : laterBlocks;
     // Skip blocks, which belong to either the earlier or the later lists
     int i = 0;
     for(; i < removedBlocks.length; i++) {

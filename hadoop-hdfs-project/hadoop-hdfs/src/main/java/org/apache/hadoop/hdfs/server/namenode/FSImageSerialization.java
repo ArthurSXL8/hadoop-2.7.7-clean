@@ -167,7 +167,7 @@ public class FSImageSerialization {
     out.writeLong(cons.getModificationTime());
     out.writeLong(cons.getPreferredBlockSize());
 
-    writeBlocks(cons.getBlocks(), out);
+    writeBlocks(cons.getBlockNeighborInfos(), out);
     cons.getPermissionStatus().write(out);
 
     FileUnderConstructionFeature uc = cons.getFileUnderConstructionFeature();
@@ -192,7 +192,7 @@ public class FSImageSerialization {
     out.writeLong(file.getAccessTime());
     out.writeLong(file.getPreferredBlockSize());
 
-    writeBlocks(file.getBlocks(), out);
+    writeBlocks(file.getBlockNeighborInfos(), out);
     SnapshotFSImageFormat.saveFileDiffList(file, out);
 
     if (writeUnderConstruction) {

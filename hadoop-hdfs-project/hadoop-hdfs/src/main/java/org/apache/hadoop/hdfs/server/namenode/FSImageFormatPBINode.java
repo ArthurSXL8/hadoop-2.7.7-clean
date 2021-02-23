@@ -209,7 +209,7 @@ public final class FSImageFormatPBINode {
 
     public static void updateBlocksMap(INodeFile file, BlockManager bm) {
       // Add file->block mapping
-      final BlockNeighborInfo[] blocks = file.getBlocks();
+      final BlockNeighborInfo[] blocks = file.getBlockNeighborInfos();
       if (blocks != null) {
         for (int i = 0; i < blocks.length; i++) {
           file.setBlock(i, bm.addBlockCollection(blocks[i], file));
@@ -624,8 +624,8 @@ public final class FSImageFormatPBINode {
       INodeSection.INodeFile.Builder b = buildINodeFile(n,
           parent.getSaverContext());
 
-      if (n.getBlocks() != null) {
-        for (Block block : n.getBlocks()) {
+      if (n.getBlockNeighborInfos() != null) {
+        for (Block block : n.getBlockNeighborInfos()) {
           b.addBlocks(PBHelper.convert(block));
         }
       }

@@ -405,7 +405,7 @@ public class FSDirAttrOp {
       blockRepls[0] = oldBR;
       blockRepls[1] = newBR;
     }
-    return file.getBlocks();
+    return file.getBlockNeighborInfos();
   }
 
   static void unprotectedSetStoragePolicy(

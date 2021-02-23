@@ -229,7 +229,7 @@ class FSDirConcatOp {
     int count = 0;
     for (INodeFile nodeToRemove : srcList) {
       if(nodeToRemove != null) {
-        nodeToRemove.setBlocks(null);
+        nodeToRemove.setBlockNeighborInfos(null);
         // Ensure the nodeToRemove is cleared from snapshot diff list
         nodeToRemove.getParent().removeChild(nodeToRemove,
             targetIIP.getLatestSnapshotId());

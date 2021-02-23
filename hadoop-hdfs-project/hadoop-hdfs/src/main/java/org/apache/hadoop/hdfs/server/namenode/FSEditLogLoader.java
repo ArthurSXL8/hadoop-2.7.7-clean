@@ -946,7 +946,7 @@ public class FSEditLogLoader {
    */
   private void addNewBlock(FSDirectory fsDir, AddBlockOp op, INodeFile file)
       throws IOException {
-    BlockNeighborInfo[] oldBlocks = file.getBlocks();
+    BlockNeighborInfo[] oldBlocks = file.getBlockNeighborInfos();
     Block pBlock = op.getPenultimateBlock();
     Block newBlock= op.getLastBlock();
     
@@ -986,7 +986,7 @@ public class FSEditLogLoader {
   private void updateBlocks(FSDirectory fsDir, BlockListUpdatingOp op,
       INodesInPath iip, INodeFile file) throws IOException {
     // Update its block list
-    BlockNeighborInfo[] oldBlocks = file.getBlocks();
+    BlockNeighborInfo[] oldBlocks = file.getBlockNeighborInfos();
     Block[] newBlocks = op.getBlocks();
     String path = op.getPath();
     

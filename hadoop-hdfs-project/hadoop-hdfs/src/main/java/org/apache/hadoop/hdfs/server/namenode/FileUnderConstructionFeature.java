@@ -74,7 +74,7 @@ public class FileUnderConstructionFeature implements INode.Feature {
    */
   void cleanZeroSizeBlock(final INodeFile f,
       final BlocksMapUpdateInfo collectedBlocks) {
-    final BlockNeighborInfo[] blocks = f.getBlocks();
+    final BlockNeighborInfo[] blocks = f.getBlockNeighborInfos();
     if (blocks != null && blocks.length > 0
         && blocks[blocks.length - 1] instanceof BlockNeighborInfoUnderConstruction) {
       BlockNeighborInfoUnderConstruction lastUC =

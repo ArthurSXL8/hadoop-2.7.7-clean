@@ -686,7 +686,7 @@ public class FSImageFormat {
 
     public void updateBlocksMap(INodeFile file) {
       // Add file->block mapping
-      final BlockNeighborInfo[] blocks = file.getBlocks();
+      final BlockNeighborInfo[] blocks = file.getBlockNeighborInfos();
       if (blocks != null) {
         final BlockManager bm = namesystem.getBlockManager();
         for (int i = 0; i < blocks.length; i++) {

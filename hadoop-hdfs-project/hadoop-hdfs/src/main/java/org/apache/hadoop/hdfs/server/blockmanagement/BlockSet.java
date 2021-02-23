@@ -46,7 +46,7 @@ public interface BlockSet {
   /**
    * Get the blocks.
    */
-  public BlockNeighborInfo[] getBlocks();
+  public BlockNeighborInfo[] getBlockNeighborInfos();
 
   /**
    * Get preferred block size for the collection 

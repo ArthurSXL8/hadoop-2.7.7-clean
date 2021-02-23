@@ -104,10 +104,10 @@ class BlocksMap {
   /**
    * Add block b belonging to the specified block set to the map.
    */
-  BlockNeighborInfo addBlockCollection(BlockNeighborInfo b, BlockSet blockSet) {
-    BlockNeighborInfo blockNeighborInfo = blockAndNeighborSet.get(b);
-    if (blockNeighborInfo != b) {
-      blockNeighborInfo = b;
+  BlockNeighborInfo addBlockCollection(BlockNeighborInfo blockNeighborInfo1, BlockSet blockSet) {
+    BlockNeighborInfo blockNeighborInfo = blockAndNeighborSet.get(blockNeighborInfo1);
+    if (blockNeighborInfo != blockNeighborInfo1) {
+      blockNeighborInfo = blockNeighborInfo1;
       blockAndNeighborSet.put(blockNeighborInfo);
     }
     blockNeighborInfo.setBlockSet(blockSet);
@@ -125,14 +125,14 @@ class BlocksMap {
       return;
 
     blockNeighborInfo.setBlockSet(null);
-    for(int idx = blockNeighborInfo.numNodes()-1; idx >= 0; idx--) {
+    for(int idx = blockNeighborInfo.numNodes() - 1; idx >= 0; idx--) {
       DatanodeDescriptor dn = blockNeighborInfo.getDatanode(idx);
       dn.removeBlock(blockNeighborInfo); // remove from the list and wipe the location
     }
   }
   
   /** Returns the block object it it exists in the map. */
-  BlockNeighborInfo getStoredBlock(Block block) {
+  BlockNeighborInfo getBlockNeighborInfo(Block block) {
     return blockAndNeighborSet.get(block);
   }
 
@@ -174,9 +174,9 @@ class BlocksMap {
   }
 
   /** counts number of containing nodes. Better than using iterator. */
-  int numNodes(Block b) {
-    BlockNeighborInfo info = blockAndNeighborSet.get(b);
-    return info == null ? 0 : info.numNodes();
+  int numNodes(Block block) {
+    BlockNeighborInfo blockNeighborInfo = blockAndNeighborSet.get(block);
+    return blockNeighborInfo == null ? 0 : blockNeighborInfo.numNodes();
   }
 
   /**
@@ -185,15 +185,15 @@ class BlocksMap {
    * only if it does not belong to any file and data-nodes.
    */
   boolean removeNode(Block b, DatanodeDescriptor node) {
-    BlockNeighborInfo info = blockAndNeighborSet.get(b);
-    if (info == null)
+    BlockNeighborInfo blockNeighborInfo = blockAndNeighborSet.get(b);
+    if (blockNeighborInfo == null)
       return false;
 
     // remove block from the data-node list and the node from the block info
-    boolean removed = node.removeBlock(info);
+    boolean removed = node.removeBlock(blockNeighborInfo);
 
-    if (info.getDatanode(0) == null     // no datanodes left
-              && info.getBlockCollection() == null) {  // does not belong to a file
+    if (blockNeighborInfo.getDatanode(0) == null     // no datanodes left
+              && blockNeighborInfo.getBlockCollection() == null) {  // does not belong to a file
       blockAndNeighborSet.remove(b);  // remove block from the map
     }
     return removed;

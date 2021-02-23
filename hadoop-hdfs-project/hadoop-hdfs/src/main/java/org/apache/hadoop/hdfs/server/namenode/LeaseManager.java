@@ -124,7 +124,7 @@ public class LeaseManager {
         } catch (UnresolvedLinkException e) {
           throw new AssertionError("Lease files should reside on this FS");
         }
-        BlockNeighborInfo[] blocks = cons.getBlocks();
+        BlockNeighborInfo[] blocks = cons.getBlockNeighborInfos();
         if(blocks == null)
           continue;
         for(BlockNeighborInfo b : blocks) {

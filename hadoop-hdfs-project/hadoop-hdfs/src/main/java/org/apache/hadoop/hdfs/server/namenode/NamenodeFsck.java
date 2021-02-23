@@ -68,7 +68,7 @@ import org.apache.hadoop.hdfs.server.blockmanagement.BlockManager;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockPlacementPolicy;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockPlacementStatus;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeDescriptor;
-import org.apache.hadoop.hdfs.server.blockmanagement.NumberReplicas;
+import org.apache.hadoop.hdfs.server.blockmanagement.ReplicaCount;
 import org.apache.hadoop.hdfs.server.common.HdfsServerConstants;
 import org.apache.hadoop.hdfs.server.datanode.CachingStrategy;
 import org.apache.hadoop.net.NetUtils;
@@ -236,18 +236,18 @@ public class NamenodeFsck implements DataEncryptionKeyFactory {
         LOG.warn("Block "+ blockId + " " + NONEXISTENT_STATUS);
         return;
       }
-      BlockSet bc = bm.getBlockCollection(blockInfo);
+      BlockSet bc = bm.getBlockSet(blockInfo);
       INode iNode = (INode) bc;
-      NumberReplicas numberReplicas= bm.countNodes(block);
+      ReplicaCount replicaCount = bm.getReplicaCount(block);
       out.println("Block Id: " + blockId);
       out.println("Block belongs to: "+iNode.getFullPathName());
       out.println("No. of Expected Replica: " + bc.getBlockReplication());
-      out.println("No. of live Replica: " + numberReplicas.liveReplicas());
-      out.println("No. of excess Replica: " + numberReplicas.excessReplicas());
-      out.println("No. of stale Replica: " + numberReplicas.replicasOnStaleNodes());
+      out.println("No. of live Replica: " + replicaCount.liveReplicas());
+      out.println("No. of excess Replica: " + replicaCount.excessReplicas());
+      out.println("No. of stale Replica: " + replicaCount.replicasOnStaleNodes());
       out.println("No. of decommission Replica: "
-          + numberReplicas.decommissioned());
-      out.println("No. of corrupted Replica: " + numberReplicas.corruptReplicas());
+          + replicaCount.decommissioned());
+      out.println("No. of corrupted Replica: " + replicaCount.corruptReplicas());
       //record datanodes that have corrupted block replica
       Collection<DatanodeDescriptor> corruptionRecord = null;
       if (bm.getCorruptReplicas(block) != null) {
@@ -506,9 +506,9 @@ public class NamenodeFsck implements DataEncryptionKeyFactory {
       boolean isCorrupt = lBlk.isCorrupt();
       String blkName = block.toString();
       DatanodeInfo[] locs = lBlk.getLocations();
-      NumberReplicas numberReplicas =
-          namenode.getNamesystem().getBlockManager().countNodes(block.getLocalBlock());
-      int liveReplicas = numberReplicas.liveReplicas();
+      ReplicaCount replicaCount =
+          namenode.getNamesystem().getBlockManager().getReplicaCount(block.getLocalBlock());
+      int liveReplicas = replicaCount.liveReplicas();
       res.totalReplicas += liveReplicas;
       short targetFileReplication = file.getReplication();
       res.numExpectedReplicas += targetFileReplication;

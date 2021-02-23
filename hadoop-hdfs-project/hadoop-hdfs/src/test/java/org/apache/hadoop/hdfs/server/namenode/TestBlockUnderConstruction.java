@@ -92,7 +92,7 @@ public class TestBlockUnderConstruction {
         " isUnderConstruction = " + inode.isUnderConstruction() +
         " expected to be " + isFileOpen,
         inode.isUnderConstruction() == isFileOpen);
-    BlockNeighborInfo[] blocks = inode.getBlocks();
+    BlockNeighborInfo[] blocks = inode.getBlockNeighborInfos();
     assertTrue("File does not have blocks: " + inode.toString(),
         blocks != null && blocks.length > 0);
     

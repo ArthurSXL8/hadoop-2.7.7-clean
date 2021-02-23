@@ -250,9 +250,9 @@ public class DecommissionManager {
    */
   private boolean isSufficientlyReplicated(BlockNeighborInfo block,
                                            BlockSet bc,
-                                           NumberReplicas numberReplicas) {
+                                           ReplicaCount replicaCount) {
     final int numExpected = bc.getBlockReplication();
-    final int numLive = numberReplicas.liveReplicas();
+    final int numLive = replicaCount.liveReplicas();
     if (numLive >= numExpected
         && blockManager.isPlacementPolicySatisfied(block)) {
       // Block has enough replica, skip
@@ -277,7 +277,7 @@ public class DecommissionManager {
         }
       } else {
         // Can decom a non-UC as long as the default replication is met
-        if (numLive >= blockManager.defaultReplication) {
+        if (numLive >= blockManager.defaultReplicaCount) {
           return true;
         }
       }
@@ -286,7 +286,7 @@ public class DecommissionManager {
   }
 
   private static void logBlockReplicationInfo(Block block, BlockSet bc,
-      DatanodeDescriptor srcNode, NumberReplicas num,
+      DatanodeDescriptor srcNode, ReplicaCount num,
       Iterable<DatanodeStorageInfo> storages) {
     int curReplicas = num.liveReplicas();
     int curExpectedReplicas = bc.getBlockReplication();
@@ -573,7 +573,7 @@ public class DecommissionManager {
         final BlockNeighborInfo block = it.next();
         // Remove the block from the list if it's no longer in the block map,
         // e.g. the containing file has been deleted
-        if (blockManager.blocksMap.getStoredBlock(block) == null) {
+        if (blockManager.blocksMap.getBlockNeighborInfo(block) == null) {
           LOG.trace("Removing unknown block {}", block);
           it.remove();
           continue;
@@ -584,7 +584,7 @@ public class DecommissionManager {
           continue;
         }
 
-        final NumberReplicas num = blockManager.countNodes(block);
+        final ReplicaCount num = blockManager.getReplicaCount(block);
         final int liveReplicas = num.liveReplicas();
         final int curReplicas = liveReplicas;
 

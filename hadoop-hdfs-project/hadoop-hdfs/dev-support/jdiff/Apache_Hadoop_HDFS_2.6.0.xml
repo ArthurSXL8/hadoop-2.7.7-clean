@@ -6843,7 +6843,7 @@ order written.</p>]]>
     </doc>
   </interface>
   <!-- end interface org.apache.hadoop.hdfs.server.blockmanagement.MutableBlockCollection -->
-  <!-- start class org.apache.hadoop.hdfs.server.blockmanagement.NumberReplicas -->
+  <!-- start class org.apache.hadoop.hdfs.server.blockmanagement.ReplicaCount -->
   <class name="NumberReplicas" extends="java.lang.Object"
     abstract="false"
     static="false" final="false" visibility="public"
@@ -6883,7 +6883,7 @@ order written.</p>]]>
  the number of decommissined Replicas.]]>
     </doc>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.blockmanagement.NumberReplicas -->
+  <!-- end class org.apache.hadoop.hdfs.server.blockmanagement.ReplicaCount -->
   <!-- start class org.apache.hadoop.hdfs.server.blockmanagement.UnresolvedTopologyException -->
   <class name="UnresolvedTopologyException" extends="java.io.IOException"
     abstract="false"

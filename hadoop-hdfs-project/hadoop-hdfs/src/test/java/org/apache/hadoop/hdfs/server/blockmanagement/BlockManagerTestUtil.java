@@ -86,7 +86,7 @@ public class BlockManagerTestUtil {
     namesystem.readLock();
     try {
       return new int[]{getNumberOfRacks(bm, b),
-          bm.countNodes(b).liveReplicas(),
+          bm.getReplicaCount(b).liveReplicas(),
           bm.neededReplications.contains(b) ? 1 : 0};
     } finally {
       namesystem.readUnlock();
@@ -149,7 +149,7 @@ public class BlockManagerTestUtil {
    * @return corruptReplicas from block manager
    */
   public static  CorruptReplicasMap getCorruptReplicas(final BlockManager blockManager){
-    return blockManager.corruptReplicas;
+    return blockManager.corruptReplicasMap;
     
   }
 

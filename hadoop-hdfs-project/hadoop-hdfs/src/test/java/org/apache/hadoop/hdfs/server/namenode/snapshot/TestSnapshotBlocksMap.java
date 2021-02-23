@@ -88,7 +88,7 @@ public class TestSnapshotBlocksMap {
   }
 
   void assertAllNull(INodeFile inode, Path path, String[] snapshots) throws Exception { 
-    Assert.assertNull(inode.getBlocks());
+    Assert.assertNull(inode.getBlockNeighborInfos());
     assertINodeNull(path.toString());
     assertINodeNullInSnapshots(path, snapshots);
   }
@@ -107,8 +107,8 @@ public class TestSnapshotBlocksMap {
   static INodeFile assertBlockCollection(String path, int numBlocks,
      final FSDirectory dir, final BlockManager blkManager) throws Exception {
     final INodeFile file = INodeFile.valueOf(dir.getINode(path), path);
-    assertEquals(numBlocks, file.getBlocks().length);
-    for(BlockNeighborInfo b : file.getBlocks()) {
+    assertEquals(numBlocks, file.getBlockNeighborInfos().length);
+    for(BlockNeighborInfo b : file.getBlockNeighborInfos()) {
       assertBlockCollection(blkManager, file, b);
     }
     return file;
@@ -117,7 +117,7 @@ public class TestSnapshotBlocksMap {
   static void assertBlockCollection(final BlockManager blkManager,
       final INodeFile file, final BlockNeighborInfo b) {
     Assert.assertSame(b, blkManager.getStoredBlock(b));
-    Assert.assertSame(file, blkManager.getBlockCollection(b));
+    Assert.assertSame(file, blkManager.getBlockSet(b));
     Assert.assertSame(file, b.getBlockCollection());
   }
 
@@ -146,11 +146,11 @@ public class TestSnapshotBlocksMap {
     {
       final INodeFile f2 = assertBlockCollection(file2.toString(), 3, fsdir,
           blockmanager);
-      BlockNeighborInfo[] blocks = f2.getBlocks();
+      BlockNeighborInfo[] blocks = f2.getBlockNeighborInfos();
       hdfs.delete(sub2, true);
       // The INode should have been removed from the blocksMap
       for(BlockNeighborInfo b : blocks) {
-        assertNull(blockmanager.getBlockCollection(b));
+        assertNull(blockmanager.getBlockSet(b));
       }
     }
     
@@ -177,7 +177,7 @@ public class TestSnapshotBlocksMap {
     // Check the block information for file0
     final INodeFile f0 = assertBlockCollection(file0.toString(), 4, fsdir,
         blockmanager);
-    BlockNeighborInfo[] blocks0 = f0.getBlocks();
+    BlockNeighborInfo[] blocks0 = f0.getBlockNeighborInfos();
     
     // Also check the block information for snapshot of file0
     Path snapshotFile0 = SnapshotTestHelper.getSnapshotPath(sub1, "s0",
@@ -188,7 +188,7 @@ public class TestSnapshotBlocksMap {
     hdfs.delete(file0, true);
     // Make sure the blocks of file0 is still in blocksMap
     for(BlockNeighborInfo b : blocks0) {
-      assertNotNull(blockmanager.getBlockCollection(b));
+      assertNotNull(blockmanager.getBlockSet(b));
     }
     assertBlockCollection(snapshotFile0.toString(), 4, fsdir, blockmanager);
     
@@ -202,7 +202,7 @@ public class TestSnapshotBlocksMap {
 
     // Make sure the first block of file0 is still in blocksMap
     for(BlockNeighborInfo b : blocks0) {
-      assertNotNull(blockmanager.getBlockCollection(b));
+      assertNotNull(blockmanager.getBlockSet(b));
     }
     assertBlockCollection(snapshotFile0.toString(), 4, fsdir, blockmanager);
 
@@ -293,7 +293,7 @@ public class TestSnapshotBlocksMap {
     hdfs.append(bar);
 
     INodeFile barNode = fsdir.getINode4Write(bar.toString()).asFile();
-    BlockNeighborInfo[] blks = barNode.getBlocks();
+    BlockNeighborInfo[] blks = barNode.getBlockNeighborInfos();
     assertEquals(1, blks.length);
     assertEquals(BLOCKSIZE, blks[0].getNumBytes());
     ExtendedBlock previous = new ExtendedBlock(fsn.getBlockPoolId(), blks[0]);
@@ -304,7 +304,7 @@ public class TestSnapshotBlocksMap {
     SnapshotTestHelper.createSnapshot(hdfs, foo, "s1");
 
     barNode = fsdir.getINode4Write(bar.toString()).asFile();
-    blks = barNode.getBlocks();
+    blks = barNode.getBlockNeighborInfos();
     assertEquals(2, blks.length);
     assertEquals(BLOCKSIZE, blks[0].getNumBytes());
     assertEquals(0, blks[1].getNumBytes());
@@ -313,7 +313,7 @@ public class TestSnapshotBlocksMap {
     final Path sbar = SnapshotTestHelper.getSnapshotPath(foo, "s1",
         bar.getName());
     barNode = fsdir.getINode(sbar.toString()).asFile();
-    blks = barNode.getBlocks();
+    blks = barNode.getBlockNeighborInfos();
     assertEquals(1, blks.length);
     assertEquals(BLOCKSIZE, blks[0].getNumBytes());
   }
@@ -331,7 +331,7 @@ public class TestSnapshotBlocksMap {
     hdfs.append(bar);
 
     INodeFile barNode = fsdir.getINode4Write(bar.toString()).asFile();
-    BlockNeighborInfo[] blks = barNode.getBlocks();
+    BlockNeighborInfo[] blks = barNode.getBlockNeighborInfos();
     assertEquals(1, blks.length);
     ExtendedBlock previous = new ExtendedBlock(fsn.getBlockPoolId(), blks[0]);
     cluster.getNameNodeRpc()
@@ -341,7 +341,7 @@ public class TestSnapshotBlocksMap {
     SnapshotTestHelper.createSnapshot(hdfs, foo, "s1");
 
     barNode = fsdir.getINode4Write(bar.toString()).asFile();
-    blks = barNode.getBlocks();
+    blks = barNode.getBlockNeighborInfos();
     assertEquals(2, blks.length);
     assertEquals(BLOCKSIZE, blks[0].getNumBytes());
     assertEquals(0, blks[1].getNumBytes());
@@ -349,7 +349,7 @@ public class TestSnapshotBlocksMap {
     hdfs.delete(subDir, true);
     final Path sbar = SnapshotTestHelper.getSnapshotPath(foo, "s1", "sub/bar");
     barNode = fsdir.getINode(sbar.toString()).asFile();
-    blks = barNode.getBlocks();
+    blks = barNode.getBlockNeighborInfos();
     assertEquals(1, blks.length);
     assertEquals(BLOCKSIZE, blks[0].getNumBytes());
   }
@@ -370,7 +370,7 @@ public class TestSnapshotBlocksMap {
     hdfs.append(bar);
 
     INodeFile barNode = fsdir.getINode4Write(bar.toString()).asFile();
-    BlockNeighborInfo[] blks = barNode.getBlocks();
+    BlockNeighborInfo[] blks = barNode.getBlockNeighborInfos();
     assertEquals(1, blks.length);
     ExtendedBlock previous = new ExtendedBlock(fsn.getBlockPoolId(), blks[0]);
     cluster.getNameNodeRpc()
@@ -384,7 +384,7 @@ public class TestSnapshotBlocksMap {
     hdfs.rename(bar, bar2);
     
     INodeFile bar2Node = fsdir.getINode4Write(bar2.toString()).asFile();
-    blks = bar2Node.getBlocks();
+    blks = bar2Node.getBlockNeighborInfos();
     assertEquals(2, blks.length);
     assertEquals(BLOCKSIZE, blks[0].getNumBytes());
     assertEquals(0, blks[1].getNumBytes());
@@ -394,7 +394,7 @@ public class TestSnapshotBlocksMap {
     
     final Path sbar = SnapshotTestHelper.getSnapshotPath(foo, "s1", "sub/bar");
     barNode = fsdir.getINode(sbar.toString()).asFile();
-    blks = barNode.getBlocks();
+    blks = barNode.getBlockNeighborInfos();
     assertEquals(1, blks.length);
     assertEquals(BLOCKSIZE, blks[0].getNumBytes());
   }
@@ -411,7 +411,7 @@ public class TestSnapshotBlocksMap {
     
     // Create a zero-length file.
     DFSTestUtil.createFile(hdfs, bar, 0, REPLICATION, 0L);
-    assertEquals(0, fsdir.getINode4Write(bar.toString()).asFile().getBlocks().length);
+    assertEquals(0, fsdir.getINode4Write(bar.toString()).asFile().getBlockNeighborInfos().length);
 
     // Create a snapshot that includes that file.
     SnapshotTestHelper.createSnapshot(hdfs, foo, "s0");
@@ -421,7 +421,7 @@ public class TestSnapshotBlocksMap {
     out.write(testData);
     out.close();
     INodeFile barNode = fsdir.getINode4Write(bar.toString()).asFile();
-    BlockNeighborInfo[] blks = barNode.getBlocks();
+    BlockNeighborInfo[] blks = barNode.getBlockNeighborInfos();
     assertEquals(1, blks.length);
     assertEquals(testData.length, blks[0].getNumBytes());
     

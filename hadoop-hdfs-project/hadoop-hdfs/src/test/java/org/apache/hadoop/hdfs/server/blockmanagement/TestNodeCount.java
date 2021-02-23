@@ -48,7 +48,7 @@ public class TestNodeCount {
   long timeout = 0;
   long failtime = 0;
   Block lastBlock = null;
-  NumberReplicas lastNum = null;
+  ReplicaCount lastNum = null;
 
   @Test
   public void testNodeCount() throws Exception {
@@ -165,11 +165,11 @@ public class TestNodeCount {
   }
 
   /* threadsafe read of the replication counts for this block */
-  NumberReplicas countNodes(Block block, FSNamesystem namesystem) {
+  ReplicaCount countNodes(Block block, FSNamesystem namesystem) {
     namesystem.readLock();
     try {
       lastBlock = block;
-      lastNum = namesystem.getBlockManager().countNodes(block);
+      lastNum = namesystem.getBlockManager().getReplicaCount(block);
       return lastNum;
     }
     finally {

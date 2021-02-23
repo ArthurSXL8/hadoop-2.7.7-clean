@@ -806,7 +806,7 @@ public class TestFsck {
       // intentionally corrupt NN data structure
       INodeFile node = (INodeFile) cluster.getNamesystem().dir.getINode
           (fileName, true);
-      final BlockNeighborInfo[] blocks = node.getBlocks();
+      final BlockNeighborInfo[] blocks = node.getBlockNeighborInfos();
       assertEquals(blocks.length, 1);
       blocks[0].setNumBytes(-1L);  // set the block length to be negative
       
@@ -1308,8 +1308,8 @@ public class TestFsck {
       //decommission datanode
       ExtendedBlock eb = util.getFirstBlock(dfs, path);
       DatanodeDescriptor dn = cluster.getNameNode().getNamesystem()
-          .getBlockManager().getBlockCollection(eb.getLocalBlock())
-          .getBlocks()[0].getDatanode(0);
+          .getBlockManager().getBlockSet(eb.getLocalBlock())
+          .getBlockNeighborInfos()[0].getDatanode(0);
       cluster.getNameNode().getNamesystem().getBlockManager()
           .getDatanodeManager().getDecomManager().startDecommission(dn);
       String dnName = dn.getXferAddr();

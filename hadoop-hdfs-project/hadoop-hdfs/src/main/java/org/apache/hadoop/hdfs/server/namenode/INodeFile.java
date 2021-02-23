@@ -120,7 +120,7 @@ public class INodeFile extends INodeWithAdditionalFields
 
   private long header = 0L;
 
-  private BlockNeighborInfo[] blocks;
+  private BlockNeighborInfo[] blockNeighborInfos;
 
   INodeFile(long id, byte[] name, PermissionStatus permissions, long mtime,
             long atime, BlockNeighborInfo[] blklist, short replication,
@@ -130,18 +130,18 @@ public class INodeFile extends INodeWithAdditionalFields
   }
 
   INodeFile(long id, byte[] name, PermissionStatus permissions, long mtime,
-            long atime, BlockNeighborInfo[] blklist, short replication,
+            long atime, BlockNeighborInfo[] blockNeighborInfos, short replication,
             long preferredBlockSize, byte storagePolicyID) {
     super(id, name, permissions, mtime, atime);
     header = HeaderFormat.toLong(preferredBlockSize, replication,
         storagePolicyID);
-    this.blocks = blklist;
+    this.blockNeighborInfos = blockNeighborInfos;
   }
   
   public INodeFile(INodeFile that) {
     super(that);
     this.header = that.header;
-    this.blocks = that.blocks;
+    this.blockNeighborInfos = that.blockNeighborInfos;
     this.features = that.features;
   }
   
@@ -215,19 +215,19 @@ public class INodeFile extends INodeWithAdditionalFields
 
   /** Assert all blocks are complete. */
   private void assertAllBlocksComplete() {
-    if (blocks == null) {
+    if (blockNeighborInfos == null) {
       return;
     }
-    for (int i = 0; i < blocks.length; i++) {
-      Preconditions.checkState(blocks[i].isComplete(), "Failed to finalize"
+    for (int i = 0; i < blockNeighborInfos.length; i++) {
+      Preconditions.checkState(blockNeighborInfos[i].isComplete(), "Failed to finalize"
           + " %s %s since blocks[%s] is non-complete, where blocks=%s.",
-          getClass().getSimpleName(), this, i, Arrays.asList(blocks));
+          getClass().getSimpleName(), this, i, Arrays.asList(blockNeighborInfos));
     }
   }
 
   @Override // BlockCollection
-  public void setBlock(int index, BlockNeighborInfo blk) {
-    this.blocks[index] = blk;
+  public void setBlock(int index, BlockNeighborInfo blockNeighborInfo) {
+    this.blockNeighborInfos[index] = blockNeighborInfo;
   }
 
   @Override // BlockCollection, the file should be under construction
@@ -251,21 +251,21 @@ public class INodeFile extends INodeWithAdditionalFields
    * Remove a block from the block list. This block should be
    * the last one on the list.
    */
-  boolean removeLastBlock(Block oldblock) {
+  boolean removeLastBlock(Block old) {
     Preconditions.checkState(isUnderConstruction(),
         "file is no longer under construction");
-    if (blocks == null || blocks.length == 0) {
+    if (blockNeighborInfos == null || blockNeighborInfos.length == 0) {
       return false;
     }
-    int size_1 = blocks.length - 1;
-    if (!blocks[size_1].equals(oldblock)) {
+    int size_1 = blockNeighborInfos.length - 1;
+    if (!blockNeighborInfos[size_1].equals(old)) {
       return false;
     }
 
     //copy to a new list
     BlockNeighborInfo[] newlist = new BlockNeighborInfo[size_1];
-    System.arraycopy(blocks, 0, newlist, 0, size_1);
-    setBlocks(newlist);
+    System.arraycopy(blockNeighborInfos, 0, newlist, 0, size_1);
+    setBlockNeighborInfos(newlist);
     return true;
   }
 
@@ -423,28 +423,28 @@ public class INodeFile extends INodeWithAdditionalFields
 
   /** @return the blocks of the file. */
   @Override
-  public BlockNeighborInfo[] getBlocks() {
-    return this.blocks;
+  public BlockNeighborInfo[] getBlockNeighborInfos() {
+    return this.blockNeighborInfos;
   }
 
   /** @return blocks of the file corresponding to the snapshot. */
   public BlockNeighborInfo[] getBlocks(int snapshot) {
     if(snapshot == CURRENT_STATE_ID || getDiffs() == null)
-      return getBlocks();
+      return getBlockNeighborInfos();
     FileDiff diff = getDiffs().getDiffById(snapshot);
     BlockNeighborInfo[] snapshotBlocks =
-        diff == null ? getBlocks() : diff.getBlocks();
+        diff == null ? getBlockNeighborInfos() : diff.getBlocks();
     if(snapshotBlocks != null)
       return snapshotBlocks;
     // Blocks are not in the current snapshot
     // Find next snapshot with blocks present or return current file blocks
     snapshotBlocks = getDiffs().findLaterSnapshotBlocks(snapshot);
-    return (snapshotBlocks == null) ? getBlocks() : snapshotBlocks;
+    return (snapshotBlocks == null) ? getBlockNeighborInfos() : snapshotBlocks;
   }
 
   void updateBlockCollection() {
-    if (blocks != null) {
-      for(BlockNeighborInfo b : blocks) {
+    if (blockNeighborInfos != null) {
+      for(BlockNeighborInfo b : blockNeighborInfos) {
         b.setBlockSet(this);
       }
     }
@@ -454,22 +454,22 @@ public class INodeFile extends INodeWithAdditionalFields
    * append array of blocks to this.blocks
    */
   void concatBlocks(INodeFile[] inodes) {
-    int size = this.blocks.length;
+    int size = this.blockNeighborInfos.length;
     int totalAddedBlocks = 0;
     for(INodeFile f : inodes) {
-      totalAddedBlocks += f.blocks.length;
+      totalAddedBlocks += f.blockNeighborInfos.length;
     }
     
     BlockNeighborInfo[] newlist =
         new BlockNeighborInfo[size + totalAddedBlocks];
-    System.arraycopy(this.blocks, 0, newlist, 0, size);
+    System.arraycopy(this.blockNeighborInfos, 0, newlist, 0, size);
     
     for(INodeFile in: inodes) {
-      System.arraycopy(in.blocks, 0, newlist, size, in.blocks.length);
-      size += in.blocks.length;
+      System.arraycopy(in.blockNeighborInfos, 0, newlist, size, in.blockNeighborInfos.length);
+      size += in.blockNeighborInfos.length;
     }
 
-    setBlocks(newlist);
+    setBlockNeighborInfos(newlist);
     updateBlockCollection();
   }
   
@@ -477,20 +477,20 @@ public class INodeFile extends INodeWithAdditionalFields
    * add a block to the block list
    */
   void addBlock(BlockNeighborInfo newblock) {
-    if (this.blocks == null) {
-      this.setBlocks(new BlockNeighborInfo[]{newblock});
+    if (this.blockNeighborInfos == null) {
+      this.setBlockNeighborInfos(new BlockNeighborInfo[]{newblock});
     } else {
-      int size = this.blocks.length;
+      int size = this.blockNeighborInfos.length;
       BlockNeighborInfo[] newlist = new BlockNeighborInfo[size + 1];
-      System.arraycopy(this.blocks, 0, newlist, 0, size);
+      System.arraycopy(this.blockNeighborInfos, 0, newlist, 0, size);
       newlist[size] = newblock;
-      this.setBlocks(newlist);
+      this.setBlockNeighborInfos(newlist);
     }
   }
 
   /** Set the blocks. */
-  public void setBlocks(BlockNeighborInfo[] blocks) {
-    this.blocks = blocks;
+  public void setBlockNeighborInfos(BlockNeighborInfo[] blockNeighborInfos) {
+    this.blockNeighborInfos = blockNeighborInfos;
   }
 
   @Override
@@ -525,13 +525,13 @@ public class INodeFile extends INodeWithAdditionalFields
   @Override
   public void destroyAndCollectBlocks(BlockStoragePolicySuite bsps,
       BlocksMapUpdateInfo collectedBlocks, final List<INode> removedINodes) {
-    if (blocks != null && collectedBlocks != null) {
-      for (BlockNeighborInfo blk : blocks) {
+    if (blockNeighborInfos != null && collectedBlocks != null) {
+      for (BlockNeighborInfo blk : blockNeighborInfos) {
         collectedBlocks.addDeleteBlock(blk);
         blk.setBlockSet(null);
       }
     }
-    setBlocks(BlockNeighborInfo.EMPTY_ARRAY);
+    setBlockNeighborInfos(BlockNeighborInfo.EMPTY_ARRAY);
     if (getAclFeature() != null) {
       AclStorage.removeAclFeature(getAclFeature());
     }
@@ -675,13 +675,13 @@ public class INodeFile extends INodeWithAdditionalFields
    */
   public final long computeFileSize(boolean includesLastUcBlock,
       boolean usePreferredBlockSize4LastUcBlock) {
-    if (blocks == null || blocks.length == 0) {
+    if (blockNeighborInfos == null || blockNeighborInfos.length == 0) {
       return 0;
     }
-    final int last = blocks.length - 1;
+    final int last = blockNeighborInfos.length - 1;
     //check if the last block is BlockInfoUnderConstruction
-    long size = blocks[last].getNumBytes();
-    if (blocks[last] instanceof BlockNeighborInfoUnderConstruction) {
+    long size = blockNeighborInfos[last].getNumBytes();
+    if (blockNeighborInfos[last] instanceof BlockNeighborInfoUnderConstruction) {
        if (!includesLastUcBlock) {
          size = 0;
        } else if (usePreferredBlockSize4LastUcBlock) {
@@ -690,7 +690,7 @@ public class INodeFile extends INodeWithAdditionalFields
     }
     //sum other blocks
     for(int i = 0; i < last; i++) {
-      size += blocks[i].getNumBytes();
+      size += blockNeighborInfos[i].getNumBytes();
     }
     return size;
   }
@@ -712,7 +712,7 @@ public class INodeFile extends INodeWithAdditionalFields
 
     // Collect all distinct blocks
     long size = 0;
-    Set<Block> allBlocks = new HashSet<Block>(Arrays.asList(getBlocks()));
+    Set<Block> allBlocks = new HashSet<Block>(Arrays.asList(getBlockNeighborInfos()));
     List<FileDiff> diffs = sf.getDiffs().asList();
     for(FileDiff diff : diffs) {
       BlockNeighborInfo[] diffBlocks = diff.getBlocks();
@@ -761,20 +761,21 @@ public class INodeFile extends INodeWithAdditionalFields
    * Return the penultimate allocated block for this file.
    */
   BlockNeighborInfo getPenultimateBlock() {
-    if (blocks == null || blocks.length <= 1) {
+    if (blockNeighborInfos == null || blockNeighborInfos.length <= 1) {
       return null;
     }
-    return blocks[blocks.length - 2];
+    return blockNeighborInfos[blockNeighborInfos.length - 2];
   }
 
   @Override
   public BlockNeighborInfo getLastBlock() {
-    return blocks == null || blocks.length == 0? null: blocks[blocks.length-1];
+    return blockNeighborInfos == null || blockNeighborInfos.length == 0? null: blockNeighborInfos[
+      blockNeighborInfos.length-1];
   }
 
   @Override
   public int numBlocks() {
-    return blocks == null ? 0 : blocks.length;
+    return blockNeighborInfos == null ? 0 : blockNeighborInfos.length;
   }
 
   @VisibleForTesting
@@ -785,7 +786,8 @@ public class INodeFile extends INodeWithAdditionalFields
     out.print(", fileSize=" + computeFileSize(snapshotId));
     // only compare the first block
     out.print(", blocks=");
-    out.print(blocks == null || blocks.length == 0? null: blocks[0]);
+    out.print(
+      blockNeighborInfos == null || blockNeighborInfos.length == 0? null: blockNeighborInfos[0]);
     out.println();
   }
 
@@ -795,7 +797,7 @@ public class INodeFile extends INodeWithAdditionalFields
    */
   public long collectBlocksBeyondMax(final long max,
       final BlocksMapUpdateInfo collectedBlocks) {
-    final BlockNeighborInfo[] oldBlocks = getBlocks();
+    final BlockNeighborInfo[] oldBlocks = getBlockNeighborInfos();
     if (oldBlocks == null)
       return 0;
     // find the minimum n such that the size of the first n blocks > max
@@ -826,7 +828,7 @@ public class INodeFile extends INodeWithAdditionalFields
    * @return the quota usage delta (not considering replication factor)
    */
   long computeQuotaDeltaForTruncate(final long newLength) {
-    final BlockNeighborInfo[] blocks = getBlocks();
+    final BlockNeighborInfo[] blocks = getBlockNeighborInfos();
     if (blocks == null || blocks.length == 0) {
       return 0;
     }
@@ -863,15 +865,15 @@ public class INodeFile extends INodeWithAdditionalFields
       newBlocks = BlockNeighborInfo.EMPTY_ARRAY;
     } else {
       newBlocks = new BlockNeighborInfo[n];
-      System.arraycopy(getBlocks(), 0, newBlocks, 0, n);
+      System.arraycopy(getBlockNeighborInfos(), 0, newBlocks, 0, n);
     }
     // set new blocks
-    setBlocks(newBlocks);
+    setBlockNeighborInfos(newBlocks);
   }
 
   public void collectBlocksBeyondSnapshot(BlockNeighborInfo[] snapshotBlocks,
                                           BlocksMapUpdateInfo collectedBlocks) {
-    BlockNeighborInfo[] oldBlocks = getBlocks();
+    BlockNeighborInfo[] oldBlocks = getBlockNeighborInfos();
     if(snapshotBlocks == null || oldBlocks == null)
       return;
     // Skip blocks in common between the file and the snapshot

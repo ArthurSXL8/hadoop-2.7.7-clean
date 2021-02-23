@@ -369,7 +369,7 @@ public class CacheReplicationMonitor extends Thread implements Closeable {
    * @param file The file.
    */
   private void rescanFile(CacheDirective directive, INodeFile file) {
-    BlockNeighborInfo[] blockInfos = file.getBlocks();
+    BlockNeighborInfo[] blockInfos = file.getBlockNeighborInfos();
 
     // Increment the "needed" statistics
     directive.addFilesNeeded(1);

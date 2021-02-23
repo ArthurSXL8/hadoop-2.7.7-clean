@@ -759,7 +759,7 @@ public class TestRetryCacheWithHA {
       INodeFile fileNode = cluster.getNamesystem(0).getFSDirectory()
           .getINode4Write(file).asFile();
       BlockNeighborInfoUnderConstruction blkUC =
-          (BlockNeighborInfoUnderConstruction) (fileNode.getBlocks())[1];
+          (BlockNeighborInfoUnderConstruction) (fileNode.getBlockNeighborInfos())[1];
       int datanodeNum = blkUC.getExpectedStorageLocations().length;
       for (int i = 0; i < CHECKTIMES && datanodeNum != 2; i++) {
         Thread.sleep(1000);

@@ -588,7 +588,7 @@ public class TestBlockManager {
             aBlock,
             cntNodes,
             liveNodes,
-            new NumberReplicas(),
+            new ReplicaCount(),
             UnderReplicatedBlocks.QUEUE_HIGHEST_PRIORITY));
 
     assertNull("Does not choose a source node for a less-than-highest-priority"
@@ -598,7 +598,7 @@ public class TestBlockManager {
             aBlock,
             cntNodes,
             liveNodes,
-            new NumberReplicas(),
+            new ReplicaCount(),
             UnderReplicatedBlocks.QUEUE_VERY_UNDER_REPLICATED));
 
     // Increase the replication count to test replication count > hard limit
@@ -611,7 +611,7 @@ public class TestBlockManager {
             aBlock,
             cntNodes,
             liveNodes,
-            new NumberReplicas(),
+            new ReplicaCount(),
             UnderReplicatedBlocks.QUEUE_HIGHEST_PRIORITY));
   }
 
@@ -637,7 +637,7 @@ public class TestBlockManager {
             aBlock,
             cntNodes,
             liveNodes,
-            new NumberReplicas(),
+            new ReplicaCount(),
             UnderReplicatedBlocks.QUEUE_UNDER_REPLICATED));
 
 
@@ -651,7 +651,7 @@ public class TestBlockManager {
             aBlock,
             cntNodes,
             liveNodes,
-            new NumberReplicas(),
+            new ReplicaCount(),
             UnderReplicatedBlocks.QUEUE_UNDER_REPLICATED));
   }
 

@@ -263,13 +263,13 @@ public class TestSnapshotDeletion {
     DFSTestUtil.createFile(hdfs, tempFile, BLOCKSIZE, REPLICATION, seed);
     final INodeFile temp = TestSnapshotBlocksMap.assertBlockCollection(
         tempFile.toString(), 1, fsdir, blockmanager);
-    BlockNeighborInfo[] blocks = temp.getBlocks();
+    BlockNeighborInfo[] blocks = temp.getBlockNeighborInfos();
     hdfs.delete(tempDir, true);
     // check dir's quota usage
     checkQuotaUsageComputation(dir, 8, BLOCKSIZE * REPLICATION * 3);
     // check blocks of tempFile
     for (BlockNeighborInfo b : blocks) {
-      assertNull(blockmanager.getBlockCollection(b));
+      assertNull(blockmanager.getBlockSet(b));
     }
     
     // make a change: create a new file under subsub
@@ -339,14 +339,14 @@ public class TestSnapshotDeletion {
     DFSTestUtil.createFile(hdfs, newFile, BLOCKSIZE, REPLICATION, seed);
     final INodeFile newFileNode = TestSnapshotBlocksMap.assertBlockCollection(
         newFile.toString(), 1, fsdir, blockmanager);
-    blocks = newFileNode.getBlocks();
+    blocks = newFileNode.getBlockNeighborInfos();
     checkQuotaUsageComputation(dir, 10L, BLOCKSIZE * REPLICATION * 5);
     hdfs.delete(sub, true);
     // while deletion, we add diff for subsub and metaChangeFile1, and remove
     // newFile
     checkQuotaUsageComputation(dir, 9L, BLOCKSIZE * REPLICATION * 4);
     for (BlockNeighborInfo b : blocks) {
-      assertNull(blockmanager.getBlockCollection(b));
+      assertNull(blockmanager.getBlockSet(b));
     }
     
     // make sure the whole subtree of sub is stored correctly in snapshot
@@ -482,7 +482,7 @@ public class TestSnapshotDeletion {
     
     final INodeFile toDeleteFileNode = TestSnapshotBlocksMap
         .assertBlockCollection(toDeleteFile.toString(), 1, fsdir, blockmanager);
-    BlockNeighborInfo[] blocks = toDeleteFileNode.getBlocks();
+    BlockNeighborInfo[] blocks = toDeleteFileNode.getBlockNeighborInfos();
     
     // create snapshot s0 on dir
     SnapshotTestHelper.createSnapshot(hdfs, dir, "s0");
@@ -509,7 +509,7 @@ public class TestSnapshotDeletion {
     // metaChangeFile's replication factor decreases
     checkQuotaUsageComputation(dir, 6, 2 * BLOCKSIZE * REPLICATION - BLOCKSIZE);
     for (BlockNeighborInfo b : blocks) {
-      assertNull(blockmanager.getBlockCollection(b));
+      assertNull(blockmanager.getBlockSet(b));
     }
     
     // check 1. there is no snapshot s0
@@ -802,7 +802,7 @@ public class TestSnapshotDeletion {
     FileStatus statusBeforeDeletion13 = hdfs.getFileStatus(file13_s1);
     INodeFile file14Node = TestSnapshotBlocksMap.assertBlockCollection(
         file14_s2.toString(), 1, fsdir, blockmanager);
-    BlockNeighborInfo[] blocks_14 = file14Node.getBlocks();
+    BlockNeighborInfo[] blocks_14 = file14Node.getBlockNeighborInfos();
     TestSnapshotBlocksMap.assertBlockCollection(file15_s2.toString(), 1, fsdir,
         blockmanager);
     
@@ -840,7 +840,7 @@ public class TestSnapshotDeletion {
     assertFalse(hdfs.exists(file14_s1));
     assertFalse(hdfs.exists(file15_s1));
     for (BlockNeighborInfo b : blocks_14) {
-      assertNull(blockmanager.getBlockCollection(b));
+      assertNull(blockmanager.getBlockSet(b));
     }
     
     INodeFile nodeFile13 = (INodeFile) fsdir.getINode(file13.toString());

@@ -3133,10 +3133,10 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       }
       src = fileState.path;
 
-      if (pendingFile.getBlocks().length >= maxBlocksPerFile) {
+      if (pendingFile.getBlockNeighborInfos().length >= maxBlocksPerFile) {
         throw new IOException("File has reached the limit on maximum number of"
             + " blocks (" + DFSConfigKeys.DFS_NAMENODE_MAX_BLOCKS_PER_FILE_KEY
-            + "): " + pendingFile.getBlocks().length + " >= "
+            + "): " + pendingFile.getBlockNeighborInfos().length + " >= "
             + maxBlocksPerFile);
       }
       blockSize = pendingFile.getPreferredBlockSize();
@@ -3591,7 +3591,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   boolean checkFileProgress(String src, INodeFile v, boolean checkall) {
     if (checkall) {
       // check all blocks of the file.
-      for (BlockNeighborInfo block: v.getBlocks()) {
+      for (BlockNeighborInfo block: v.getBlockNeighborInfos()) {
         if (!isCompleteBlock(src, block, blockManager.minReplication)) {
           return false;
         }
@@ -4021,7 +4021,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
     final INodeFile pendingFile = iip.getLastINode().asFile();
     int nrBlocks = pendingFile.numBlocks();
-    BlockNeighborInfo[] blocks = pendingFile.getBlocks();
+    BlockNeighborInfo[] blocks = pendingFile.getBlockNeighborInfos();
 
     int nrCompleteBlocks;
     BlockNeighborInfo curBlock = null;
@@ -4600,7 +4600,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     Preconditions.checkArgument(file.isUnderConstruction());
     getEditLog().logUpdateBlocks(path, file, logRetryCache);
     NameNode.stateChangeLog.debug("persistBlocks: {} with {} blocks is" +
-        " peristed to the file system", path, file.getBlocks().length);
+        " peristed to the file system", path, file.getBlockNeighborInfos().length);
   }
 
   /**
@@ -4614,7 +4614,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     // file is closed
     getEditLog().logCloseFile(path, file);
     NameNode.stateChangeLog.debug("closeFile: {} with {} blocks is persisted" +
-        " to the file system", path, file.getBlocks().length);
+        " to the file system", path, file.getBlockNeighborInfos().length);
   }
 
   /**
@@ -5095,7 +5095,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     getEditLog().logAddBlock(path, file);
     NameNode.stateChangeLog.debug("persistNewBlock: {} with new block {}," +
         " current total block count is {}", path,
-        file.getLastBlock().toString(), file.getBlocks().length);
+        file.getLastBlock().toString(), file.getBlockNeighborInfos().length);
   }
 
   /**
@@ -5729,7 +5729,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       return;
     BlockNeighborInfo storedBlock = getStoredBlock(b);
     if (storedBlock.isComplete()) {
-      safeMode.decrementSafeBlockCount((short)blockManager.countNodes(b).liveReplicas());
+      safeMode.decrementSafeBlockCount((short)blockManager.getReplicaCount(b).liveReplicas());
     }
   }
   
@@ -6619,9 +6619,9 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
       while (blkIterator.hasNext()) {
         Block blk = blkIterator.next();
-        final INode inode = (INode)blockManager.getBlockCollection(blk);
+        final INode inode = (INode)blockManager.getBlockSet(blk);
         skip++;
-        if (inode != null && blockManager.countNodes(blk).liveReplicas() == 0) {
+        if (inode != null && blockManager.getReplicaCount(blk).liveReplicas() == 0) {
           String src = inode.getFullPathName();
           if (src.startsWith(path)){
             corruptFiles.add(new CorruptFileBlockInfo(src, blk));

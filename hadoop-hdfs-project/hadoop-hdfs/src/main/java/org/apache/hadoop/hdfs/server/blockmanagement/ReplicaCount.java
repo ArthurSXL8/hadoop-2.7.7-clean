@@ -21,7 +21,7 @@ package org.apache.hadoop.hdfs.server.blockmanagement;
  * A immutable object that stores the number of live replicas and
  * the number of decommissioned Replicas.
  */
-public class NumberReplicas {
+public class ReplicaCount {
   private int liveReplicas;
 
   // Tracks only the decommissioning replicas
@@ -32,11 +32,11 @@ public class NumberReplicas {
   private int excessReplicas;
   private int replicasOnStaleNodes;
 
-  NumberReplicas() {
+  ReplicaCount() {
     initialize(0, 0, 0, 0, 0, 0);
   }
 
-  NumberReplicas(int live, int decommissioned, int decommissioning, int corrupt,
+  ReplicaCount(int live, int decommissioned, int decommissioning, int corrupt,
                  int excess, int stale) {
     initialize(live, decommissioned, decommissioning, corrupt, excess, stale);
   }

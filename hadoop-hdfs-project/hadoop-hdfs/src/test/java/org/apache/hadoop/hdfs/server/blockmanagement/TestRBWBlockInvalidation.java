@@ -56,9 +56,9 @@ import com.google.common.collect.Lists;
 public class TestRBWBlockInvalidation {
   private static final Log LOG = LogFactory.getLog(TestRBWBlockInvalidation.class);
   
-  private static NumberReplicas countReplicas(final FSNamesystem namesystem,
+  private static ReplicaCount countReplicas(final FSNamesystem namesystem,
       ExtendedBlock block) {
-    return namesystem.getBlockManager().countNodes(block.getLocalBlock());
+    return namesystem.getBlockManager().getReplicaCount(block.getLocalBlock());
   }
 
   /**

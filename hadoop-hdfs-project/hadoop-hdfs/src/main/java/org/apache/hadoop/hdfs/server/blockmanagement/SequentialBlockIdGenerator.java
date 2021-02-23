@@ -19,7 +19,6 @@ package org.apache.hadoop.hdfs.server.blockmanagement;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hdfs.protocol.Block;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockManager;
 import org.apache.hadoop.util.SequentialNumber;
 
 /**
@@ -61,6 +60,6 @@ public class SequentialBlockIdGenerator extends SequentialNumber {
    * Returns whether the given block is one pointed-to by a file.
    */
   private boolean isValidBlock(Block b) {
-    return (blockManager.getBlockCollection(b) != null);
+    return (blockManager.getBlockSet(b) != null);
   }
 }
