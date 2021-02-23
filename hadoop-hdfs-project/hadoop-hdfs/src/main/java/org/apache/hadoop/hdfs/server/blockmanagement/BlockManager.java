@@ -3545,21 +3545,21 @@ public class BlockManager {
     blocksMap.clear();
   }
   // async processing of an action, used for IBRs.
-  public void enqueueBlockOp(final Runnable action) throws IOException {
+  public void enqueueBlockOp(final Runnable runnable) throws IOException {
     try {
-      blockReportThread.enqueue(action);
+      blockReportThread.enqueue(runnable);
     } catch (InterruptedException ie) {
       throw new IOException(ie);
     }
   }
 
   // sync batch processing for a full BR.
-  public <T> T runBlockOp(final Callable<T> action)
+  public <T> T runBlockOp(final Callable<T> callable)
       throws IOException {
-    final FutureTask<T> future = new FutureTask<T>(action);
-    enqueueBlockOp(future);
+    final FutureTask<T> futureTask = new FutureTask<T>(callable);
+    enqueueBlockOp(futureTask);
     try {
-      return future.get();
+      return futureTask.get();
     } catch (ExecutionException ee) {
       Throwable cause = ee.getCause();
       if (cause == null) {
@@ -3645,8 +3645,8 @@ public class BlockManager {
       runnableBlockingQueue.clear();
     }
 
-    void enqueue(Runnable action) throws InterruptedException {
-      if (!runnableBlockingQueue.offer(action)) {
+    void enqueue(Runnable runnable) throws InterruptedException {
+      if (!runnableBlockingQueue.offer(runnable)) {
         if (!isAlive() && namesystem.isRunning()) {
           ExitUtil.terminate(1, getName()+" is not running");
         }
@@ -3655,7 +3655,7 @@ public class BlockManager {
           lastFull = now;
           LOG.info("Block report queue is full");
         }
-        runnableBlockingQueue.put(action);
+        runnableBlockingQueue.put(runnable);
       }
     }
   }
