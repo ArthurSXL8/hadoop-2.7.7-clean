@@ -690,7 +690,7 @@ public class FSImageFormat {
       if (blocks != null) {
         final BlockManager bm = namesystem.getBlockManager();
         for (int i = 0; i < blocks.length; i++) {
-          file.setBlock(i, bm.addBlockCollection(blocks[i], file));
+          file.setBlock(i, bm.addBlockSet(blocks[i], file));
         } 
       }
     }
@@ -960,7 +960,7 @@ public class FSImageFormat {
         if (oldnode.numBlocks() > 0) {
           BlockNeighborInfo ucBlock = cons.getLastBlock();
           // we do not replace the inode, just replace the last block of oldnode
-          BlockNeighborInfo info = namesystem.getBlockManager().addBlockCollection(
+          BlockNeighborInfo info = namesystem.getBlockManager().addBlockSet(
               ucBlock, oldnode);
           oldnode.setBlock(oldnode.numBlocks() - 1, info);
         }

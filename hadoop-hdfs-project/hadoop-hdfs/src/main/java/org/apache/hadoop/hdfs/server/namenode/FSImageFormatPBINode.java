@@ -212,7 +212,7 @@ public final class FSImageFormatPBINode {
       final BlockNeighborInfo[] blocks = file.getBlockNeighborInfos();
       if (blocks != null) {
         for (int i = 0; i < blocks.length; i++) {
-          file.setBlock(i, bm.addBlockCollection(blocks[i], file));
+          file.setBlock(i, bm.addBlockSet(blocks[i], file));
         }
       }
     }

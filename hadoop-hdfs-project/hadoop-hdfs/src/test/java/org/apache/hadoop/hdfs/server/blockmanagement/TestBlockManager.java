@@ -512,7 +512,7 @@ public class TestBlockManager {
     Mockito.doReturn((short)3).when(bc).getBlockReplication();
     BlockNeighborInfo blockInfo = blockOnNodes(blockId, nodes);
 
-    bm.blocksMap.addBlockCollection(blockInfo, bc);
+    bm.blocksMap.addBlockSet(blockInfo, bc);
     return blockInfo;
   }
 
@@ -817,7 +817,7 @@ public class TestBlockManager {
         new BlockNeighborInfo(block, (short) 3);
     BlockSet bc = Mockito.mock(BlockSet.class);
     Mockito.doReturn((short) 3).when(bc).getBlockReplication();
-    bm.blocksMap.addBlockCollection(blockInfo, bc);
+    bm.blocksMap.addBlockSet(blockInfo, bc);
     return blockInfo;
   }
 
@@ -827,7 +827,7 @@ public class TestBlockManager {
         new BlockNeighborInfoUnderConstruction(block, (short) 3);
     BlockSet bc = Mockito.mock(BlockSet.class);
     Mockito.doReturn((short) 3).when(bc).getBlockReplication();
-    bm.blocksMap.addBlockCollection(blockInfo, bc);
+    bm.blocksMap.addBlockSet(blockInfo, bc);
     return blockInfo;
   }
   

@@ -245,7 +245,7 @@ public class FSImageFormatPBSnapshot {
           Block blk = PBHelper.convert(bpl.get(j));
           BlockNeighborInfo storedBlock =  fsn.getBlockManager().getStoredBlock(blk);
           if(storedBlock == null) {
-            storedBlock = fsn.getBlockManager().addBlockCollection(
+            storedBlock = fsn.getBlockManager().addBlockSet(
                 new BlockNeighborInfo(blk, copy.getFileReplication()), file);
           }
           blocks[j] = storedBlock;

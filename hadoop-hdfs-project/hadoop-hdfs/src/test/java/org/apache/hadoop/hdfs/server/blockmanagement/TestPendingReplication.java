@@ -187,7 +187,7 @@ public class TestPendingReplication {
       Mockito.doReturn((short) 3).when(bc).getBlockReplication();
       // Place into blocksmap with GenerationStamp = 1
       blockInfo.setGenerationStamp(1);
-      blocksMap.addBlockCollection(blockInfo, bc);
+      blocksMap.addBlockSet(blockInfo, bc);
 
       assertEquals("Size of pendingReplications ", 1,
           pendingReplications.size());

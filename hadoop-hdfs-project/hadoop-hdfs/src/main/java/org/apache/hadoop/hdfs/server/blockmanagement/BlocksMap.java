@@ -36,22 +36,22 @@ import com.google.common.collect.Iterables;
  */
 class BlocksMap {
   private static class StorageIterator implements Iterator<DatanodeStorageInfo> {
-    private final BlockNeighborInfo blockInfo;
+    private final BlockNeighborInfo blockNeighborInfo;
     private int nextIdx = 0;
       
     StorageIterator(BlockNeighborInfo blkInfo) {
-      this.blockInfo = blkInfo;
+      this.blockNeighborInfo = blkInfo;
     }
 
     @Override
     public boolean hasNext() {
-      return blockInfo != null && nextIdx < blockInfo.getCapacity()
-              && blockInfo.getDatanode(nextIdx) != null;
+      return blockNeighborInfo != null && nextIdx < blockNeighborInfo.getCapacity()
+              && blockNeighborInfo.getDatanode(nextIdx) != null;
     }
 
     @Override
     public DatanodeStorageInfo next() {
-      return blockInfo.getStorageInfo(nextIdx++);
+      return blockNeighborInfo.getStorageInfo(nextIdx++);
     }
 
     @Override
@@ -104,7 +104,7 @@ class BlocksMap {
   /**
    * Add block b belonging to the specified block set to the map.
    */
-  BlockNeighborInfo addBlockCollection(BlockNeighborInfo blockNeighborInfo1, BlockSet blockSet) {
+  BlockNeighborInfo addBlockSet(BlockNeighborInfo blockNeighborInfo1, BlockSet blockSet) {
     BlockNeighborInfo blockNeighborInfo = blockAndNeighborSet.get(blockNeighborInfo1);
     if (blockNeighborInfo != blockNeighborInfo1) {
       blockNeighborInfo = blockNeighborInfo1;
@@ -126,8 +126,8 @@ class BlocksMap {
 
     blockNeighborInfo.setBlockSet(null);
     for(int idx = blockNeighborInfo.numNodes() - 1; idx >= 0; idx--) {
-      DatanodeDescriptor dn = blockNeighborInfo.getDatanode(idx);
-      dn.removeBlock(blockNeighborInfo); // remove from the list and wipe the location
+      DatanodeDescriptor datanodeDescriptor = blockNeighborInfo.getDatanode(idx);
+      datanodeDescriptor.removeBlock(blockNeighborInfo); // remove from the list and wipe the location
     }
   }
   

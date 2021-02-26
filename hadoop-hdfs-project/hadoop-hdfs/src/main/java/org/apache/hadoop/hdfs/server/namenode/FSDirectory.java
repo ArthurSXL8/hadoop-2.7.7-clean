@@ -503,7 +503,7 @@ public class FSDirectory implements Closeable {
             fileINode.getFileReplication(),
             BlockUCState.UNDER_CONSTRUCTION,
             targets);
-      getBlockManager().addBlockCollection(blockInfo, fileINode);
+      getBlockManager().addBlockSet(blockInfo, fileINode);
       fileINode.addBlock(blockInfo);
 
       if(NameNode.stateChangeLog.isDebugEnabled()) {

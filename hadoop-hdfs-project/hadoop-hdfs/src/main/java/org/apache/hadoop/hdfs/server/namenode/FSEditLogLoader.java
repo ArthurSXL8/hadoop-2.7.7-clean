@@ -974,7 +974,7 @@ public class FSEditLogLoader {
     // add the new block
     BlockNeighborInfo newBI = new BlockNeighborInfoUnderConstruction(
           newBlock, file.getBlockReplication());
-    fsNamesys.getBlockManager().addBlockCollection(newBI, file);
+    fsNamesys.getBlockManager().addBlockSet(newBI, file);
     file.addBlock(newBI);
     fsNamesys.getBlockManager().processQueuedMessagesForBlock(newBlock);
   }
@@ -1060,7 +1060,7 @@ public class FSEditLogLoader {
           // OP_ADD operations as each block is allocated.
           newBI = new BlockNeighborInfo(newBlock, file.getBlockReplication());
         }
-        fsNamesys.getBlockManager().addBlockCollection(newBI, file);
+        fsNamesys.getBlockManager().addBlockSet(newBI, file);
         file.addBlock(newBI);
         fsNamesys.getBlockManager().processQueuedMessagesForBlock(newBlock);
       }

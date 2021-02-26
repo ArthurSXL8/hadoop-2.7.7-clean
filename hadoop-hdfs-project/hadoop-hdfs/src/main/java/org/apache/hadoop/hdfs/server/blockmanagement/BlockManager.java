@@ -3350,14 +3350,14 @@ public class BlockManager {
     return this.neededReplications.getCorruptBlockSize();
   }
 
-  public long getMissingReplOneBlocksCount() {
+  public long getMissingReplicationOneBlocksCount() {
     // not locking
     return this.neededReplications.getCorruptReplOneBlockSize();
   }
 
-  public BlockNeighborInfo addBlockCollection(BlockNeighborInfo block,
-                                              BlockSet bc) {
-    return blocksMap.addBlockCollection(block, bc);
+  public BlockNeighborInfo addBlockSet(BlockNeighborInfo blockNeighborInfo,
+                                              BlockSet blockSet) {
+    return blocksMap.addBlockSet(blockNeighborInfo, blockSet);
   }
 
   public BlockSet getBlockSet(Block b) {

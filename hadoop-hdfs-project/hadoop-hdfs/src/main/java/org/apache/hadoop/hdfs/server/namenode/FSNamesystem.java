@@ -2205,7 +2205,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       truncatedBlockUC.setNumBytes(oldBlock.getNumBytes() - lastBlockDelta);
       truncatedBlockUC.setTruncateBlock(oldBlock);
       file.setLastBlock(truncatedBlockUC, blockManager.getStorages(oldBlock));
-      getBlockManager().addBlockCollection(truncatedBlockUC, file);
+      getBlockManager().addBlockSet(truncatedBlockUC, file);
 
       NameNode.stateChangeLog.debug(
           "BLOCK* prepareFileForTruncate: Scheduling copy-on-truncate to new" +
@@ -4806,7 +4806,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       "with replication factor 1"})
   public long getMissingReplOneBlocksCount() {
     // not locking
-    return blockManager.getMissingReplOneBlocksCount();
+    return blockManager.getMissingReplicationOneBlocksCount();
   }
   
   @Metric({"ExpiredHeartbeats", "Number of expired heartbeats"})
