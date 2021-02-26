@@ -720,7 +720,7 @@ public class TestBalancer {
             int totalNodes = cluster.getDataNodes().size();
             for (int i=0; i < nodes.getNumberofIncludeNodes(); i++) {
               nodes.getNodesToBeIncluded().add (cluster.getDataNodes().get(
-                  totalNodes-1-i).getDatanodeId().getXferAddr());
+                  totalNodes-1-i).getDatanodeId().getDataTransferIpAndPort());
             }
           }
           //polulate the exclude nodes
@@ -728,7 +728,7 @@ public class TestBalancer {
             int totalNodes = cluster.getDataNodes().size();
             for (int i=0; i < nodes.getNumberofExcludeNodes(); i++) {
               nodes.getNodesToBeExcluded().add (cluster.getDataNodes().get(
-                  totalNodes-1-i).getDatanodeId().getXferAddr());
+                  totalNodes-1-i).getDatanodeId().getDataTransferIpAndPort());
             }
           }
         }

@@ -100,7 +100,7 @@ class HostFileManager {
   }
 
   static InetSocketAddress resolvedAddressFromDatanodeID(DatanodeID id) {
-    return new InetSocketAddress(id.getIpAddr(), id.getXferPort());
+    return new InetSocketAddress(id.getIp(), id.getDataStreamingPort());
   }
 
   synchronized HostSet getIncludes() {

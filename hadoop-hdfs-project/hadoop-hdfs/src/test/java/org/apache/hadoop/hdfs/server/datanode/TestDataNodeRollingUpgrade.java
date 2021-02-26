@@ -40,7 +40,6 @@ import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hdfs.MiniDFSCluster.Builder;
 import org.apache.hadoop.hdfs.MiniDFSCluster.DataNodeProperties;
 import org.apache.hadoop.hdfs.TestRollingUpgrade;
-import org.apache.hadoop.hdfs.client.BlockReportOptions;
 import org.apache.hadoop.hdfs.protocol.BlockLocalPathInfo;
 import org.apache.hadoop.hdfs.protocol.ExtendedBlock;
 import org.apache.hadoop.hdfs.protocol.LocatedBlocks;
@@ -115,7 +114,7 @@ public class TestDataNodeRollingUpgrade {
 
   private File getTrashFileForBlock(File blockFile, boolean exists) {
     File trashFile = new File(
-        dn0.getStorage().getTrashDirectoryForBlockFile(blockPoolId, blockFile));
+        dn0.getDataStorage().getTrashDirectoryForBlockFile(blockPoolId, blockFile));
     assertEquals(exists, trashFile.exists());
     return trashFile;
   }
@@ -139,7 +138,7 @@ public class TestDataNodeRollingUpgrade {
 
   private boolean isTrashRootPresent() {
     // Trash is disabled; trash root does not exist
-    BlockPoolSliceStorage bps = dn0.getStorage().getBPStorage(blockPoolId);
+    BlockPoolSliceStorage bps = dn0.getDataStorage().getBPStorage(blockPoolId);
     return bps.trashEnabled();
   }
 
@@ -181,7 +180,7 @@ public class TestDataNodeRollingUpgrade {
 
     // Ensure datanode rolling upgrade is started
     assertFalse(dn0.getFSDataset().trashEnabled(blockPoolId));
-    BlockPoolSliceStorage bps = dn0.getStorage().getBPStorage(blockPoolId);
+    BlockPoolSliceStorage bps = dn0.getDataStorage().getBPStorage(blockPoolId);
     assertFalse(bps.trashEnabled());
   }
 
@@ -366,7 +365,7 @@ public class TestDataNodeRollingUpgrade {
       dn0 = cluster.getDataNodes().get(0);
       LOG.info("The DN has been restarted");
       assertFalse(trashFile0.exists());
-      assertFalse(dn0.getStorage().getBPStorage(blockPoolId).isTrashAllowed(blockFiles[0]));
+      assertFalse(dn0.getDataStorage().getBPStorage(blockPoolId).isTrashAllowed(blockFiles[0]));
 
       // Ensure that the block file for the first file was moved from 'trash' to 'previous'.
       assertTrue(isBlockFileInPrevious(blockFiles[0]));
@@ -427,7 +426,7 @@ public class TestDataNodeRollingUpgrade {
       dn0 = cluster.getDataNodes().get(0);
       LOG.info("The DN has been restarted");
       assertFalse(trashFile0.exists());
-      assertFalse(dn0.getStorage().getBPStorage(blockPoolId).isTrashAllowed(blockFiles[0]));
+      assertFalse(dn0.getDataStorage().getBPStorage(blockPoolId).isTrashAllowed(blockFiles[0]));
 
       // Ensure that the block file for the first file was moved from 'trash' to 'previous'.
       assertTrue(isBlockFileInPrevious(blockFiles[0]));

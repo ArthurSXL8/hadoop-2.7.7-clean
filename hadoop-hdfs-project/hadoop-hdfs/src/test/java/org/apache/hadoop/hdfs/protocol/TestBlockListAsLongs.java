@@ -43,10 +43,10 @@ import org.apache.hadoop.hdfs.protocol.proto.DatanodeProtocolProtos.BlockReportR
 import org.apache.hadoop.hdfs.protocolPB.DatanodeProtocolClientSideTranslatorPB;
 import org.apache.hadoop.hdfs.protocolPB.DatanodeProtocolPB;
 import org.apache.hadoop.hdfs.server.common.HdfsServerConstants.ReplicaState;
-import org.apache.hadoop.hdfs.server.datanode.FinalizedReplica;
+import org.apache.hadoop.hdfs.server.datanode.FinalizedReplicaMeta;
 import org.apache.hadoop.hdfs.server.datanode.Replica;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaBeingWritten;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaWaitingToBeRecovered;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaBeingWritten;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaWaitingToBeRecovered;
 import org.apache.hadoop.hdfs.server.protocol.BlockReportContext;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeRegistration;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeStorage;
@@ -80,7 +80,7 @@ public class TestBlockListAsLongs {
   @Test
   public void testFinalized() {
     BlockListAsLongs blocks = checkReport(
-        new FinalizedReplica(b1, null, null));
+        new FinalizedReplicaMeta(b1, null, null));
     assertArrayEquals(
         new long[] {
             1, 0,
@@ -92,7 +92,7 @@ public class TestBlockListAsLongs {
   @Test
   public void testUc() {
     BlockListAsLongs blocks = checkReport(
-      new ReplicaBeingWritten(b1, null, null, null));
+      new ReplicaMetaBeingWritten(b1, null, null, null));
     assertArrayEquals(
         new long[] {
             0, 1,
@@ -104,10 +104,10 @@ public class TestBlockListAsLongs {
   @Test
   public void testMix() {
     BlockListAsLongs blocks = checkReport(
-        new FinalizedReplica(b1, null, null),
-        new FinalizedReplica(b2, null, null),
-        new ReplicaBeingWritten(b3, null, null, null),
-        new ReplicaWaitingToBeRecovered(b4, null, null));
+        new FinalizedReplicaMeta(b1, null, null),
+        new FinalizedReplicaMeta(b2, null, null),
+        new ReplicaMetaBeingWritten(b3, null, null, null),
+        new ReplicaMetaWaitingToBeRecovered(b4, null, null));
     assertArrayEquals(
         new long[] {
             2, 2,
@@ -127,13 +127,13 @@ public class TestBlockListAsLongs {
       Block b = new Block(rand.nextLong(), i, i<<4);
       switch (rand.nextInt(2)) {
         case 0:
-          replicas[i] = new FinalizedReplica(b, null, null);
+          replicas[i] = new FinalizedReplicaMeta(b, null, null);
           break;
         case 1:
-          replicas[i] = new ReplicaBeingWritten(b, null, null, null);
+          replicas[i] = new ReplicaMetaBeingWritten(b, null, null, null);
           break;
         case 2:
-          replicas[i] = new ReplicaWaitingToBeRecovered(b, null, null);
+          replicas[i] = new ReplicaMetaWaitingToBeRecovered(b, null, null);
           break;
       }
     }
@@ -219,7 +219,7 @@ public class TestBlockListAsLongs {
     NamespaceInfo nsInfo = new NamespaceInfo(1, "cluster", "bp", 1);
     reg.setNamespaceInfo(nsInfo);
 
-    Replica r = new FinalizedReplica(new Block(1, 2, 3), null, null);
+    Replica r = new FinalizedReplicaMeta(new Block(1, 2, 3), null, null);
     BlockListAsLongs bbl = BlockListAsLongs.encode(Collections.singleton(r));
     DatanodeStorage storage = new DatanodeStorage("s1");
     StorageBlockReport[] sbr = { new StorageBlockReport(storage, bbl) };    

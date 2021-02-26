@@ -52,25 +52,25 @@ class BlockPoolManager {
     Maps.newHashMap();
   private final Map<String, BPOfferService> bpByBlockPoolId =
     Maps.newHashMap();
-  private final List<BPOfferService> offerServices =
+  private final List<BPOfferService> bpOfferServices =
     Lists.newArrayList();
 
-  private final DataNode dn;
+  private final DataNode dataNode;
 
   //This lock is used only to ensure exclusion of refreshNamenodes
   private final Object refreshNamenodesLock = new Object();
   
-  BlockPoolManager(DataNode dn) {
-    this.dn = dn;
+  BlockPoolManager(DataNode dataNode) {
+    this.dataNode = dataNode;
   }
   
-  synchronized void addBlockPool(BPOfferService bpos) {
-    Preconditions.checkArgument(offerServices.contains(bpos),
-        "Unknown BPOS: %s", bpos);
-    if (bpos.getBlockPoolId() == null) {
+  synchronized void addBlockPool(BPOfferService bpOfferService) {
+    Preconditions.checkArgument(bpOfferServices.contains(bpOfferService),
+        "Unknown BPOS: %s", bpOfferService);
+    if (bpOfferService.getBlockPoolId() == null) {
       throw new IllegalArgumentException("Null blockpool id");
     }
-    bpByBlockPoolId.put(bpos.getBlockPoolId(), bpos);
+    bpByBlockPoolId.put(bpOfferService.getBlockPoolId(), bpOfferService);
   }
   
   /**
@@ -78,35 +78,35 @@ class BlockPoolManager {
    * Caution: The BPOfferService returned could be shutdown any time.
    */
   synchronized BPOfferService[] getAllNamenodeThreads() {
-    BPOfferService[] bposArray = new BPOfferService[offerServices.size()];
-    return offerServices.toArray(bposArray);
+    BPOfferService[] bposArray = new BPOfferService[bpOfferServices.size()];
+    return bpOfferServices.toArray(bposArray);
   }
       
   synchronized BPOfferService get(String bpid) {
     return bpByBlockPoolId.get(bpid);
   }
   
-  synchronized void remove(BPOfferService t) {
-    offerServices.remove(t);
-    if (t.hasBlockPoolId()) {
+  synchronized void remove(BPOfferService bpos) {
+    bpOfferServices.remove(bpos);
+    if (bpos.hasBlockPoolId()) {
       // It's possible that the block pool never successfully registered
       // with any NN, so it was never added it to this map
-      bpByBlockPoolId.remove(t.getBlockPoolId());
+      bpByBlockPoolId.remove(bpos.getBlockPoolId());
     }
     
     boolean removed = false;
     for (Iterator<BPOfferService> it = bpByNameserviceId.values().iterator();
          it.hasNext() && !removed;) {
-      BPOfferService bpos = it.next();
-      if (bpos == t) {
+      BPOfferService bpOfferService = it.next();
+      if (bpOfferService == bpos) {
         it.remove();
-        LOG.info("Removed " + bpos);
+        LOG.info("Removed " + bpOfferService);
         removed = true;
       }
     }
     
     if (!removed) {
-      LOG.warn("Couldn't remove BPOS " + t + " from bpByNameserviceId map");
+      LOG.warn("Couldn't remove BPOS " + bpos + " from bpByNameserviceId map");
     }
   }
   
@@ -129,7 +129,7 @@ class BlockPoolManager {
             @Override
             public Object run() throws Exception {
               // TODO-ZH 遍历所有的BPOfferService，即遍历所有联邦
-              for (BPOfferService bpos : offerServices) {
+              for (BPOfferService bpos : bpOfferServices) {
                 // TODO-ZH 重要代码
                 bpos.start();
               }
@@ -144,8 +144,8 @@ class BlockPoolManager {
   }
   
   void joinAll() {
-    for (BPOfferService bpos: this.getAllNamenodeThreads()) {
-      bpos.join();
+    for (BPOfferService bpOfferService: this.getAllNamenodeThreads()) {
+      bpOfferService.join();
     }
   }
   
@@ -228,7 +228,7 @@ class BlockPoolManager {
            */
           BPOfferService bpos = createBPOS(addrs);
           bpByNameserviceId.put(nsToAdd, bpos);
-          offerServices.add(bpos);
+          bpOfferServices.add(bpos);
         }
       }
       // TODO-ZH 重要代码
@@ -268,6 +268,6 @@ class BlockPoolManager {
    * Extracted out for test purposes.
    */
   protected BPOfferService createBPOS(List<InetSocketAddress> nnAddrs) {
-    return new BPOfferService(nnAddrs, dn);
+    return new BPOfferService(nnAddrs, dataNode);
   }
 }

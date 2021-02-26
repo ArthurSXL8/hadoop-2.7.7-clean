@@ -432,8 +432,8 @@ public class DatanodeManager {
    */
   DatanodeDescriptor getDatanodeDescriptor(String address) {
     DatanodeID dnId = parseDNFromHostsEntry(address);
-    String host = dnId.getIpAddr();
-    int xferPort = dnId.getXferPort();
+    String host = dnId.getIp();
+    int xferPort = dnId.getDataStreamingPort();
     DatanodeDescriptor node = getDatanodeByXferAddr(host, xferPort);
     if (node == null) {
       node = getDatanodeByHost(host);
@@ -449,7 +449,7 @@ public class DatanodeManager {
       if (rackNodes != null) {
         // Try something machine local.
         for (Node rackNode : rackNodes) {
-          if (((DatanodeDescriptor) rackNode).getIpAddr().equals(host)) {
+          if (((DatanodeDescriptor) rackNode).getIp().equals(host)) {
             node = (DatanodeDescriptor) rackNode;
             break;
           }
@@ -494,7 +494,7 @@ public class DatanodeManager {
     final DatanodeDescriptor node = getDatanode(nodeID.getDatanodeUuid());
     if (node == null) 
       return null;
-    if (!node.getXferAddr().equals(nodeID.getXferAddr())) {
+    if (!node.getDataTransferIpAndPort().equals(nodeID.getDataTransferIpAndPort())) {
       final UnregisteredNodeException e = new UnregisteredNodeException(
           nodeID, node);
       NameNode.stateChangeLog.error("BLOCK* NameSystem.getDatanode: "
@@ -733,7 +733,7 @@ public class DatanodeManager {
       throws UnresolvedTopologyException {
     List<String> names = new ArrayList<String>(1);
     if (dnsToSwitchMapping instanceof CachedDNSToSwitchMapping) {
-      names.add(node.getIpAddr());
+      names.add(node.getIp());
     } else {
       names.add(node.getHostName());
     }
@@ -862,7 +862,7 @@ public class DatanodeManager {
         throw new DisallowedDatanodeException(nodeReg, message);
       }
       // update node registration with the ip and hostname from rpc request
-      nodeReg.setIpAddr(ip);
+      nodeReg.setIp(ip);
       nodeReg.setPeerHostName(hostname);
     }
     
@@ -880,7 +880,7 @@ public class DatanodeManager {
   
       DatanodeDescriptor nodeS = getDatanode(nodeReg.getDatanodeUuid());
       DatanodeDescriptor nodeN = host2DatanodeMap.getDatanodeByXferAddr(
-          nodeReg.getIpAddr(), nodeReg.getXferPort());
+          nodeReg.getIp(), nodeReg.getDataStreamingPort());
         
       if (nodeN != null && nodeN != nodeS) {
         NameNode.LOG.info("BLOCK* registerDatanode: " + nodeN);
@@ -996,7 +996,7 @@ public class DatanodeManager {
       // correct network location later.
       List<String> invalidNodeNames = new ArrayList<String>(3);
       // clear cache for nodes in IP or Hostname
-      invalidNodeNames.add(nodeReg.getIpAddr());
+      invalidNodeNames.add(nodeReg.getIp());
       invalidNodeNames.add(nodeReg.getHostName());
       invalidNodeNames.add(nodeReg.getPeerHostName());
       dnsToSwitchMapping.reloadCachedMappings(invalidNodeNames);

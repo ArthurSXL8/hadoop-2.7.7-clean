@@ -248,14 +248,14 @@ class BlockSender implements java.io.Closeable {
         replicaVisibleLength = replica.getVisibleLength();
       }
       // if there is a write in progress
-      if (replica instanceof ReplicaBeingWritten) {
-        final ReplicaBeingWritten rbw = (ReplicaBeingWritten)replica;
+      if (replica instanceof ReplicaMetaBeingWritten) {
+        final ReplicaMetaBeingWritten rbw = (ReplicaMetaBeingWritten)replica;
         waitForMinLength(rbw, startOffset + length);
         chunkChecksum = rbw.getLastChecksumAndDataLen();
       }
-      if (replica instanceof FinalizedReplica) {
+      if (replica instanceof FinalizedReplicaMeta) {
         chunkChecksum = getPartialChunkChecksumForFinalized(
-            (FinalizedReplica)replica);
+            (FinalizedReplicaMeta)replica);
       }
 
       if (replica.getGenerationStamp() < block.getGenerationStamp()) {
@@ -410,7 +410,7 @@ class BlockSender implements java.io.Closeable {
   }
 
   private ChunkChecksum getPartialChunkChecksumForFinalized(
-      FinalizedReplica finalized) throws IOException {
+      FinalizedReplicaMeta finalized) throws IOException {
     // There are a number of places in the code base where a finalized replica
     // object is created. If last partial checksum is loaded whenever a
     // finalized replica is created, it would increase latency in DataNode
@@ -505,7 +505,7 @@ class BlockSender implements java.io.Closeable {
    * @param len minimum length to reach
    * @throws IOException on failing to reach the len in given wait time
    */
-  private static void waitForMinLength(ReplicaBeingWritten rbw, long len)
+  private static void waitForMinLength(ReplicaMetaBeingWritten rbw, long len)
       throws IOException {
     // Wait for 3 seconds for rbw replica to reach the minimum length
     for (int i = 0; i < 30 && rbw.getBytesOnDisk() < len; i++) {

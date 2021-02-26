@@ -101,7 +101,7 @@ public class TestDirectoryScanner {
   /** Truncate a block file */
   private long truncateBlockFile() throws IOException {
     synchronized (fds) {
-      for (ReplicaInfo b : FsDatasetTestUtil.getReplicas(fds, bpid)) {
+      for (ReplicaMetaInfo b : FsDatasetTestUtil.getReplicas(fds, bpid)) {
         File f = b.getBlockFile();
         File mf = b.getMetaFile();
         // Truncate a block file that has a corresponding metadata file
@@ -126,7 +126,7 @@ public class TestDirectoryScanner {
   /** Delete a block file */
   private long deleteBlockFile() {
     synchronized(fds) {
-      for (ReplicaInfo b : FsDatasetTestUtil.getReplicas(fds, bpid)) {
+      for (ReplicaMetaInfo b : FsDatasetTestUtil.getReplicas(fds, bpid)) {
         File f = b.getBlockFile();
         File mf = b.getMetaFile();
         // Delete a block file that has corresponding metadata file
@@ -142,7 +142,7 @@ public class TestDirectoryScanner {
   /** Delete block meta file */
   private long deleteMetaFile() {
     synchronized(fds) {
-      for (ReplicaInfo b : FsDatasetTestUtil.getReplicas(fds, bpid)) {
+      for (ReplicaMetaInfo b : FsDatasetTestUtil.getReplicas(fds, bpid)) {
         File file = b.getMetaFile();
         // Delete a metadata file
         if (file.exists() && file.delete()) {
@@ -161,7 +161,7 @@ public class TestDirectoryScanner {
    */
   private void duplicateBlock(long blockId) throws IOException {
     synchronized (fds) {
-      ReplicaInfo b = FsDatasetTestUtil.fetchReplicaInfo(fds, bpid, blockId);
+      ReplicaMetaInfo b = FsDatasetTestUtil.fetchReplicaInfo(fds, bpid, blockId);
       for (FsVolumeSpi v : fds.getVolumes()) {
         if (v.getStorageID().equals(b.getVolume().getStorageID())) {
           continue;
@@ -733,7 +733,7 @@ public class TestDirectoryScanner {
   }
 
   private void verifyAddition(long blockId, long genStamp, long size) {
-    final ReplicaInfo replicainfo;
+    final ReplicaMetaInfo replicainfo;
     replicainfo = FsDatasetTestUtil.fetchReplicaInfo(fds, bpid, blockId);
     assertNotNull(replicainfo);
 
@@ -755,14 +755,14 @@ public class TestDirectoryScanner {
   }
 
   private void verifyGenStamp(long blockId, long genStamp) {
-    final ReplicaInfo memBlock;
+    final ReplicaMetaInfo memBlock;
     memBlock = FsDatasetTestUtil.fetchReplicaInfo(fds, bpid, blockId);
     assertNotNull(memBlock);
     assertEquals(genStamp, memBlock.getGenerationStamp());
   }
   
   private void verifyStorageType(long blockId, boolean expectTransient) {
-    final ReplicaInfo memBlock;
+    final ReplicaMetaInfo memBlock;
     memBlock = FsDatasetTestUtil.fetchReplicaInfo(fds, bpid, blockId);
     assertNotNull(memBlock);
     assertThat(memBlock.getVolume().isTransientStorage(), is(expectTransient));

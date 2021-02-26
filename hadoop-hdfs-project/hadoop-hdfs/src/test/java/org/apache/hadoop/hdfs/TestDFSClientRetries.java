@@ -24,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyShort;
@@ -53,7 +52,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.crypto.CipherSuite;
 import org.apache.hadoop.crypto.CryptoProtocolVersion;
 import org.apache.hadoop.fs.CommonConfigurationKeys;
 import org.apache.hadoop.fs.CreateFlag;
@@ -64,7 +62,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.hdfs.LeaseRenewer;
 import org.apache.hadoop.hdfs.client.HdfsUtils;
 import org.apache.hadoop.hdfs.protocol.Block;
 import org.apache.hadoop.hdfs.protocol.ClientDatanodeProtocol;
@@ -844,7 +841,7 @@ public class TestDFSClientRetries {
           cluster.getNameNodeRpc(), f, 0, Long.MAX_VALUE)
             .getLocatedBlocks();
       final DatanodeInfo first = locatedblocks.get(0).getLocations()[0];
-      cluster.stopDataNode(first.getXferAddr());
+      cluster.stopDataNode(first.getDataTransferIpAndPort());
 
       //get checksum again
       final FileChecksum cs2 = fs.getFileChecksum(p);

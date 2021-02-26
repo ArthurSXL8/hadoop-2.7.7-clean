@@ -58,7 +58,7 @@ public class FileDataServlet extends DfsServlet {
     if (host instanceof DatanodeInfo) {
       hostname = host.getHostName();
     } else {
-      hostname = host.getIpAddr();
+      hostname = host.getIp();
     }
 
     int port = "https".equals(scheme) ? host.getInfoSecurePort() : host

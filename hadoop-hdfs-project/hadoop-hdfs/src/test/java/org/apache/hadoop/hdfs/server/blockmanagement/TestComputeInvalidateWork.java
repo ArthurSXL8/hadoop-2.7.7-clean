@@ -123,7 +123,7 @@ public class TestComputeInvalidateWork {
       DatanodeRegistration dnr = cluster.getDataNode(nodes[0].getIpcPort())
                                         .getDNRegistrationForBP(poolId);
       dnr = new DatanodeRegistration(UUID.randomUUID().toString(), dnr);
-      cluster.stopDataNode(nodes[0].getXferAddr());
+      cluster.stopDataNode(nodes[0].getDataTransferIpAndPort());
 
       Block block = new Block(0, 0, GenerationStamp.LAST_RESERVED_STAMP);
       bm.addToInvalidates(block, nodes[0]);

@@ -176,7 +176,7 @@ public class BlockReaderTestUtil {
     InetSocketAddress targetAddr = null;
     ExtendedBlock block = testBlock.getBlock();
     DatanodeInfo[] nodes = testBlock.getLocations();
-    targetAddr = NetUtils.createSocketAddr(nodes[0].getXferAddr());
+    targetAddr = NetUtils.createSocketAddr(nodes[0].getDataTransferIpAndPort());
 
     final DistributedFileSystem fs = cluster.getFileSystem();
     return new BlockReaderFactory(fs.getClient().getConf()).

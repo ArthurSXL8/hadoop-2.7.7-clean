@@ -157,8 +157,8 @@ public class DataNodeTestUtils {
    * @param blkId id of the replica's block
    * @return copy of ReplicaInfo object @link{FSDataset#fetchReplicaInfo}
    */
-  public static ReplicaInfo fetchReplicaInfo(final DataNode dn,
-      final String bpid, final long blkId) {
+  public static ReplicaMetaInfo fetchReplicaInfo(final DataNode dn,
+                                                 final String bpid, final long blkId) {
     return FsDatasetTestUtil.fetchReplicaInfo(dn.getFSDataset(), bpid, blkId);
   }
 

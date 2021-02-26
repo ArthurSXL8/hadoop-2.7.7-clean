@@ -31,12 +31,12 @@ import org.apache.hadoop.hdfs.server.protocol.ReplicaRecoveryInfo;
  * A recovery with higher recovery id preempts recoveries with a lower id.
  *
  */
-public class ReplicaUnderRecovery extends ReplicaInfo {
-  private ReplicaInfo original; // the original replica that needs to be recovered
+public class ReplicaMetaUnderRecovery extends ReplicaMetaInfo {
+  private ReplicaMetaInfo original; // the original replica that needs to be recovered
   private long recoveryId; // recovery id; it is also the generation stamp 
                            // that the replica will be bumped to after recovery
 
-  public ReplicaUnderRecovery(ReplicaInfo replica, long recoveryId) {
+  public ReplicaMetaUnderRecovery(ReplicaMetaInfo replica, long recoveryId) {
     super(replica, replica.getVolume(), replica.getDir());
     if ( replica.getState() != ReplicaState.FINALIZED &&
          replica.getState() != ReplicaState.RBW &&
@@ -51,7 +51,7 @@ public class ReplicaUnderRecovery extends ReplicaInfo {
    * Copy constructor.
    * @param from where to copy from
    */
-  public ReplicaUnderRecovery(ReplicaUnderRecovery from) {
+  public ReplicaMetaUnderRecovery(ReplicaMetaUnderRecovery from) {
     super(from);
     this.original = from.getOriginalReplica();
     this.recoveryId = from.getRecoveryID();
@@ -82,7 +82,7 @@ public class ReplicaUnderRecovery extends ReplicaInfo {
    * Get the original replica that's under recovery
    * @return the original replica under recovery
    */
-  public ReplicaInfo getOriginalReplica() {
+  public ReplicaMetaInfo getOriginalReplica() {
     return original;
   }
 

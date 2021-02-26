@@ -112,7 +112,7 @@ public class TestBlockHasMultipleReplicasOnSameDN {
 
     for (LocatedBlock locatedBlock : locatedBlocks.getLocatedBlocks()) {
       Block localBlock = locatedBlock.getBlock().getLocalBlock();
-      blocks.add(new FinalizedReplica(localBlock, null, null));
+      blocks.add(new FinalizedReplicaMeta(localBlock, null, null));
     }
 
     BlockListAsLongs bll = BlockListAsLongs.encode(blocks);

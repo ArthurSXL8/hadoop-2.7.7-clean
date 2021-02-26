@@ -939,7 +939,7 @@ public class NNThroughputBenchmark implements Tool {
     }
 
     String getXferAddr() {
-      return dnRegistration.getXferAddr();
+      return dnRegistration.getDataTransferIpAndPort();
     }
 
     void register() throws IOException {
@@ -1178,7 +1178,7 @@ public class NNThroughputBenchmark implements Tool {
             prevBlock, null, INodeId.GRANDFATHER_INODE_ID, null);
         prevBlock = loc.getBlock();
         for(DatanodeInfo dnInfo : loc.getLocations()) {
-          int dnIdx = Arrays.binarySearch(datanodes, dnInfo.getXferAddr());
+          int dnIdx = Arrays.binarySearch(datanodes, dnInfo.getDataTransferIpAndPort());
           datanodes[dnIdx].addBlock(loc.getBlock().getLocalBlock());
           ReceivedDeletedBlockInfo[] rdBlocks = { new ReceivedDeletedBlockInfo(
               loc.getBlock().getLocalBlock(),

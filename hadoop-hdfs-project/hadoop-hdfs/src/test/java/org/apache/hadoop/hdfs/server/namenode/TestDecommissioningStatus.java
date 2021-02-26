@@ -188,7 +188,7 @@ public class TestDecommissioningStatus {
       FileSystem localFileSys, int nodeIndex) throws IOException {
     DatanodeInfo[] info = client.datanodeReport(DatanodeReportType.LIVE);
 
-    String nodename = info[nodeIndex].getXferAddr();
+    String nodename = info[nodeIndex].getDataTransferIpAndPort();
     decommissionNode(namesystem, localFileSys, nodename);
     return nodename;
   }
@@ -413,7 +413,7 @@ public class TestDecommissioningStatus {
     Logger log = Logger.getLogger(DecommissionManager.class);
     log.setLevel(Level.DEBUG);
     DatanodeID dnID = cluster.getDataNodes().get(0).getDatanodeId();
-    String dnName = dnID.getXferAddr();
+    String dnName = dnID.getDataTransferIpAndPort();
     DataNodeProperties stoppedDN = cluster.stopDataNode(0);
     DFSTestUtil.waitForDatanodeState(cluster, dnID.getDatanodeUuid(),
         false, 30000);
@@ -448,7 +448,7 @@ public class TestDecommissioningStatus {
     // Shutdown dn1
     LOG.info("Shutdown dn1");
     DatanodeID dnID = cluster.getDataNodes().get(1).getDatanodeId();
-    String dnName = dnID.getXferAddr();
+    String dnName = dnID.getDataTransferIpAndPort();
     DatanodeDescriptor dnDescriptor1 = dm.getDatanode(dnID);
     nodes.add(dnName);
     DataNodeProperties stoppedDN1 = cluster.stopDataNode(1);
@@ -458,7 +458,7 @@ public class TestDecommissioningStatus {
     // Shutdown dn0
     LOG.info("Shutdown dn0");
     dnID = cluster.getDataNodes().get(0).getDatanodeId();
-    dnName = dnID.getXferAddr();
+    dnName = dnID.getDataTransferIpAndPort();
     DatanodeDescriptor dnDescriptor0 = dm.getDatanode(dnID);
     nodes.add(dnName);
     DataNodeProperties stoppedDN0 = cluster.stopDataNode(0);

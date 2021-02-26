@@ -365,7 +365,7 @@ public class TestEncryptedTransfer {
       DFSOutputStream dfstream = (DFSOutputStream) out.getWrappedStream();
       // shut down the first datanode in the pipeline.
       DatanodeInfo[] targets = dfstream.getPipeline();
-      cluster.stopDataNode(targets[0].getXferAddr());
+      cluster.stopDataNode(targets[0].getDataTransferIpAndPort());
       // write data to induce pipeline recovery
       out.write(PLAIN_TEXT.getBytes());
       out.hflush();

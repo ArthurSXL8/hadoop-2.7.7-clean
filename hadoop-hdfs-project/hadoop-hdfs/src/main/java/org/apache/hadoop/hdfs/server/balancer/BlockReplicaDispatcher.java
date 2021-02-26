@@ -336,7 +336,7 @@ public class BlockReplicaDispatcher {
       DataInputStream in = null;
       try {
         sock.connect(
-            NetUtils.createSocketAddr(target.getDatanodeInfo().getXferAddr()),
+            NetUtils.createSocketAddr(target.getDatanodeInfo().getDataTransferIpAndPort()),
             HdfsServerConstants.READ_TIMEOUT);
 
         // Set read timeout so that it doesn't hang forever against
@@ -1285,9 +1285,9 @@ public class BlockReplicaDispatcher {
      * @return true if the datanode's transfer address matches the set of nodes.
      */
     private static boolean isIn(Set<String> datanodes, DatanodeInfo dn) {
-      return isIn(datanodes, dn.getPeerHostName(), dn.getXferPort())
-          || isIn(datanodes, dn.getIpAddr(), dn.getXferPort())
-          || isIn(datanodes, dn.getHostName(), dn.getXferPort());
+      return isIn(datanodes, dn.getPeerHostName(), dn.getDataStreamingPort())
+          || isIn(datanodes, dn.getIp(), dn.getDataStreamingPort())
+          || isIn(datanodes, dn.getHostName(), dn.getDataStreamingPort());
     }
 
     /** @return true if nodes contains host or host:port */

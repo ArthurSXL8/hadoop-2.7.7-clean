@@ -77,11 +77,11 @@ public class TestNodeCount {
       
       // bring down first datanode
       DatanodeDescriptor datanode = datanodes[0];
-      DataNodeProperties dnprop = cluster.stopDataNode(datanode.getXferAddr());
+      DataNodeProperties dnprop = cluster.stopDataNode(datanode.getDataTransferIpAndPort());
       
       // make sure that NN detects that the datanode is down
       BlockManagerTestUtil.noticeDeadDatanode(
-          cluster.getNameNode(), datanode.getXferAddr());
+          cluster.getNameNode(), datanode.getDataTransferIpAndPort());
       
       // the block will be replicated
       DFSTestUtil.waitReplication(fs, FILE_PATH, REPLICATION_FACTOR);
@@ -109,10 +109,10 @@ public class TestNodeCount {
       assertTrue(nonExcessDN!=null);
       
       // bring down non excessive datanode
-      dnprop = cluster.stopDataNode(nonExcessDN.getXferAddr());
+      dnprop = cluster.stopDataNode(nonExcessDN.getDataTransferIpAndPort());
       // make sure that NN detects that the datanode is down
       BlockManagerTestUtil.noticeDeadDatanode(
-          cluster.getNameNode(), nonExcessDN.getXferAddr());
+          cluster.getNameNode(), nonExcessDN.getDataTransferIpAndPort());
 
       // The block should be replicated
       initializeTimeout(TIMEOUT);

@@ -140,7 +140,7 @@ public class SaslDataTransferServer {
       throw new IOException(String.format("Cannot create a secured " +
         "connection if DataNode listens on unprivileged port (%d) and no " +
         "protection is defined in configuration property %s.",
-        datanodeId.getXferPort(), DFS_DATA_TRANSFER_PROTECTION_KEY));
+        datanodeId.getDataStreamingPort(), DFS_DATA_TRANSFER_PROTECTION_KEY));
     }
   }
 

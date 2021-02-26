@@ -53,22 +53,22 @@ public class TestTransferRbw {
   private static final Random RAN = new Random();
   private static final short REPLICATION = (short)1;
 
-  private static ReplicaBeingWritten getRbw(final DataNode datanode,
-      String bpid) throws InterruptedException {
-    return (ReplicaBeingWritten)getReplica(datanode, bpid, ReplicaState.RBW);
+  private static ReplicaMetaBeingWritten getRbw(final DataNode datanode,
+                                                String bpid) throws InterruptedException {
+    return (ReplicaMetaBeingWritten)getReplica(datanode, bpid, ReplicaState.RBW);
   }
-  private static ReplicaInPipeline getReplica(final DataNode datanode,
-      final String bpid, final ReplicaState expectedState) throws InterruptedException {
-    final Collection<ReplicaInfo> replicas = FsDatasetTestUtil.getReplicas(
+  private static ReplicaMetaInPipeline getReplica(final DataNode datanode,
+                                                  final String bpid, final ReplicaState expectedState) throws InterruptedException {
+    final Collection<ReplicaMetaInfo> replicas = FsDatasetTestUtil.getReplicas(
         datanode.getFSDataset(), bpid);
     for(int i = 0; i < 5 && replicas.size() == 0; i++) {
       LOG.info("wait since replicas.size() == 0; i=" + i);
       Thread.sleep(1000);
     }
     Assert.assertEquals(1, replicas.size());
-    final ReplicaInfo r = replicas.iterator().next();
+    final ReplicaMetaInfo r = replicas.iterator().next();
     Assert.assertEquals(expectedState, r.getState());
-    return (ReplicaInPipeline)r;
+    return (ReplicaMetaInPipeline)r;
   }
 
   @Test
@@ -95,7 +95,7 @@ public class TestTransferRbw {
       }
 
       //get the RBW
-      final ReplicaBeingWritten oldrbw;
+      final ReplicaMetaBeingWritten oldrbw;
       final DataNode newnode;
       final DatanodeInfo newnodeinfo;
       final String bpid = cluster.getNamesystem().getBlockPoolId();
@@ -130,7 +130,7 @@ public class TestTransferRbw {
       }
 
       //check new rbw
-      final ReplicaBeingWritten newrbw = getRbw(newnode, bpid);
+      final ReplicaMetaBeingWritten newrbw = getRbw(newnode, bpid);
       LOG.info("newrbw = " + newrbw);
       Assert.assertEquals(oldrbw.getBlockId(), newrbw.getBlockId());
       Assert.assertEquals(oldrbw.getGenerationStamp(), newrbw.getGenerationStamp());

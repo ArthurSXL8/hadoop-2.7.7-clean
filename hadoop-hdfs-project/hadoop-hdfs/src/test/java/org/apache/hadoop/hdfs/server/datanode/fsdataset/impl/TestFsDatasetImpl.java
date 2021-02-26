@@ -42,9 +42,9 @@ import org.apache.hadoop.hdfs.server.datanode.DNConf;
 import org.apache.hadoop.hdfs.server.datanode.DataNode;
 import org.apache.hadoop.hdfs.server.datanode.DataNodeTestUtils;
 import org.apache.hadoop.hdfs.server.datanode.DataStorage;
-import org.apache.hadoop.hdfs.server.datanode.FinalizedReplica;
+import org.apache.hadoop.hdfs.server.datanode.FinalizedReplicaMeta;
 import org.apache.hadoop.hdfs.server.datanode.ReplicaHandler;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaInfo;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo;
 import org.apache.hadoop.hdfs.server.datanode.ShortCircuitRegistry;
 import org.apache.hadoop.hdfs.server.datanode.StorageLocation;
 import org.apache.hadoop.hdfs.server.datanode.fsdataset.FsVolumeReference;
@@ -65,7 +65,6 @@ import org.mockito.stubbing.Answer;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -79,7 +78,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -375,11 +373,11 @@ public class TestFsDatasetImpl {
       FsVolumeImpl vol = ds.getVolumes().get(0);
 
       ExtendedBlock eb;
-      ReplicaInfo info;
+      ReplicaMetaInfo info;
       List<Block> blockList = new ArrayList<Block>();
       for (int i = 1; i <= 63; i++) {
         eb = new ExtendedBlock(BLOCKPOOL, i, 1, 1000 + i);
-        info = new FinalizedReplica(
+        info = new FinalizedReplicaMeta(
             eb.getLocalBlock(), vol, vol.getCurrentDir().getParentFile());
         ds.volumeMap.add(BLOCKPOOL, info);
         info.getBlockFile().createNewFile();
@@ -396,7 +394,7 @@ public class TestFsDatasetImpl {
 
       blockList.clear();
       eb = new ExtendedBlock(BLOCKPOOL, 64, 1, 1064);
-      info = new FinalizedReplica(
+      info = new FinalizedReplicaMeta(
           eb.getLocalBlock(), vol, vol.getCurrentDir().getParentFile());
       ds.volumeMap.add(BLOCKPOOL, info);
       info.getBlockFile().createNewFile();
@@ -422,14 +420,14 @@ public class TestFsDatasetImpl {
     File f1 = new File("d1/block");
     File f2 = new File("d2/block");
 
-    ReplicaInfo replicaOlder = new FinalizedReplica(1,1,1,fsv1,f1);
-    ReplicaInfo replica = new FinalizedReplica(1,2,2,fsv1,f1);
-    ReplicaInfo replicaSame = new FinalizedReplica(1,2,2,fsv1,f1);
-    ReplicaInfo replicaNewer = new FinalizedReplica(1,3,3,fsv1,f1);
+    ReplicaMetaInfo replicaOlder = new FinalizedReplicaMeta(1,1,1,fsv1,f1);
+    ReplicaMetaInfo replica = new FinalizedReplicaMeta(1,2,2,fsv1,f1);
+    ReplicaMetaInfo replicaSame = new FinalizedReplicaMeta(1,2,2,fsv1,f1);
+    ReplicaMetaInfo replicaNewer = new FinalizedReplicaMeta(1,3,3,fsv1,f1);
 
-    ReplicaInfo replicaOtherOlder = new FinalizedReplica(1,1,1,fsv2,f2);
-    ReplicaInfo replicaOtherSame = new FinalizedReplica(1,2,2,fsv2,f2);
-    ReplicaInfo replicaOtherNewer = new FinalizedReplica(1,3,3,fsv2,f2);
+    ReplicaMetaInfo replicaOtherOlder = new FinalizedReplicaMeta(1,1,1,fsv2,f2);
+    ReplicaMetaInfo replicaOtherSame = new FinalizedReplicaMeta(1,2,2,fsv2,f2);
+    ReplicaMetaInfo replicaOtherNewer = new FinalizedReplicaMeta(1,3,3,fsv2,f2);
 
     // equivalent path so don't remove either
     assertNull(BlockPoolSlice.selectReplicaToDelete(replicaSame, replica));
@@ -496,7 +494,7 @@ public class TestFsDatasetImpl {
         Assert.fail("This is not a valid code path. "
             + "out.close should have thrown an exception.");
       } catch (IOException ioe) {
-        GenericTestUtils.assertExceptionContains(info.getXferAddr(), ioe);
+        GenericTestUtils.assertExceptionContains(info.getDataTransferIpAndPort(), ioe);
       }
       finalizedDir.setWritable(true);
       finalizedDir.setExecutable(true);

@@ -693,7 +693,7 @@ class DataXceiver extends Receiver implements Runnable {
       if (targets.length > 0) {
         InetSocketAddress mirrorTarget = null;
         // Connect to backup machine
-        mirrorNode = targets[0].getXferAddr(connectToDnViaHostname);
+        mirrorNode = targets[0].getDataTransferIpAndPort(connectToDnViaHostname);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Connecting to datanode " + mirrorNode);
         }
@@ -763,7 +763,7 @@ class DataXceiver extends Receiver implements Runnable {
             BlockOpResponseProto.newBuilder()
               .setStatus(ERROR)
                // NB: Unconditionally using the xfer addr w/o hostname
-              .setFirstBadLink(targets[0].getXferAddr())
+              .setFirstBadLink(targets[0].getDataTransferIpAndPort())
               .build()
               .writeDelimitedTo(replyOut);
             replyOut.flush();
@@ -1080,7 +1080,7 @@ class DataXceiver extends Receiver implements Runnable {
     try {
       // Move the block to different storage in the same datanode
       if (proxySource.equals(datanode.getDatanodeId())) {
-        ReplicaInfo oldReplica = datanode.data.moveBlockAcrossStorage(block,
+        ReplicaMetaInfo oldReplica = datanode.data.moveBlockAcrossStorage(block,
             storageType);
         if (oldReplica != null) {
           LOG.info("Moved " + block + " from StorageType "
@@ -1089,7 +1089,7 @@ class DataXceiver extends Receiver implements Runnable {
       } else {
         block.setNumBytes(dataXceiverServer.estimateBlockSize);
         // get the output stream to the proxy
-        final String dnAddr = proxySource.getXferAddr(connectToDnViaHostname);
+        final String dnAddr = proxySource.getDataTransferIpAndPort(connectToDnViaHostname);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Connecting to datanode " + dnAddr);
         }
@@ -1306,7 +1306,7 @@ class DataXceiver extends Receiver implements Runnable {
               DatanodeRegistration dnR = 
                 datanode.getDNRegistrationForBP(blk.getBlockPoolId());
               // NB: Unconditionally using the xfer addr w/o hostname
-              resp.setFirstBadLink(dnR.getXferAddr());
+              resp.setFirstBadLink(dnR.getDataTransferIpAndPort());
             }
             resp.build().writeDelimitedTo(out);
             out.flush();

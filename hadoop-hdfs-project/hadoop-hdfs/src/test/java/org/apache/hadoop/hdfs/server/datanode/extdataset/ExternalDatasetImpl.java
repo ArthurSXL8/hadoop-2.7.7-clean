@@ -41,8 +41,6 @@ import org.apache.hadoop.hdfs.server.protocol.NamespaceInfo;
 import org.apache.hadoop.hdfs.server.protocol.ReplicaRecoveryInfo;
 import org.apache.hadoop.hdfs.server.protocol.StorageReport;
 import org.apache.hadoop.hdfs.server.protocol.VolumeFailureSummary;
-import org.apache.hadoop.util.DiskChecker;
-import org.apache.hadoop.util.DiskChecker.DiskErrorException;
 
 public class ExternalDatasetImpl implements FsDatasetSpi<ExternalVolumeImpl> {
 
@@ -87,12 +85,12 @@ public class ExternalDatasetImpl implements FsDatasetSpi<ExternalVolumeImpl> {
   }
 
   @Override
-  public List<FinalizedReplica> getFinalizedBlocks(String bpid) {
+  public List<FinalizedReplicaMeta> getFinalizedBlocks(String bpid) {
     return null;
   }
 
   @Override
-  public List<FinalizedReplica> getFinalizedBlocksOnPersistentStorage(String bpid) {
+  public List<FinalizedReplicaMeta> getFinalizedBlocksOnPersistentStorage(String bpid) {
     return null;
   }
 
@@ -342,7 +340,7 @@ public class ExternalDatasetImpl implements FsDatasetSpi<ExternalVolumeImpl> {
   }
 
   @Override
-  public ReplicaInfo moveBlockAcrossStorage(ExtendedBlock block, StorageType targetStorageType) throws IOException {
+  public ReplicaMetaInfo moveBlockAcrossStorage(ExtendedBlock block, StorageType targetStorageType) throws IOException {
     return null;
   }
 

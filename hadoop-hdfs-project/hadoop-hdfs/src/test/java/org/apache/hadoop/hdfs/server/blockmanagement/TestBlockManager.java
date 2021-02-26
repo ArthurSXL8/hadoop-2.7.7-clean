@@ -67,8 +67,8 @@ import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeDescriptor.BlockTargetPair;
 import org.apache.hadoop.hdfs.server.datanode.DataNodeTestUtils;
-import org.apache.hadoop.hdfs.server.datanode.FinalizedReplica;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaBeingWritten;
+import org.apache.hadoop.hdfs.server.datanode.FinalizedReplicaMeta;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaBeingWritten;
 import org.apache.hadoop.hdfs.server.namenode.FSNamesystem;
 import org.apache.hadoop.hdfs.server.namenode.NameNodeAdapter;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeRegistration;
@@ -756,14 +756,14 @@ public class TestBlockManager {
     BlockNeighborInfo receivedBlock = addBlockToBM(receivedBlockId);
     rdbiList.add(new ReceivedDeletedBlockInfo(new Block(receivedBlock),
         ReceivedDeletedBlockInfo.BlockStatus.RECEIVED_BLOCK, null));
-    builder.add(new FinalizedReplica(receivedBlock, null, null));
+    builder.add(new FinalizedReplicaMeta(receivedBlock, null, null));
 
     // blk_43 is under construction.
     long receivingBlockId = 43;
     BlockNeighborInfo receivingBlock = addUcBlockToBM(receivingBlockId);
     rdbiList.add(new ReceivedDeletedBlockInfo(new Block(receivingBlock),
         ReceivedDeletedBlockInfo.BlockStatus.RECEIVING_BLOCK, null));
-    builder.add(new ReplicaBeingWritten(receivingBlock, null, null, null));
+    builder.add(new ReplicaMetaBeingWritten(receivingBlock, null, null, null));
 
     // blk_44 has 2 records in IBR. It's finalized. So full BR has 1 record.
     long receivingReceivedBlockId = 44;
@@ -772,7 +772,7 @@ public class TestBlockManager {
         ReceivedDeletedBlockInfo.BlockStatus.RECEIVING_BLOCK, null));
     rdbiList.add(new ReceivedDeletedBlockInfo(new Block(receivingReceivedBlock),
         ReceivedDeletedBlockInfo.BlockStatus.RECEIVED_BLOCK, null));
-    builder.add(new FinalizedReplica(receivingReceivedBlock, null, null));
+    builder.add(new FinalizedReplicaMeta(receivingReceivedBlock, null, null));
 
     // blk_45 is not in full BR, because it's deleted.
     long ReceivedDeletedBlockId = 45;
@@ -786,7 +786,7 @@ public class TestBlockManager {
     // blk_46 exists in DN for a long time, so it's in full BR, but not in IBR.
     long existedBlockId = 46;
     BlockNeighborInfo existedBlock = addBlockToBM(existedBlockId);
-    builder.add(new FinalizedReplica(existedBlock, null, null));
+    builder.add(new FinalizedReplicaMeta(existedBlock, null, null));
 
     // process IBR and full BR
     StorageReceivedDeletedBlocks srdb =

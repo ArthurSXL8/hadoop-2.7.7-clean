@@ -267,13 +267,13 @@ public class JsonUtil {
 
     // TODO: Fix storageID
     final Map<String, Object> m = new TreeMap<String, Object>();
-    m.put("ipAddr", datanodeinfo.getIpAddr());
+    m.put("ipAddr", datanodeinfo.getIp());
     // 'name' is equivalent to ipAddr:xferPort. Older clients (1.x, 0.23.x) 
     // expects this instead of the two fields.
-    m.put("name", datanodeinfo.getXferAddr());
+    m.put("name", datanodeinfo.getDataTransferIpAndPort());
     m.put("hostName", datanodeinfo.getHostName());
     m.put("storageID", datanodeinfo.getDatanodeUuid());
-    m.put("xferPort", datanodeinfo.getXferPort());
+    m.put("xferPort", datanodeinfo.getDataStreamingPort());
     m.put("infoPort", datanodeinfo.getInfoPort());
     m.put("infoSecurePort", datanodeinfo.getInfoSecurePort());
     m.put("ipcPort", datanodeinfo.getIpcPort());

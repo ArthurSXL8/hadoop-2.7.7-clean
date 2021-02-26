@@ -1312,7 +1312,7 @@ public class TestFsck {
           .getBlockNeighborInfos()[0].getDatanode(0);
       cluster.getNameNode().getNamesystem().getBlockManager()
           .getDatanodeManager().getDecomManager().startDecommission(dn);
-      String dnName = dn.getXferAddr();
+      String dnName = dn.getDataTransferIpAndPort();
 
       //wait for decommission start
       DatanodeInfo datanodeInfo = null;
@@ -1320,7 +1320,7 @@ public class TestFsck {
       do {
         Thread.sleep(2000);
         for (DatanodeInfo info : dfs.getDataNodeStats()) {
-          if (dnName.equals(info.getXferAddr())) {
+          if (dnName.equals(info.getDataTransferIpAndPort())) {
             datanodeInfo = info;
           }
         }

@@ -35,7 +35,7 @@ public aspect FSDatasetAspects {
   // the following will inject faults inside of the method in question 		
     execution (* FSDataset.getBlockFile(..)) && !within(FSDatasetAspects +);
 
-  pointcut callCreateBlockWriteStream(ReplicaInPipeline repl) : 
+  pointcut callCreateBlockWriteStream(ReplicaMetaInPipeline repl) :
     call (BlockWriteStreams createStreams(..))
     && target (repl)
       && !within(FSDatasetAspects +);
@@ -52,7 +52,7 @@ public aspect FSDatasetAspects {
     }
   }
 
-  before(ReplicaInPipeline repl) throws DiskOutOfSpaceException : callCreateBlockWriteStream(repl) {
+  before(ReplicaMetaInPipeline repl) throws DiskOutOfSpaceException : callCreateBlockWriteStream(repl) {
     if (ProbabilityModel.injectCriteria(FSDataset.class.getSimpleName())) {
       LOG.info("Before the injection point");
       Thread.dumpStack();

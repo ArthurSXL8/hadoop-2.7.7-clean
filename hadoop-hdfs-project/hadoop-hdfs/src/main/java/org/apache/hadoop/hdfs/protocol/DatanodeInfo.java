@@ -125,8 +125,8 @@ public class DatanodeInfo extends DatanodeID implements Node {
       final long blockPoolUsed, final long cacheCapacity, final long cacheUsed,
       final long lastUpdate, final long lastUpdateMonotonic,
       final int xceiverCount, final AdminStates adminState) {
-    this(nodeID.getIpAddr(), nodeID.getHostName(), nodeID.getDatanodeUuid(),
-        nodeID.getXferPort(), nodeID.getInfoPort(), nodeID.getInfoSecurePort(),
+    this(nodeID.getIp(), nodeID.getHostName(), nodeID.getDatanodeUuid(),
+        nodeID.getDataStreamingPort(), nodeID.getInfoPort(), nodeID.getInfoSecurePort(),
         nodeID.getIpcPort(), capacity, dfsUsed, remaining, blockPoolUsed,
         cacheCapacity, cacheUsed, lastUpdate, lastUpdateMonotonic,
         xceiverCount, location, adminState);
@@ -174,7 +174,7 @@ public class DatanodeInfo extends DatanodeID implements Node {
   /** Network location name */
   @Override
   public String getName() {
-    return getXferAddr();
+    return getDataTransferIpAndPort();
   }
   
   /** The raw capacity. */

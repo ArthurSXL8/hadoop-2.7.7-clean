@@ -152,7 +152,7 @@ public class TestDatanodeManager {
         }
         DatanodeRegistration toRemove = it.next().getValue();
         LOG.info("Removing node " + toRemove.getDatanodeUuid() + " ip " +
-        toRemove.getXferAddr() + " version : " + toRemove.getSoftwareVersion());
+        toRemove.getDataTransferIpAndPort() + " version : " + toRemove.getSoftwareVersion());
 
         //Remove that random node
         dm.removeDatanode(toRemove);
@@ -172,14 +172,14 @@ public class TestDatanodeManager {
           dr = sIdToDnReg.get(storageID);
           //Half of the times, change the IP address
           if(rng.nextBoolean()) {
-            dr.setIpAddr(dr.getIpAddr() + "newIP");
+            dr.setIp(dr.getIp() + "newIP");
           }
         } else { //This storageID has never been registered
           //Ensure IP address is unique to storageID
           String ip = "someIP" + storageID;
-          Mockito.when(dr.getIpAddr()).thenReturn(ip);
-          Mockito.when(dr.getXferAddr()).thenReturn(ip + ":9000");
-          Mockito.when(dr.getXferPort()).thenReturn(9000);
+          Mockito.when(dr.getIp()).thenReturn(ip);
+          Mockito.when(dr.getDataTransferIpAndPort()).thenReturn(ip + ":9000");
+          Mockito.when(dr.getDataStreamingPort()).thenReturn(9000);
         }
         //Pick a random version to register with
         Mockito.when(dr.getSoftwareVersion()).thenReturn(
@@ -187,7 +187,7 @@ public class TestDatanodeManager {
 
         LOG.info("Registering node storageID: " + dr.getDatanodeUuid() +
           ", version: " + dr.getSoftwareVersion() + ", IP address: "
-          + dr.getXferAddr());
+          + dr.getDataTransferIpAndPort());
 
         //Register this random node
         dm.registerDatanode(dr);
@@ -307,9 +307,9 @@ public class TestDatanodeManager {
       String ip = "IP-" + i;
       DatanodeRegistration dr = Mockito.mock(DatanodeRegistration.class);
       Mockito.when(dr.getDatanodeUuid()).thenReturn(uuid);
-      Mockito.when(dr.getIpAddr()).thenReturn(ip);
-      Mockito.when(dr.getXferAddr()).thenReturn(ip + ":9000");
-      Mockito.when(dr.getXferPort()).thenReturn(9000);
+      Mockito.when(dr.getIp()).thenReturn(ip);
+      Mockito.when(dr.getDataTransferIpAndPort()).thenReturn(ip + ":9000");
+      Mockito.when(dr.getDataStreamingPort()).thenReturn(9000);
       Mockito.when(dr.getSoftwareVersion()).thenReturn("version1");
       dm.registerDatanode(dr);
 
@@ -328,7 +328,7 @@ public class TestDatanodeManager {
     List<LocatedBlock> blocks = new ArrayList<>();
     blocks.add(block);
 
-    final String targetIp = locs[4].getIpAddr();
+    final String targetIp = locs[4].getIp();
 
     // sort block locations
     dm.sortLocatedBlocks(targetIp, blocks);
@@ -346,7 +346,7 @@ public class TestDatanodeManager {
     }
 
     // Ensure the local node is first.
-    assertThat(sortedLocs[0].getIpAddr(), is(targetIp));
+    assertThat(sortedLocs[0].getIp(), is(targetIp));
 
     // Ensure the two decommissioned DNs were moved to the end.
     assertThat(sortedLocs[sortedLocs.length-1].getAdminState(),

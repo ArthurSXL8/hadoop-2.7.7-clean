@@ -226,7 +226,7 @@ public class TestDataNodeVolumeFailure {
 
     // Verify dn0Vol1 has been completely removed from DN0.
     // 1. dn0Vol1 is removed from DataStorage.
-    DataStorage storage = dn0.getStorage();
+    DataStorage storage = dn0.getDataStorage();
     assertEquals(1, storage.getNumStorageDirs());
     for (int i = 0; i < storage.getNumStorageDirs(); i++) {
       Storage.StorageDirectory sd = storage.getStorageDir(i);
@@ -252,7 +252,7 @@ public class TestDataNodeVolumeFailure {
     }
 
     // 3. all blocks on dn0Vol1 have been removed.
-    for (ReplicaInfo replica : FsDatasetTestUtil.getReplicas(data, bpid)) {
+    for (ReplicaMetaInfo replica : FsDatasetTestUtil.getReplicas(data, bpid)) {
       assertNotNull(replica.getVolume());
       assertNotEquals(
           new File(replica.getVolume().getBasePath()).getAbsoluteFile(),
@@ -404,7 +404,7 @@ public class TestDataNodeVolumeFailure {
     InetSocketAddress targetAddr = null;
     ExtendedBlock block = lblock.getBlock(); 
    
-    targetAddr = NetUtils.createSocketAddr(datanode.getXferAddr());
+    targetAddr = NetUtils.createSocketAddr(datanode.getDataTransferIpAndPort());
 
     BlockReader blockReader = new BlockReaderFactory(new DFSClient.Conf(conf)).
       setInetSocketAddress(targetAddr).

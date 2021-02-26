@@ -388,7 +388,7 @@ public class TestDatanodeDeath {
       } else {
         int victim = datanodeToKill;
         System.out.println("SimpleTest stopping datanode " + targets[victim]);
-        cluster.stopDataNode(targets[victim].getXferAddr());
+        cluster.stopDataNode(targets[victim].getDataTransferIpAndPort());
       }
       System.out.println("SimpleTest stopping datanode complete");
 

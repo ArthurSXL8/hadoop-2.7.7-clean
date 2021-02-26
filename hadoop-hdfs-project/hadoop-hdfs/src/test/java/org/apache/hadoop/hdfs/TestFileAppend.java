@@ -44,7 +44,7 @@ import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.hdfs.protocol.LocatedBlocks;
 import org.apache.hadoop.hdfs.server.datanode.DataNode;
 import org.apache.hadoop.hdfs.server.datanode.DataNodeTestUtils;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaBeingWritten;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaBeingWritten;
 import org.apache.hadoop.hdfs.server.datanode.ReplicaHandler;
 import org.apache.hadoop.hdfs.server.datanode.SimulatedFSDataset;
 import org.apache.hadoop.hdfs.server.datanode.fsdataset.FsDatasetSpi;
@@ -646,8 +646,8 @@ public class TestFileAppend{
           dataSet.append(block, newGS, initialFileLength);
 
       // write data to block file
-      ReplicaBeingWritten rbw =
-          (ReplicaBeingWritten) replicaHandler.getReplica();
+      ReplicaMetaBeingWritten rbw =
+          (ReplicaMetaBeingWritten) replicaHandler.getReplica();
       ReplicaOutputStreams outputStreams =
           rbw.createStreams(false, DEFAULT_CHECKSUM);
       OutputStream dataOutput = outputStreams.getDataOut();

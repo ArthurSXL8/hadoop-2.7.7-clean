@@ -183,7 +183,7 @@ public class TestHftpFileSystem {
     for (DataNode node : cluster.getDataNodes()) {
       DatanodeRegistration dnR = DataNodeTestUtils.getDNRegistrationForBP(node,
           blockPoolId);
-      if (dnR.getXferAddr().equals(xferAddr)) {
+      if (dnR.getDataTransferIpAndPort().equals(xferAddr)) {
         checked = true;
         assertEquals(dnR.getInfoPort(), conn.getURL().getPort());
       }

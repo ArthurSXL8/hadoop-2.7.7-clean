@@ -6334,7 +6334,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
         String[] storageIDs = blocks[i].getStorageIDs();
         for (int j = 0; j < nodes.length; j++) {
           NameNode.stateChangeLog.info("*DIR* reportBadBlocks for block: {} on"
-              + " datanode: {}", blk, nodes[j].getXferAddr());
+              + " datanode: {}", blk, nodes[j].getDataTransferIpAndPort());
           blockManager.findAndMarkBlockAsCorrupt(blk, nodes[j],
               storageIDs == null ? null: storageIDs[j], 
               "client machine reported it");
@@ -7030,7 +7030,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       innerinfo
           .put("infoAddr", node.getInfoAddr())
           .put("infoSecureAddr", node.getInfoSecureAddr())
-          .put("xferaddr", node.getXferAddr())
+          .put("xferaddr", node.getDataTransferIpAndPort())
           .put("lastContact", getLastContact(node))
           .put("usedSpace", getDfsUsed(node))
           .put("adminState", node.getAdminState().toString())
@@ -7054,7 +7054,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
             .put("estimatedCapacityLostTotal",
                 volumeFailureSummary.getEstimatedCapacityLostTotal());
       }
-      info.put(node.getHostName() + ":" + node.getXferPort(), innerinfo.build());
+      info.put(node.getHostName() + ":" + node.getDataStreamingPort(), innerinfo.build());
     }
     return JSON.toString(info);
   }
@@ -7073,9 +7073,9 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       Map<String, Object> innerinfo = ImmutableMap.<String, Object>builder()
           .put("lastContact", getLastContact(node))
           .put("decommissioned", node.isDecommissioned())
-          .put("xferaddr", node.getXferAddr())
+          .put("xferaddr", node.getDataTransferIpAndPort())
           .build();
-      info.put(node.getHostName() + ":" + node.getXferPort(), innerinfo);
+      info.put(node.getHostName() + ":" + node.getDataStreamingPort(), innerinfo);
     }
     return JSON.toString(info);
   }
@@ -7094,7 +7094,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     for (DatanodeDescriptor node : decomNodeList) {
       Map<String, Object> innerinfo = ImmutableMap
           .<String, Object> builder()
-          .put("xferaddr", node.getXferAddr())
+          .put("xferaddr", node.getDataTransferIpAndPort())
           .put("underReplicatedBlocks",
               node.decommissioningStatus.getUnderReplicatedBlocks())
           .put("decommissionOnlyReplicas",
@@ -7102,7 +7102,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
           .put("underReplicateInOpenFiles",
               node.decommissioningStatus.getUnderReplicatedInOpenFiles())
           .build();
-      info.put(node.getHostName() + ":" + node.getXferPort(), innerinfo);
+      info.put(node.getHostName() + ":" + node.getDataStreamingPort(), innerinfo);
     }
     return JSON.toString(info);
   }

@@ -27,7 +27,7 @@ import org.apache.hadoop.hdfs.server.datanode.fsdataset.FsVolumeSpi;
 /**
  * This class describes a replica that has been finalized.
  */
-public class FinalizedReplica extends ReplicaInfo {
+public class FinalizedReplicaMeta extends ReplicaMetaInfo {
   private boolean unlinked;      // copy-on-write done for block
   private byte[] lastPartialChunkChecksum;
 
@@ -39,8 +39,8 @@ public class FinalizedReplica extends ReplicaInfo {
    * @param vol volume where replica is located
    * @param dir directory path where block and meta files are located
    */
-  public FinalizedReplica(long blockId, long len, long genStamp,
-      FsVolumeSpi vol, File dir) {
+  public FinalizedReplicaMeta(long blockId, long len, long genStamp,
+                              FsVolumeSpi vol, File dir) {
     this(blockId, len, genStamp, vol, dir, null);
   }
 
@@ -53,8 +53,8 @@ public class FinalizedReplica extends ReplicaInfo {
    * @param dir directory path where block and meta files are located
    * @param checksum the last partial chunk checksum
    */
-  public FinalizedReplica(long blockId, long len, long genStamp,
-      FsVolumeSpi vol, File dir, byte[] checksum) {
+  public FinalizedReplicaMeta(long blockId, long len, long genStamp,
+                              FsVolumeSpi vol, File dir, byte[] checksum) {
     super(blockId, len, genStamp, vol, dir);
     this.setLastPartialChunkChecksum(checksum);
   }
@@ -65,7 +65,7 @@ public class FinalizedReplica extends ReplicaInfo {
    * @param vol volume where replica is located
    * @param dir directory path where block and meta files are located
    */
-  public FinalizedReplica(Block block, FsVolumeSpi vol, File dir) {
+  public FinalizedReplicaMeta(Block block, FsVolumeSpi vol, File dir) {
     this(block, vol, dir, null);
   }
 
@@ -76,8 +76,8 @@ public class FinalizedReplica extends ReplicaInfo {
    * @param dir directory path where block and meta files are located
    * @param checksum the last partial chunk checksum
    */
-  public FinalizedReplica(Block block, FsVolumeSpi vol, File dir,
-      byte[] checksum) {
+  public FinalizedReplicaMeta(Block block, FsVolumeSpi vol, File dir,
+                              byte[] checksum) {
     super(block, vol, dir);
     this.setLastPartialChunkChecksum(checksum);
   }
@@ -86,7 +86,7 @@ public class FinalizedReplica extends ReplicaInfo {
    * Copy constructor.
    * @param from where to copy construct from
    */
-  public FinalizedReplica(FinalizedReplica from) {
+  public FinalizedReplicaMeta(FinalizedReplicaMeta from) {
     super(from);
     this.unlinked = from.isUnlinked();
     this.setLastPartialChunkChecksum(from.getLastPartialChunkChecksum());

@@ -40,7 +40,7 @@ import org.apache.hadoop.hdfs.server.datanode.DataNode;
 import org.apache.hadoop.hdfs.server.datanode.DataNodeFaultInjector;
 import org.apache.hadoop.hdfs.server.datanode.DataNodeTestUtils;
 import org.apache.hadoop.hdfs.server.datanode.DatanodeUtil;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaInfo;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo;
 import org.apache.hadoop.hdfs.server.datanode.fsdataset.FsVolumeSpi;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.Time;
@@ -121,7 +121,7 @@ public class TestDatanodeRestart {
       String bpid = cluster.getNamesystem().getBlockPoolId();
       ReplicaMap replicas = dataset(dn).volumeMap;
       Assert.assertEquals(1, replicas.size(bpid));
-      ReplicaInfo replica = replicas.replicas(bpid).iterator().next();
+      ReplicaMetaInfo replica = replicas.replicas(bpid).iterator().next();
       Assert.assertEquals(ReplicaState.RWR, replica.getState());
       if (isCorrupt) {
         Assert.assertEquals((fileLen-1)/512*512, replica.getNumBytes());
@@ -154,9 +154,9 @@ public class TestDatanodeRestart {
       }
       String bpid = cluster.getNamesystem().getBlockPoolId();
       DataNode dn = cluster.getDataNodes().get(0);
-      Iterator<ReplicaInfo> replicasItor = 
+      Iterator<ReplicaMetaInfo> replicasItor =
           dataset(dn).volumeMap.replicas(bpid).iterator();
-      ReplicaInfo replica = replicasItor.next();
+      ReplicaMetaInfo replica = replicasItor.next();
       createUnlinkTmpFile(replica, true, true); // rename block file
       createUnlinkTmpFile(replica, false, true); // rename meta file
       replica = replicasItor.next();
@@ -171,7 +171,7 @@ public class TestDatanodeRestart {
       dn = cluster.getDataNodes().get(0);
 
       // check volumeMap: 4 finalized replica
-      Collection<ReplicaInfo> replicas = dataset(dn).volumeMap.replicas(bpid);
+      Collection<ReplicaMetaInfo> replicas = dataset(dn).volumeMap.replicas(bpid);
       Assert.assertEquals(4, replicas.size());
       replicasItor = replicas.iterator();
       while (replicasItor.hasNext()) {
@@ -187,14 +187,14 @@ public class TestDatanodeRestart {
     return (FsDatasetImpl)DataNodeTestUtils.getFSDataset(dn);
   }
 
-  private static void createUnlinkTmpFile(ReplicaInfo replicaInfo, 
-      boolean changeBlockFile, 
-      boolean isRename) throws IOException {
+  private static void createUnlinkTmpFile(ReplicaMetaInfo replicaMetaInfo,
+                                          boolean changeBlockFile,
+                                          boolean isRename) throws IOException {
     File src;
     if (changeBlockFile) {
-      src = replicaInfo.getBlockFile();
+      src = replicaMetaInfo.getBlockFile();
     } else {
-      src = replicaInfo.getMetaFile();
+      src = replicaMetaInfo.getMetaFile();
     }
     File dst = DatanodeUtil.getUnlinkTmpFile(src);
     if (isRename) {

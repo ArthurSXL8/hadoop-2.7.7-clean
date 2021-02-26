@@ -129,7 +129,7 @@ public class TestJsonUtil {
     response.put("cacheUsed", 321l);
 
     DatanodeInfo di = JsonUtil.toDatanodeInfo(response);
-    Assert.assertEquals(name, di.getXferAddr());
+    Assert.assertEquals(name, di.getDataTransferIpAndPort());
 
     // The encoded result should contain name, ipAddr and xferPort.
     Map<String, Object> r = JsonUtil.toJsonMap(di);

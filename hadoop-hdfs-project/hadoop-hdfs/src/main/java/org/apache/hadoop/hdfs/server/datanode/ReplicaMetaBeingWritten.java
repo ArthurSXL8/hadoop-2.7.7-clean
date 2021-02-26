@@ -27,7 +27,7 @@ import org.apache.hadoop.hdfs.server.datanode.fsdataset.FsVolumeSpi;
  * Those are the replicas that
  * are created in a pipeline initiated by a dfs client.
  */
-public class ReplicaBeingWritten extends ReplicaInPipeline {
+public class ReplicaMetaBeingWritten extends ReplicaMetaInPipeline {
   /**
    * Constructor for a zero length replica
    * @param blockId block id
@@ -37,8 +37,8 @@ public class ReplicaBeingWritten extends ReplicaInPipeline {
    * @param bytesToReserve disk space to reserve for this replica, based on
    *                       the estimated maximum block length.
    */
-  public ReplicaBeingWritten(long blockId, long genStamp, 
-        FsVolumeSpi vol, File dir, long bytesToReserve) {
+  public ReplicaMetaBeingWritten(long blockId, long genStamp,
+                                 FsVolumeSpi vol, File dir, long bytesToReserve) {
     super(blockId, genStamp, vol, dir, bytesToReserve);
   }
   
@@ -49,8 +49,8 @@ public class ReplicaBeingWritten extends ReplicaInPipeline {
    * @param dir directory path where block and meta files are located
    * @param writer a thread that is writing to this replica
    */
-  public ReplicaBeingWritten(Block block, 
-      FsVolumeSpi vol, File dir, Thread writer) {
+  public ReplicaMetaBeingWritten(Block block,
+                                 FsVolumeSpi vol, File dir, Thread writer) {
     super( block, vol, dir, writer);
   }
 
@@ -65,8 +65,8 @@ public class ReplicaBeingWritten extends ReplicaInPipeline {
    * @param bytesToReserve disk space to reserve for this replica, based on
    *                       the estimated maximum block length.
    */
-  public ReplicaBeingWritten(long blockId, long len, long genStamp,
-      FsVolumeSpi vol, File dir, Thread writer, long bytesToReserve) {
+  public ReplicaMetaBeingWritten(long blockId, long len, long genStamp,
+                                 FsVolumeSpi vol, File dir, Thread writer, long bytesToReserve) {
     super(blockId, len, genStamp, vol, dir, writer, bytesToReserve);
   }
 
@@ -74,7 +74,7 @@ public class ReplicaBeingWritten extends ReplicaInPipeline {
    * Copy constructor.
    * @param from where to copy from
    */
-  public ReplicaBeingWritten(ReplicaBeingWritten from) {
+  public ReplicaMetaBeingWritten(ReplicaMetaBeingWritten from) {
     super(from);
   }
 

@@ -94,7 +94,7 @@ public class DatanodeRegistration extends DatanodeID
 
   @Override // NodeRegistration
   public String getAddress() {
-    return getXferAddr();
+    return getDataTransferIpAndPort();
   }
 
   @Override

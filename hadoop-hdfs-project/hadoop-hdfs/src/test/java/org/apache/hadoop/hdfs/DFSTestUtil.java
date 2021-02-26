@@ -557,7 +557,7 @@ public class DFSTestUtil {
       Thread.sleep(1000);
       DistributedFileSystem dfs = (DistributedFileSystem)fs;
       for (DatanodeInfo info : dfs.getDataNodeStats()) {
-        if (name.equals(info.getXferAddr())) {
+        if (name.equals(info.getDataTransferIpAndPort())) {
           dn = info;
         }
       }
@@ -1896,7 +1896,7 @@ public class DFSTestUtil {
       SocketException {
     Socket sock = new Socket();
     try {
-      sock.connect(NetUtils.createSocketAddr(destination.getXferAddr()),
+      sock.connect(NetUtils.createSocketAddr(destination.getDataTransferIpAndPort()),
           HdfsServerConstants.READ_TIMEOUT);
       sock.setKeepAlive(true);
       // sendRequest

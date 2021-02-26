@@ -43,10 +43,10 @@ import org.junit.Test;
  *   CorruptReplicasMap::getCorruptReplicaBlockIds
  *   return the correct values
  */
-public class TestCorruptReplicaInfo {
+public class TestCorruptReplicaMetaInfo {
   
   private static final Log LOG = 
-                           LogFactory.getLog(TestCorruptReplicaInfo.class);
+                           LogFactory.getLog(TestCorruptReplicaMetaInfo.class);
   
   private final Map<Long, Block> block_map =
     new HashMap<Long, Block>();  

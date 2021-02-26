@@ -45,10 +45,10 @@ import org.apache.hadoop.hdfs.protocol.RecoveryInProgressException;
 import org.apache.hadoop.hdfs.server.common.HdfsServerConstants.ReplicaState;
 import org.apache.hadoop.hdfs.server.datanode.DataNode;
 import org.apache.hadoop.hdfs.server.datanode.DataNodeTestUtils;
-import org.apache.hadoop.hdfs.server.datanode.FinalizedReplica;
+import org.apache.hadoop.hdfs.server.datanode.FinalizedReplicaMeta;
 import org.apache.hadoop.hdfs.server.datanode.Replica;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaInfo;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaUnderRecovery;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaUnderRecovery;
 import org.apache.hadoop.hdfs.server.datanode.fsdataset.FsDatasetSpi;
 import org.apache.hadoop.hdfs.server.protocol.BlockRecoveryCommand.RecoveringBlock;
 import org.apache.hadoop.hdfs.server.protocol.InterDatanodeProtocol;
@@ -215,11 +215,11 @@ public class TestInterDatanodeProtocol {
     }
   }
 
-  private static ReplicaInfo createReplicaInfo(Block b) {
-    return new FinalizedReplica(b, null, null);
+  private static ReplicaMetaInfo createReplicaInfo(Block b) {
+    return new FinalizedReplicaMeta(b, null, null);
   }
 
-  private static void assertEquals(ReplicaInfo originalInfo, ReplicaRecoveryInfo recoveryInfo) {
+  private static void assertEquals(ReplicaMetaInfo originalInfo, ReplicaRecoveryInfo recoveryInfo) {
     Assert.assertEquals(originalInfo.getBlockId(), recoveryInfo.getBlockId());
     Assert.assertEquals(originalInfo.getGenerationStamp(), recoveryInfo.getGenerationStamp());
     Assert.assertEquals(originalInfo.getBytesOnDisk(), recoveryInfo.getNumBytes());
@@ -245,7 +245,7 @@ public class TestInterDatanodeProtocol {
     { 
       //normal case
       final Block b = blocks[0];
-      final ReplicaInfo originalInfo = map.get(bpid, b);
+      final ReplicaMetaInfo originalInfo = map.get(bpid, b);
 
       final long recoveryid = gs + 1;
       final ReplicaRecoveryInfo recoveryInfo = FsDatasetImpl
@@ -253,7 +253,7 @@ public class TestInterDatanodeProtocol {
               DFSConfigKeys.DFS_DATANODE_XCEIVER_STOP_TIMEOUT_MILLIS_DEFAULT);
       assertEquals(originalInfo, recoveryInfo);
 
-      final ReplicaUnderRecovery updatedInfo = (ReplicaUnderRecovery)map.get(bpid, b);
+      final ReplicaMetaUnderRecovery updatedInfo = (ReplicaMetaUnderRecovery)map.get(bpid, b);
       Assert.assertEquals(originalInfo.getBlockId(), updatedInfo.getBlockId());
       Assert.assertEquals(recoveryid, updatedInfo.getRecoveryID());
 
@@ -264,7 +264,7 @@ public class TestInterDatanodeProtocol {
               DFSConfigKeys.DFS_DATANODE_XCEIVER_STOP_TIMEOUT_MILLIS_DEFAULT);
       assertEquals(originalInfo, recoveryInfo2);
 
-      final ReplicaUnderRecovery updatedInfo2 = (ReplicaUnderRecovery)map.get(bpid, b);
+      final ReplicaMetaUnderRecovery updatedInfo2 = (ReplicaMetaUnderRecovery)map.get(bpid, b);
       Assert.assertEquals(originalInfo.getBlockId(), updatedInfo2.getBlockId());
       Assert.assertEquals(recoveryid2, updatedInfo2.getRecoveryID());
       
@@ -355,7 +355,7 @@ public class TestInterDatanodeProtocol {
           new RecoveringBlock(b, null, recoveryid));
 
       //check replica
-      final ReplicaInfo replica = FsDatasetTestUtil.fetchReplicaInfo(
+      final ReplicaMetaInfo replica = FsDatasetTestUtil.fetchReplicaInfo(
           fsdataset, bpid, b.getBlockId());
       Assert.assertEquals(ReplicaState.RUR, replica.getState());
 

@@ -48,7 +48,6 @@ import org.apache.hadoop.hdfs.security.token.block.BlockTokenIdentifier;
 import org.apache.hadoop.hdfs.security.token.block.InvalidBlockTokenException;
 import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.security.token.Token;
-import org.apache.htrace.Sampler;
 import org.apache.htrace.Span;
 import org.apache.htrace.Trace;
 import org.apache.htrace.TraceScope;
@@ -165,21 +164,21 @@ class BlockStorageLocationUtil {
         metadatas.put(callable.getDatanodeInfo(), metadata);
       } catch (CancellationException e) {
         LOG.info("Cancelled while waiting for datanode "
-            + datanode.getIpcAddr(false) + ": " + e.toString());
+            + datanode.getIpcAddress(false) + ": " + e.toString());
       } catch (ExecutionException e) {
         Throwable t = e.getCause();
         if (t instanceof InvalidBlockTokenException) {
           LOG.warn("Invalid access token when trying to retrieve "
-              + "information from datanode " + datanode.getIpcAddr(false));
+              + "information from datanode " + datanode.getIpcAddress(false));
           throw (InvalidBlockTokenException) t;
         }
         else if (t instanceof UnsupportedOperationException) {
-          LOG.info("Datanode " + datanode.getIpcAddr(false) + " does not support"
+          LOG.info("Datanode " + datanode.getIpcAddress(false) + " does not support"
               + " required #getHdfsBlocksMetadata() API");
           throw (UnsupportedOperationException) t;
         } else {
           LOG.info("Failed to query block locations on datanode " +
-              datanode.getIpcAddr(false) + ": " + t);
+              datanode.getIpcAddress(false) + ": " + t);
         }
         if (LOG.isDebugEnabled()) {
           LOG.debug("Could not fetch information from datanode", t);

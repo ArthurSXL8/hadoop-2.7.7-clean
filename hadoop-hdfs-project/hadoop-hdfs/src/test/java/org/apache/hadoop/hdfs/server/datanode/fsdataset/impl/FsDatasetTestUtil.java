@@ -24,16 +24,14 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.util.Collection;
-import java.util.Random;
 
 import org.apache.hadoop.hdfs.protocol.Block;
 import org.apache.hadoop.hdfs.protocol.ExtendedBlock;
 import org.apache.hadoop.hdfs.server.common.Storage;
 import org.apache.hadoop.hdfs.server.datanode.DataNode;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaInfo;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo;
 import org.apache.hadoop.hdfs.server.datanode.StorageLocation;
 import org.apache.hadoop.hdfs.server.datanode.fsdataset.FsDatasetSpi;
-import org.apache.hadoop.io.IOUtils;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -57,12 +55,12 @@ public class FsDatasetTestUtil {
   
   public static boolean unlinkBlock(FsDatasetSpi<?> fsd,
       ExtendedBlock block, int numLinks) throws IOException {
-    final ReplicaInfo info = ((FsDatasetImpl)fsd).getReplicaInfo(block);
+    final ReplicaMetaInfo info = ((FsDatasetImpl)fsd).getReplicaInfo(block);
     return info.unlinkBlock(numLinks);
   }
 
-  public static ReplicaInfo fetchReplicaInfo (final FsDatasetSpi<?> fsd,
-      final String bpid, final long blockId) {
+  public static ReplicaMetaInfo fetchReplicaInfo (final FsDatasetSpi<?> fsd,
+                                                  final String bpid, final long blockId) {
     return ((FsDatasetImpl)fsd).fetchReplicaInfo(bpid, blockId);
   }
 
@@ -70,8 +68,8 @@ public class FsDatasetTestUtil {
     return ((FsDatasetImpl)fsd).asyncDiskService.countPendingDeletions();
   }
   
-  public static Collection<ReplicaInfo> getReplicas(FsDatasetSpi<?> fsd,
-      String bpid) {
+  public static Collection<ReplicaMetaInfo> getReplicas(FsDatasetSpi<?> fsd,
+                                                        String bpid) {
     return ((FsDatasetImpl)fsd).volumeMap.replicas(bpid);
   }
 

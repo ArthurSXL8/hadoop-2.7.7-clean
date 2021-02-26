@@ -159,10 +159,10 @@ public class TestPBHelper {
   }
   
   void compare(DatanodeID dn, DatanodeID dn2) {
-    assertEquals(dn.getIpAddr(), dn2.getIpAddr());
+    assertEquals(dn.getIp(), dn2.getIp());
     assertEquals(dn.getHostName(), dn2.getHostName());
     assertEquals(dn.getDatanodeUuid(), dn2.getDatanodeUuid());
-    assertEquals(dn.getXferPort(), dn2.getXferPort());
+    assertEquals(dn.getDataStreamingPort(), dn2.getDataStreamingPort());
     assertEquals(dn.getInfoPort(), dn2.getInfoPort());
     assertEquals(dn.getIpcPort(), dn2.getIpcPort());
   }
@@ -320,7 +320,7 @@ public class TestPBHelper {
       assertEquals(dn1.getDatanodeReport(), dn2.getDatanodeReport());
       assertEquals(dn1.getDfsUsed(), dn1.getDfsUsed());
       assertEquals(dn1.getDfsUsedPercent(), dn1.getDfsUsedPercent(), DELTA);
-      assertEquals(dn1.getIpAddr(), dn2.getIpAddr());
+      assertEquals(dn1.getIp(), dn2.getIp());
       assertEquals(dn1.getHostName(), dn2.getHostName());
       assertEquals(dn1.getInfoPort(), dn2.getInfoPort());
       assertEquals(dn1.getIpcPort(), dn2.getIpcPort());

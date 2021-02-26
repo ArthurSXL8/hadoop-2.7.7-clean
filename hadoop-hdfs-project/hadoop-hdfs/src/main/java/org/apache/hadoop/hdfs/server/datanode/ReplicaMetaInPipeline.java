@@ -38,7 +38,7 @@ import org.apache.hadoop.util.StringUtils;
  * 
  * The base class implements a temporary replica
  */
-public class ReplicaInPipeline extends ReplicaInfo
+public class ReplicaMetaInPipeline extends ReplicaMetaInfo
                         implements ReplicaInPipelineInterface {
   private long bytesAcked;
   private long bytesOnDisk;
@@ -61,8 +61,8 @@ public class ReplicaInPipeline extends ReplicaInfo
    * @param bytesToReserve disk space to reserve for this replica, based on
    *                       the estimated maximum block length.
    */
-  public ReplicaInPipeline(long blockId, long genStamp, 
-        FsVolumeSpi vol, File dir, long bytesToReserve) {
+  public ReplicaMetaInPipeline(long blockId, long genStamp,
+                               FsVolumeSpi vol, File dir, long bytesToReserve) {
     this(blockId, 0L, genStamp, vol, dir, Thread.currentThread(), bytesToReserve);
   }
 
@@ -73,8 +73,8 @@ public class ReplicaInPipeline extends ReplicaInfo
    * @param dir directory path where block and meta files are located
    * @param writer a thread that is writing to this replica
    */
-  ReplicaInPipeline(Block block, 
-      FsVolumeSpi vol, File dir, Thread writer) {
+  ReplicaMetaInPipeline(Block block,
+                        FsVolumeSpi vol, File dir, Thread writer) {
     this( block.getBlockId(), block.getNumBytes(), block.getGenerationStamp(),
         vol, dir, writer, 0L);
   }
@@ -90,8 +90,8 @@ public class ReplicaInPipeline extends ReplicaInfo
    * @param bytesToReserve disk space to reserve for this replica, based on
    *                       the estimated maximum block length.
    */
-  ReplicaInPipeline(long blockId, long len, long genStamp,
-      FsVolumeSpi vol, File dir, Thread writer, long bytesToReserve) {
+  ReplicaMetaInPipeline(long blockId, long len, long genStamp,
+                        FsVolumeSpi vol, File dir, Thread writer, long bytesToReserve) {
     super( blockId, len, genStamp, vol, dir);
     this.bytesAcked = len;
     this.bytesOnDisk = len;
@@ -103,7 +103,7 @@ public class ReplicaInPipeline extends ReplicaInfo
    * Copy constructor.
    * @param from where to copy from
    */
-  public ReplicaInPipeline(ReplicaInPipeline from) {
+  public ReplicaMetaInPipeline(ReplicaMetaInPipeline from) {
     super(from);
     this.bytesAcked = from.getBytesAcked();
     this.bytesOnDisk = from.getBytesOnDisk();

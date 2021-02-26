@@ -187,7 +187,7 @@ public class TestDeleteBlockPool {
       assertEquals(1, dn1.getAllBpOs().length);
       
       DFSAdmin admin = new DFSAdmin(nn1Conf);
-      String dn1Address = dn1.getDatanodeId().getIpAddr() + ":" + dn1.getIpcPort();
+      String dn1Address = dn1.getDatanodeId().getIp() + ":" + dn1.getIpcPort();
       String[] args = { "-deleteBlockPool", dn1Address, bpid2 };
       
       int ret = admin.run(args);

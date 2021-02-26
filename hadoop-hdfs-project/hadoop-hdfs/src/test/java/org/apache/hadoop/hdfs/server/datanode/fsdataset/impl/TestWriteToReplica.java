@@ -31,15 +31,15 @@ import org.apache.hadoop.hdfs.protocol.ExtendedBlock;
 import org.apache.hadoop.hdfs.server.datanode.BlockMetadataHeader;
 import org.apache.hadoop.hdfs.server.datanode.DataNode;
 import org.apache.hadoop.hdfs.server.datanode.DataNodeTestUtils;
-import org.apache.hadoop.hdfs.server.datanode.FinalizedReplica;
+import org.apache.hadoop.hdfs.server.datanode.FinalizedReplicaMeta;
 import org.apache.hadoop.hdfs.server.datanode.ReplicaAlreadyExistsException;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaBeingWritten;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaInPipeline;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaBeingWritten;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInPipeline;
 import org.apache.hadoop.hdfs.server.datanode.ReplicaInPipelineInterface;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaInfo;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaWaitingToBeRecovered;
 import org.apache.hadoop.hdfs.server.datanode.ReplicaNotFoundException;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaUnderRecovery;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaWaitingToBeRecovered;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaUnderRecovery;
 import org.apache.hadoop.test.GenericTestUtils;
 import org.apache.hadoop.util.DataChecksum;
 import org.apache.hadoop.util.DiskChecker.DiskOutOfSpaceException;
@@ -168,34 +168,34 @@ public class TestWriteToReplica {
     ReplicaMap replicasMap = dataSet.volumeMap;
     FsVolumeImpl vol = (FsVolumeImpl) dataSet.volumes
         .getNextVolume(StorageType.DEFAULT, 0).getVolume();
-    ReplicaInfo replicaInfo = new FinalizedReplica(
+    ReplicaMetaInfo replicaMetaInfo = new FinalizedReplicaMeta(
         blocks[FINALIZED].getLocalBlock(), vol, vol.getCurrentDir().getParentFile());
-    replicasMap.add(bpid, replicaInfo);
-    replicaInfo.getBlockFile().createNewFile();
-    replicaInfo.getMetaFile().createNewFile();
-    saveMetaFileHeader(replicaInfo.getMetaFile());
+    replicasMap.add(bpid, replicaMetaInfo);
+    replicaMetaInfo.getBlockFile().createNewFile();
+    replicaMetaInfo.getMetaFile().createNewFile();
+    saveMetaFileHeader(replicaMetaInfo.getMetaFile());
     
-    replicasMap.add(bpid, new ReplicaInPipeline(
+    replicasMap.add(bpid, new ReplicaMetaInPipeline(
         blocks[TEMPORARY].getBlockId(),
         blocks[TEMPORARY].getGenerationStamp(), vol,
         vol.createTmpFile(bpid, blocks[TEMPORARY].getLocalBlock()).getParentFile(), 0));
     
-    replicaInfo = new ReplicaBeingWritten(blocks[RBW].getLocalBlock(), vol,
+    replicaMetaInfo = new ReplicaMetaBeingWritten(blocks[RBW].getLocalBlock(), vol,
         vol.createRbwFile(bpid, blocks[RBW].getLocalBlock()).getParentFile(), null);
-    replicasMap.add(bpid, replicaInfo);
-    replicaInfo.getBlockFile().createNewFile();
-    replicaInfo.getMetaFile().createNewFile();
+    replicasMap.add(bpid, replicaMetaInfo);
+    replicaMetaInfo.getBlockFile().createNewFile();
+    replicaMetaInfo.getMetaFile().createNewFile();
     try (RandomAccessFile blockRAF =
-        new RandomAccessFile(replicaInfo.getBlockFile(), "rw")) {
+        new RandomAccessFile(replicaMetaInfo.getBlockFile(), "rw")) {
       //extend blockFile
       blockRAF.setLength(blocks[RBW].getNumBytes());
     }
-    saveMetaFileHeader(replicaInfo.getMetaFile());
+    saveMetaFileHeader(replicaMetaInfo.getMetaFile());
     
-    replicasMap.add(bpid, new ReplicaWaitingToBeRecovered(
+    replicasMap.add(bpid, new ReplicaMetaWaitingToBeRecovered(
         blocks[RWR].getLocalBlock(), vol, vol.createRbwFile(bpid,
             blocks[RWR].getLocalBlock()).getParentFile()));
-    replicasMap.add(bpid, new ReplicaUnderRecovery(new FinalizedReplica(blocks[RUR]
+    replicasMap.add(bpid, new ReplicaMetaUnderRecovery(new FinalizedReplicaMeta(blocks[RUR]
         .getLocalBlock(), vol, vol.getCurrentDir().getParentFile()), 2007));    
     
     return blocks;
@@ -527,7 +527,7 @@ public class TestWriteToReplica {
   }
 
   /**
-   * Test that we can successfully recover a {@link ReplicaBeingWritten}
+   * Test that we can successfully recover a {@link ReplicaMetaBeingWritten}
    * which has inconsistent metadata (bytes were written to disk but bytesOnDisk
    * was not updated) but that recovery fails when the block is actually
    * corrupt (bytes are not present on disk).
@@ -544,7 +544,7 @@ public class TestWriteToReplica {
     String bpid = cluster.getNamesystem().getBlockPoolId();
     ExtendedBlock[] blocks = setup(bpid, fsDataset);
 
-    ReplicaBeingWritten rbw = (ReplicaBeingWritten)fsDataset.
+    ReplicaMetaBeingWritten rbw = (ReplicaMetaBeingWritten)fsDataset.
         getReplicaInfo(blocks[RBW]);
     long bytesOnDisk = rbw.getBytesOnDisk();
     // simulate an inconsistent replica length update by reducing in-memory

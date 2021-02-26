@@ -219,7 +219,7 @@ public class TestDataTransferProtocol {
       String poolId = cluster.getNamesystem().getBlockPoolId(); 
       datanode = DataNodeTestUtils.getDNRegistrationForBP(
           cluster.getDataNodes().get(0), poolId);
-      dnAddr = NetUtils.createSocketAddr(datanode.getXferAddr());
+      dnAddr = NetUtils.createSocketAddr(datanode.getDataTransferIpAndPort());
       FileSystem fileSys = cluster.getFileSystem();
 
       /* Test writing to finalized replicas */
@@ -352,7 +352,7 @@ public class TestDataTransferProtocol {
     try {
     cluster.waitActive();
     datanode = cluster.getFileSystem().getDataNodeStats(DatanodeReportType.LIVE)[0];
-    dnAddr = NetUtils.createSocketAddr(datanode.getXferAddr());
+    dnAddr = NetUtils.createSocketAddr(datanode.getDataTransferIpAndPort());
     FileSystem fileSys = cluster.getFileSystem();
     
     int fileLen = Math.min(conf.getInt(DFSConfigKeys.DFS_BLOCK_SIZE_KEY, 4096), 4096);

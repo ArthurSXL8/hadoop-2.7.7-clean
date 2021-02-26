@@ -718,7 +718,7 @@ public class NamenodeFsck implements DataEncryptionKeyFactory {
       
       try {
         chosenNode = bestNode(dfs, lblock.getLocations(), deadNodes);
-        targetAddr = NetUtils.createSocketAddr(chosenNode.getXferAddr());
+        targetAddr = NetUtils.createSocketAddr(chosenNode.getDataTransferIpAndPort());
       }  catch (IOException ie) {
         if (failures >= DFSConfigKeys.DFS_CLIENT_MAX_BLOCK_ACQUIRE_FAILURES_DEFAULT) {
           throw new IOException("Could not obtain block " + lblock, ie);

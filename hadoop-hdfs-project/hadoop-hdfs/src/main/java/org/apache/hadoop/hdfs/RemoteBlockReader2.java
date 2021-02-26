@@ -294,7 +294,7 @@ public class RemoteBlockReader2  implements BlockReader {
       long startOffset, long firstChunkOffset, long bytesToRead, Peer peer,
       DatanodeID datanodeID, PeerCache peerCache) {
     this.isLocal = DFSClient.isLocalAddress(NetUtils.
-        createSocketAddr(datanodeID.getXferAddr()));
+        createSocketAddr(datanodeID.getDataTransferIpAndPort()));
     // Path is used only for printing block and file information in debug
     this.peer = peer;
     this.datanodeID = datanodeID;

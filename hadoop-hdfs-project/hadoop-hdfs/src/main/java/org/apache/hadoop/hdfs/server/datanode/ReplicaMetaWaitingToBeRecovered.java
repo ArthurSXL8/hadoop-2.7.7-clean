@@ -32,7 +32,7 @@ import org.apache.hadoop.hdfs.server.datanode.fsdataset.FsVolumeSpi;
  * client continues to write or be recovered as a result of
  * lease recovery.
  */
-public class ReplicaWaitingToBeRecovered extends ReplicaInfo {
+public class ReplicaMetaWaitingToBeRecovered extends ReplicaMetaInfo {
   private boolean unlinked;      // copy-on-write done for block
 
   /**
@@ -43,8 +43,8 @@ public class ReplicaWaitingToBeRecovered extends ReplicaInfo {
    * @param vol volume where replica is located
    * @param dir directory path where block and meta files are located
    */
-  public ReplicaWaitingToBeRecovered(long blockId, long len, long genStamp,
-      FsVolumeSpi vol, File dir) {
+  public ReplicaMetaWaitingToBeRecovered(long blockId, long len, long genStamp,
+                                         FsVolumeSpi vol, File dir) {
     super(blockId, len, genStamp, vol, dir);
   }
   
@@ -54,7 +54,7 @@ public class ReplicaWaitingToBeRecovered extends ReplicaInfo {
    * @param vol volume where replica is located
    * @param dir directory path where block and meta files are located
    */
-  public ReplicaWaitingToBeRecovered(Block block, FsVolumeSpi vol, File dir) {
+  public ReplicaMetaWaitingToBeRecovered(Block block, FsVolumeSpi vol, File dir) {
     super(block, vol, dir);
   }
   
@@ -62,7 +62,7 @@ public class ReplicaWaitingToBeRecovered extends ReplicaInfo {
    * Copy constructor.
    * @param from where to copy from
    */
-  public ReplicaWaitingToBeRecovered(ReplicaWaitingToBeRecovered from) {
+  public ReplicaMetaWaitingToBeRecovered(ReplicaMetaWaitingToBeRecovered from) {
     super(from);
     this.unlinked = from.isUnlinked();
   }

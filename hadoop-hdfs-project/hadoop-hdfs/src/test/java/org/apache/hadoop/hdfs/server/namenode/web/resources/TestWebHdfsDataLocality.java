@@ -84,12 +84,12 @@ public class TestWebHdfsDataLocality {
         for(int i = 0; i < nDataNodes; i++) {
           //set client address to a particular datanode
           final DataNode dn = cluster.getDataNodes().get(i);
-          final String ipAddr = dm.getDatanode(dn.getDatanodeId()).getIpAddr();
+          final String ipAddr = dm.getDatanode(dn.getDatanodeId()).getIp();
 
           //The chosen datanode must be the same as the client address
           final DatanodeInfo chosen = NamenodeWebHdfsMethods.chooseDatanode(
               namenode, f, PutOpParam.Op.CREATE, -1L, blocksize, null);
-          Assert.assertEquals(ipAddr, chosen.getIpAddr());
+          Assert.assertEquals(ipAddr, chosen.getIp());
         }
       }
   
@@ -177,7 +177,7 @@ public class TestWebHdfsDataLocality {
 
       StringBuffer sb = new StringBuffer();
       for (int i = 0; i < 2; i++) {
-        sb.append(locations[i].getXferAddr());
+        sb.append(locations[i].getDataTransferIpAndPort());
         { // test GETFILECHECKSUM
           final DatanodeInfo chosen = NamenodeWebHdfsMethods.chooseDatanode(
               namenode, f, GetOpParam.Op.GETFILECHECKSUM, -1L, blocksize,

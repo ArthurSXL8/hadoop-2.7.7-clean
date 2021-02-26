@@ -182,7 +182,7 @@ public class TestDecommission {
       int hasdown = 0;
       DatanodeInfo[] nodes = blk.getLocations();
       for (int j = 0; j < nodes.length; j++) { // for each replica
-        if (isNodeDown && nodes[j].getXferAddr().equals(downnode)) {
+        if (isNodeDown && nodes[j].getDataTransferIpAndPort().equals(downnode)) {
           hasdown++;
           //Downnode must actually be decommissioned
           if (!nodes[j].isDecommissioned()) {
@@ -259,7 +259,7 @@ public class TestDecommission {
         throw new IOException("invalid datanodeUuid " + datanodeUuid);
       }
     }
-    String nodename = info[index].getXferAddr();
+    String nodename = info[index].getDataTransferIpAndPort();
     LOG.info("Decommissioning node: " + nodename);
 
     // write nodename into the exclude file.
@@ -414,7 +414,7 @@ public class TestDecommission {
     DFSClient client = getDfsClient(cluster.getNameNode(0), conf);
     assertEquals("All datanodes must be alive", numDatanodes,
         client.datanodeReport(DatanodeReportType.LIVE).length);
-    assertNull(checkFile(fileSys, file1, replicas, decomNode.getXferAddr(),
+    assertNull(checkFile(fileSys, file1, replicas, decomNode.getDataTransferIpAndPort(),
         numDatanodes));
     cleanupFile(fileSys, file1);
 
@@ -597,7 +597,7 @@ public class TestDecommission {
         while (tries++ < 20) {
           try {
             Thread.sleep(1000);
-            if (checkFile(fileSys, file1, replicas, decomNode.getXferAddr(),
+            if (checkFile(fileSys, file1, replicas, decomNode.getDataTransferIpAndPort(),
                 numDatanodes) == null) {
               break;
             }
@@ -644,7 +644,7 @@ public class TestDecommission {
       final String toDecomHost = loc.getNames()[0];
       String toDecomUuid = null;
       for (DataNode d : cluster.getDataNodes()) {
-        if (d.getDatanodeId().getXferAddr().equals(toDecomHost)) {
+        if (d.getDatanodeId().getDataTransferIpAndPort().equals(toDecomHost)) {
           toDecomUuid = d.getDatanodeId().getDatanodeUuid();
           break;
         }
@@ -853,12 +853,12 @@ public class TestDecommission {
         }
       }
       if (found != null) {
-        nodes.add(found.getXferAddr());
+        nodes.add(found.getDataTransferIpAndPort());
         dnInfos.add(dm.getDatanode(found));
       }
     }
     //decommission one of the 3 nodes which have last block
-    nodes.add(dnInfos4LastBlock[0].getXferAddr());
+    nodes.add(dnInfos4LastBlock[0].getDataTransferIpAndPort());
     dnInfos.add(dm.getDatanode(dnInfos4LastBlock[0]));
     
     writeConfigFile(excludeFile, nodes);
@@ -900,7 +900,7 @@ public class TestDecommission {
     // Decommission all nodes of the last block
     ArrayList<String> toDecom = new ArrayList<>();
     for (DatanodeInfo dnDecom : lastBlockLocations) {
-      toDecom.add(dnDecom.getXferAddr());
+      toDecom.add(dnDecom.getDataTransferIpAndPort());
     }
     writeConfigFile(excludeFile, toDecom);
     refreshNodes(ns, conf);
@@ -950,9 +950,9 @@ public class TestDecommission {
 
     DatanodeManager dm = ns.getBlockManager().getDatanodeManager();
     //decommission 2 of the 3 nodes which have last block
-    nodes.add(dnInfos4LastBlock[0].getXferAddr());
+    nodes.add(dnInfos4LastBlock[0].getDataTransferIpAndPort());
     dnInfos.add(dm.getDatanode(dnInfos4LastBlock[0]));
-    nodes.add(dnInfos4LastBlock[1].getXferAddr());
+    nodes.add(dnInfos4LastBlock[1].getDataTransferIpAndPort());
     dnInfos.add(dm.getDatanode(dnInfos4LastBlock[1]));
     writeConfigFile(excludeFile, nodes);
 
@@ -990,7 +990,7 @@ public class TestDecommission {
     DFSClient client = getDfsClient(cluster.getNameNode(), conf);
     DatanodeInfo[] info = client.datanodeReport(DatanodeReportType.LIVE);
     DatanodeID excludedDatanodeID = info[0];
-    String excludedDatanodeName = info[0].getXferAddr();
+    String excludedDatanodeName = info[0].getDataTransferIpAndPort();
 
     writeConfigFile(excludeFile, new ArrayList<String>(Arrays.asList(excludedDatanodeName)));
 
@@ -1009,7 +1009,7 @@ public class TestDecommission {
     assertEquals("All datanodes must be alive", numDatanodes, 
         client.datanodeReport(DatanodeReportType.LIVE).length);
     assertTrue("Checked if block was replicated after decommission.",
-        checkFile(fileSys, file1, replicas, datanodeInfo.getXferAddr(),
+        checkFile(fileSys, file1, replicas, datanodeInfo.getDataTransferIpAndPort(),
         numDatanodes) == null);
 
     cleanupFile(fileSys, file1);

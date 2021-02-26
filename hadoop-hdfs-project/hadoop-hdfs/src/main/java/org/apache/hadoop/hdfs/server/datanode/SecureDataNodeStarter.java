@@ -92,7 +92,7 @@ public class SecureDataNodeStarter implements Daemon {
     boolean isSecure = UserGroupInformation.isSecurityEnabled();
 
     // Obtain secure port for data streaming to datanode
-    InetSocketAddress streamingAddr  = DataNode.getStreamingAddr(conf);
+    InetSocketAddress streamingAddr  = DataNode.getStreamingAddress(conf);
     int socketWriteTimeout = conf.getInt(
         DFSConfigKeys.DFS_DATANODE_SOCKET_WRITE_TIMEOUT_KEY,
         HdfsServerConstants.WRITE_TIMEOUT);

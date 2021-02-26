@@ -954,7 +954,7 @@ class BlockReceiver implements Closeable {
           // In case this datanode is shutting down for quick restart,
           // send a special ack upstream.
           if (datanode.isRestarting() && isClient && !isTransfer) {
-            File blockFile = ((ReplicaInPipeline)replicaInfo).getBlockFile();
+            File blockFile = ((ReplicaMetaInPipeline)replicaInfo).getBlockFile();
             File restartMeta = new File(blockFile.getParent()  + 
                 File.pathSeparator + "." + blockFile.getName() + ".restart");
             if (restartMeta.exists() && !restartMeta.delete()) {

@@ -55,7 +55,7 @@ public class FileChecksumServlets {
         HttpServletRequest request, NameNode nn) 
         throws IOException {
       final String hostname = host instanceof DatanodeInfo 
-          ? host.getHostName() : host.getIpAddr();
+          ? host.getHostName() : host.getIp();
       final String scheme = request.getScheme();
       int port = host.getInfoPort();
       if ("https".equals(scheme)) {

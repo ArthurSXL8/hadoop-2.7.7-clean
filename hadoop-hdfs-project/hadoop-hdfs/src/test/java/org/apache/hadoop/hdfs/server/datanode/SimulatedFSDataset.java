@@ -23,8 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.ClosedChannelException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -62,7 +60,6 @@ import org.apache.hadoop.hdfs.server.protocol.VolumeFailureSummary;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.metrics2.util.MBeans;
 import org.apache.hadoop.util.DataChecksum;
-import org.apache.hadoop.util.DiskChecker.DiskErrorException;
 
 /**
  * This class implements a simulated FSDataset.
@@ -1283,12 +1280,12 @@ public class SimulatedFSDataset implements FsDatasetSpi<FsVolumeSpi> {
   }
 
   @Override
-  public List<FinalizedReplica> getFinalizedBlocks(String bpid) {
+  public List<FinalizedReplicaMeta> getFinalizedBlocks(String bpid) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public List<FinalizedReplica> getFinalizedBlocksOnPersistentStorage(String bpid) {
+  public List<FinalizedReplicaMeta> getFinalizedBlocksOnPersistentStorage(String bpid) {
     throw new UnsupportedOperationException();
   }
 
@@ -1325,8 +1322,8 @@ public class SimulatedFSDataset implements FsDatasetSpi<FsVolumeSpi> {
   }
 
   @Override
-  public ReplicaInfo moveBlockAcrossStorage(ExtendedBlock block,
-      StorageType targetStorageType) throws IOException {
+  public ReplicaMetaInfo moveBlockAcrossStorage(ExtendedBlock block,
+                                                StorageType targetStorageType) throws IOException {
     // TODO Auto-generated method stub
     return null;
   }

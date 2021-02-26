@@ -200,7 +200,7 @@ public class BlockManagerTestUtil {
       DatanodeDescriptor[] dnds = hbm.getDatanodes();
       DatanodeDescriptor theDND = null;
       for (DatanodeDescriptor dnd : dnds) {
-        if (dnd.getXferAddr().equals(dnName)) {
+        if (dnd.getDataTransferIpAndPort().equals(dnName)) {
           theDND = dnd;
         }
       }

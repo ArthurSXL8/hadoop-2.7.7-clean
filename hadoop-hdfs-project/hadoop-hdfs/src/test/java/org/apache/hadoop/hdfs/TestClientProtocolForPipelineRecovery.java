@@ -40,7 +40,6 @@ import org.apache.hadoop.hdfs.server.datanode.DataNodeFaultInjector;
 import org.apache.hadoop.hdfs.server.namenode.LeaseExpiredException;
 import org.apache.hadoop.hdfs.server.protocol.NamenodeProtocols;
 import org.apache.hadoop.hdfs.tools.DFSAdmin;
-import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.test.GenericTestUtils;
 import org.junit.Assert;
@@ -222,10 +221,10 @@ public class TestClientProtocolForPipelineRecovery {
 
       boolean contains = false;
       for (int i = 0; i < newNodes.length; i++) {
-        if (orgNodes[0].getXferAddr().equals(newNodes[i].getXferAddr())) {
+        if (orgNodes[0].getDataTransferIpAndPort().equals(newNodes[i].getDataTransferIpAndPort())) {
           throw new IOException("The first datanode should have been replaced.");
         }
-        if (orgNodes[1].getXferAddr().equals(newNodes[i].getXferAddr())) {
+        if (orgNodes[1].getDataTransferIpAndPort().equals(newNodes[i].getDataTransferIpAndPort())) {
           contains = true;
         }
       }
@@ -264,7 +263,7 @@ public class TestClientProtocolForPipelineRecovery {
 
       DFSAdmin dfsadmin = new DFSAdmin(conf);
       DataNode dn = cluster.getDataNodes().get(0);
-      final String dnAddr = dn.getDatanodeId().getIpcAddr(false);
+      final String dnAddr = dn.getDatanodeId().getIpcAddress(false);
       // issue shutdown to the datanode.
       final String[] args1 = {"-shutdownDatanode", dnAddr, "upgrade" };
       Assert.assertEquals(0, dfsadmin.run(args1));
@@ -303,7 +302,7 @@ public class TestClientProtocolForPipelineRecovery {
 
       DFSAdmin dfsadmin = new DFSAdmin(conf);
       DataNode dn = cluster.getDataNodes().get(0);
-      final String dnAddr1 = dn.getDatanodeId().getIpcAddr(false);
+      final String dnAddr1 = dn.getDatanodeId().getIpcAddress(false);
       // issue shutdown to the datanode.
       final String[] args1 = {"-shutdownDatanode", dnAddr1, "upgrade" };
       Assert.assertEquals(0, dfsadmin.run(args1));
@@ -320,7 +319,7 @@ public class TestClientProtocolForPipelineRecovery {
       out.hflush();
 
       dn = cluster.getDataNodes().get(1);
-      final String dnAddr2 = dn.getDatanodeId().getIpcAddr(false);
+      final String dnAddr2 = dn.getDatanodeId().getIpcAddress(false);
       // issue shutdown to the datanode.
       final String[] args2 = {"-shutdownDatanode", dnAddr2, "upgrade" };
       Assert.assertEquals(0, dfsadmin.run(args2));

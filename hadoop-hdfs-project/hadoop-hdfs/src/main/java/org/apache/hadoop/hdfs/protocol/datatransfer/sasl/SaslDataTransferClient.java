@@ -246,7 +246,7 @@ public class SaslDataTransferClient {
         "SASL client skipping handshake in unsecured configuration for "
         + "addr = {}, datanodeId = {}", addr, datanodeId);
       return null;
-    } else if (SecurityUtil.isPrivilegedPort(datanodeId.getXferPort())) {
+    } else if (SecurityUtil.isPrivilegedPort(datanodeId.getDataStreamingPort())) {
       LOG.debug(
         "SASL client skipping handshake in secured configuration with "
         + "privileged port for addr = {}, datanodeId = {}", addr, datanodeId);

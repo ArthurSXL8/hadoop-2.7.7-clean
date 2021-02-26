@@ -23,7 +23,7 @@ import java.util.Map;
 
 import org.apache.hadoop.HadoopIllegalArgumentException;
 import org.apache.hadoop.hdfs.protocol.Block;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaInfo;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo;
 
 /**
  * Maintains the replica map. 
@@ -33,8 +33,8 @@ class ReplicaMap {
   private final Object mutex;
   
   // Map of block pool Id to another map of block Id to ReplicaInfo.
-  private final Map<String, Map<Long, ReplicaInfo>> map =
-    new HashMap<String, Map<Long, ReplicaInfo>>();
+  private final Map<String, Map<Long, ReplicaMetaInfo>> map =
+    new HashMap<String, Map<Long, ReplicaMetaInfo>>();
   
   ReplicaMap(Object mutex) {
     if (mutex == null) {
@@ -70,13 +70,13 @@ class ReplicaMap {
    * @return the replica's meta information
    * @throws IllegalArgumentException if the input block or block pool is null
    */
-  ReplicaInfo get(String bpid, Block block) {
+  ReplicaMetaInfo get(String bpid, Block block) {
     checkBlockPool(bpid);
     checkBlock(block);
-    ReplicaInfo replicaInfo = get(bpid, block.getBlockId());
-    if (replicaInfo != null && 
-        block.getGenerationStamp() == replicaInfo.getGenerationStamp()) {
-      return replicaInfo;
+    ReplicaMetaInfo replicaMetaInfo = get(bpid, block.getBlockId());
+    if (replicaMetaInfo != null &&
+        block.getGenerationStamp() == replicaMetaInfo.getGenerationStamp()) {
+      return replicaMetaInfo;
     }
     return null;
   }
@@ -88,10 +88,10 @@ class ReplicaMap {
    * @param blockId a block's id
    * @return the replica's meta information
    */
-  ReplicaInfo get(String bpid, long blockId) {
+  ReplicaMetaInfo get(String bpid, long blockId) {
     checkBlockPool(bpid);
     synchronized(mutex) {
-      Map<Long, ReplicaInfo> m = map.get(bpid);
+      Map<Long, ReplicaMetaInfo> m = map.get(bpid);
       return m != null ? m.get(blockId) : null;
     }
   }
@@ -100,21 +100,21 @@ class ReplicaMap {
    * Add a replica's meta information into the map 
    * 
    * @param bpid block pool id
-   * @param replicaInfo a replica's meta information
+   * @param replicaMetaInfo a replica's meta information
    * @return previous meta information of the replica
    * @throws IllegalArgumentException if the input parameter is null
    */
-  ReplicaInfo add(String bpid, ReplicaInfo replicaInfo) {
+  ReplicaMetaInfo add(String bpid, ReplicaMetaInfo replicaMetaInfo) {
     checkBlockPool(bpid);
-    checkBlock(replicaInfo);
+    checkBlock(replicaMetaInfo);
     synchronized(mutex) {
-      Map<Long, ReplicaInfo> m = map.get(bpid);
+      Map<Long, ReplicaMetaInfo> m = map.get(bpid);
       if (m == null) {
         // Add an entry for block pool if it does not exist already
-        m = new HashMap<Long, ReplicaInfo>();
+        m = new HashMap<Long, ReplicaMetaInfo>();
         map.put(bpid, m);
       }
-      return  m.put(replicaInfo.getBlockId(), replicaInfo);
+      return  m.put(replicaMetaInfo.getBlockId(), replicaMetaInfo);
     }
   }
 
@@ -133,16 +133,16 @@ class ReplicaMap {
    * @return the removed replica's meta information
    * @throws IllegalArgumentException if the input block is null
    */
-  ReplicaInfo remove(String bpid, Block block) {
+  ReplicaMetaInfo remove(String bpid, Block block) {
     checkBlockPool(bpid);
     checkBlock(block);
     synchronized(mutex) {
-      Map<Long, ReplicaInfo> m = map.get(bpid);
+      Map<Long, ReplicaMetaInfo> m = map.get(bpid);
       if (m != null) {
         Long key = Long.valueOf(block.getBlockId());
-        ReplicaInfo replicaInfo = m.get(key);
-        if (replicaInfo != null &&
-            block.getGenerationStamp() == replicaInfo.getGenerationStamp()) {
+        ReplicaMetaInfo replicaMetaInfo = m.get(key);
+        if (replicaMetaInfo != null &&
+            block.getGenerationStamp() == replicaMetaInfo.getGenerationStamp()) {
           return m.remove(key);
         } 
       }
@@ -157,10 +157,10 @@ class ReplicaMap {
    * @param blockId block id of the replica to be removed
    * @return the removed replica's meta information
    */
-  ReplicaInfo remove(String bpid, long blockId) {
+  ReplicaMetaInfo remove(String bpid, long blockId) {
     checkBlockPool(bpid);
     synchronized(mutex) {
-      Map<Long, ReplicaInfo> m = map.get(bpid);
+      Map<Long, ReplicaMetaInfo> m = map.get(bpid);
       if (m != null) {
         return m.remove(blockId);
       }
@@ -174,7 +174,7 @@ class ReplicaMap {
    * @return the number of replicas in the map
    */
   int size(String bpid) {
-    Map<Long, ReplicaInfo> m = null;
+    Map<Long, ReplicaMetaInfo> m = null;
     synchronized(mutex) {
       m = map.get(bpid);
       return m != null ? m.size() : 0;
@@ -191,8 +191,8 @@ class ReplicaMap {
    * @param bpid block pool id
    * @return a collection of the replicas belonging to the block pool
    */
-  Collection<ReplicaInfo> replicas(String bpid) {
-    Map<Long, ReplicaInfo> m = null;
+  Collection<ReplicaMetaInfo> replicas(String bpid) {
+    Map<Long, ReplicaMetaInfo> m = null;
     m = map.get(bpid);
     return m != null ? m.values() : null;
   }
@@ -200,10 +200,10 @@ class ReplicaMap {
   void initBlockPool(String bpid) {
     checkBlockPool(bpid);
     synchronized(mutex) {
-      Map<Long, ReplicaInfo> m = map.get(bpid);
+      Map<Long, ReplicaMetaInfo> m = map.get(bpid);
       if (m == null) {
         // Add an entry for block pool if it does not exist already
-        m = new HashMap<Long, ReplicaInfo>();
+        m = new HashMap<Long, ReplicaMetaInfo>();
         map.put(bpid, m);
       }
     }

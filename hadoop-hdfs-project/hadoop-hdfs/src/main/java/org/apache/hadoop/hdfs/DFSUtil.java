@@ -548,7 +548,7 @@ public class DFSUtil {
       String[] racks = new String[locations.length];
       for (int hCnt = 0; hCnt < locations.length; hCnt++) {
         hosts[hCnt] = locations[hCnt].getHostName();
-        xferAddrs[hCnt] = locations[hCnt].getXferAddr();
+        xferAddrs[hCnt] = locations[hCnt].getDataTransferIpAndPort();
         NodeBase node = new NodeBase(xferAddrs[hCnt], 
                                      locations[hCnt].getNetworkLocation());
         racks[hCnt] = node.toString();

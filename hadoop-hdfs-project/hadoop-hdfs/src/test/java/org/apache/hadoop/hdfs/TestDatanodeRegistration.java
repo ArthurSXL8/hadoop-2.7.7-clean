@@ -237,8 +237,8 @@ public class TestDatanodeRegistration {
       
       DatanodeRegistration mockDnReg = mock(DatanodeRegistration.class);
       doReturn(HdfsConstants.DATANODE_LAYOUT_VERSION).when(mockDnReg).getVersion();
-      doReturn("127.0.0.1").when(mockDnReg).getIpAddr();
-      doReturn(123).when(mockDnReg).getXferPort();
+      doReturn("127.0.0.1").when(mockDnReg).getIp();
+      doReturn(123).when(mockDnReg).getDataStreamingPort();
       doReturn("fake-storage-id").when(mockDnReg).getDatanodeUuid();
       doReturn(mockStorageInfo).when(mockDnReg).getStorageInfo();
       
@@ -292,8 +292,8 @@ public class TestDatanodeRegistration {
       // Should succeed when software versions are the same and CTimes are the
       // same.
       doReturn(VersionInfo.getVersion()).when(mockDnReg).getSoftwareVersion();
-      doReturn("127.0.0.1").when(mockDnReg).getIpAddr();
-      doReturn(123).when(mockDnReg).getXferPort();
+      doReturn("127.0.0.1").when(mockDnReg).getIp();
+      doReturn(123).when(mockDnReg).getDataStreamingPort();
       rpcServer.registerDatanode(mockDnReg);
       
       // Should succeed when software versions are the same and CTimes are

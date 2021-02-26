@@ -22,7 +22,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import org.apache.hadoop.hdfs.protocol.Block;
-import org.apache.hadoop.hdfs.server.datanode.FinalizedReplica;
+import org.apache.hadoop.hdfs.server.datanode.FinalizedReplicaMeta;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,7 +36,7 @@ public class TestReplicaMap {
   
   @Before
   public void setup() {
-    map.add(bpid, new FinalizedReplica(block, null, null));
+    map.add(bpid, new FinalizedReplicaMeta(block, null, null));
   }
   
   /**
@@ -104,7 +104,7 @@ public class TestReplicaMap {
     assertNull(map.remove(bpid, 0));
     
     // Test 6: remove success
-    map.add(bpid, new FinalizedReplica(block, null, null));
+    map.add(bpid, new FinalizedReplicaMeta(block, null, null));
     assertNotNull(map.remove(bpid, block.getBlockId()));
   }
 }

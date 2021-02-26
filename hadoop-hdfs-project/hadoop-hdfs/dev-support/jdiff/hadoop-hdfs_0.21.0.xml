@@ -9867,7 +9867,7 @@ order written.</p>]]>
  @param vol Volume of the block file]]>
       </doc>
     </method>
-    <method name="getReplica" return="org.apache.hadoop.hdfs.server.datanode.ReplicaInfo"
+    <method name="getReplica" return="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo"
       abstract="false" native="false" synchronized="false"
       static="false" final="false" visibility="public"
       deprecated="use {@link #fetchReplicaInfo(long)} instead.">
@@ -9883,7 +9883,7 @@ order written.</p>]]>
       <param name="rBlock" type="org.apache.hadoop.hdfs.server.protocol.BlockRecoveryCommand.RecoveringBlock"/>
       <exception name="IOException" type="java.io.IOException"/>
     </method>
-    <method name="updateReplicaUnderRecovery" return="org.apache.hadoop.hdfs.server.datanode.ReplicaInfo"
+    <method name="updateReplicaUnderRecovery" return="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo"
       abstract="false" native="false" synchronized="true"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
@@ -10279,7 +10279,7 @@ order written.</p>]]>
  null if data-node does not have the replica.]]>
       </doc>
     </method>
-    <method name="updateReplicaUnderRecovery" return="org.apache.hadoop.hdfs.server.datanode.ReplicaInfo"
+    <method name="updateReplicaUnderRecovery" return="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo"
       abstract="false" native="false" synchronized="false"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
@@ -10407,7 +10407,7 @@ order written.</p>]]>
     </doc>
   </interface>
   <!-- end interface org.apache.hadoop.hdfs.server.datanode.Replica -->
-  <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaInfo -->
+  <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo -->
   <class name="ReplicaInfo" extends="org.apache.hadoop.hdfs.protocol.Block"
     abstract="true"
     static="false" final="false" visibility="public"
@@ -10423,7 +10423,7 @@ order written.</p>]]>
  It provides a general interface for meta information of a replica.]]>
     </doc>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaInfo -->
+  <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo -->
   <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaNotFoundException -->
   <class name="ReplicaNotFoundException" extends="java.io.IOException"
     abstract="false"

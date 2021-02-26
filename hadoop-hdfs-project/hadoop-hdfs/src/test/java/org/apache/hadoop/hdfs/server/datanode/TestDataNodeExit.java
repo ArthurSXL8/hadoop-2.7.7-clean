@@ -97,7 +97,7 @@ public class TestDataNodeExit {
     DataXceiverServer spyXserver = Mockito.spy(dn.getXferServer());
     NullPointerException e = new NullPointerException();
     Mockito.doThrow(e).when(spyXserver).sendOOBToPeers();
-    dn.xserver = spyXserver;
+    dn.dataXceiverServer = spyXserver;
     try {
       dn.shutdown();
     } catch (Throwable t) {

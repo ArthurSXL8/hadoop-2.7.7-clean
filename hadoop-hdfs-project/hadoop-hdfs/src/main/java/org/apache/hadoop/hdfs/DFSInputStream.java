@@ -1042,7 +1042,7 @@ implements ByteBufferReadable, CanSetDropBehind, CanSetReadahead,
           ", ignoredNodes = " + ignoredNodes);
     }
     final String dnAddr =
-        chosenNode.getXferAddr(dfsClient.getConf().connectToDnViaHostname);
+        chosenNode.getDataTransferIpAndPort(dfsClient.getConf().connectToDnViaHostname);
     if (DFSClient.LOG.isDebugEnabled()) {
       DFSClient.LOG.debug("Connecting to datanode " + dnAddr);
     }

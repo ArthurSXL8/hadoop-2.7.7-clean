@@ -158,12 +158,12 @@ public class DataStorage extends Storage {
    * @return true if a new storage ID was generated.
    * */
   public static boolean createStorageID(
-      StorageDirectory sd, boolean regenerateStorageIds) {
-    final String oldStorageID = sd.getStorageUuid();
+      StorageDirectory storageDirectory, boolean regenerateStorageIds) {
+    final String oldStorageID = storageDirectory.getStorageUuid();
     if (oldStorageID == null || regenerateStorageIds) {
-      sd.setStorageUuid(DatanodeStorage.generateUuid());
-      LOG.info("Generated new storageID " + sd.getStorageUuid() +
-          " for directory " + sd.getRoot() +
+      storageDirectory.setStorageUuid(DatanodeStorage.generateUuid());
+      LOG.info("Generated new storageID " + storageDirectory.getStorageUuid() +
+          " for directory " + storageDirectory.getRoot() +
           (oldStorageID == null ? "" : (" to replace " + oldStorageID)));
       return true;
     }

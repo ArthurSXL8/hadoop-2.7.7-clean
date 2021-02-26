@@ -144,7 +144,7 @@ public class TestBlockTokenWithDFS {
     ExtendedBlock block = lblock.getBlock();
     try {
       DatanodeInfo[] nodes = lblock.getLocations();
-      targetAddr = NetUtils.createSocketAddr(nodes[0].getXferAddr());
+      targetAddr = NetUtils.createSocketAddr(nodes[0].getDataTransferIpAndPort());
 
       blockReader = new BlockReaderFactory(new DFSClient.Conf(conf)).
           setFileName(BlockReaderFactory.getFileName(targetAddr, 

@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -43,10 +42,10 @@ import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.hdfs.server.datanode.BlockMetadataHeader;
 import org.apache.hadoop.hdfs.server.datanode.DataStorage;
 import org.apache.hadoop.hdfs.server.datanode.DatanodeUtil;
-import org.apache.hadoop.hdfs.server.datanode.FinalizedReplica;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaInfo;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaBeingWritten;
-import org.apache.hadoop.hdfs.server.datanode.ReplicaWaitingToBeRecovered;
+import org.apache.hadoop.hdfs.server.datanode.FinalizedReplicaMeta;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaBeingWritten;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaMetaWaitingToBeRecovered;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.nativeio.NativeIO;
 import org.apache.hadoop.util.DataChecksum;
@@ -442,9 +441,9 @@ class BlockPoolSlice {
       long genStamp = FsDatasetUtil.getGenerationStampFromFile(
           files, file);
       long blockId = Block.filename2id(file.getName());
-      ReplicaInfo newReplica = null;
+      ReplicaMetaInfo newReplica = null;
       if (isFinalized) {
-        newReplica = new FinalizedReplica(blockId, 
+        newReplica = new FinalizedReplicaMeta(blockId,
             file.length(), genStamp, volume, file.getParentFile());
       } else {
 
@@ -459,7 +458,7 @@ class BlockPoolSlice {
             // It didn't expire. Load the replica as a RBW.
             // We don't know the expected block length, so just use 0
             // and don't reserve any more space for writes.
-            newReplica = new ReplicaBeingWritten(blockId,
+            newReplica = new ReplicaMetaBeingWritten(blockId,
                 validateIntegrityAndSetLength(file, genStamp), 
                 genStamp, volume, file.getParentFile(), null, 0);
             loadRwr = false;
@@ -478,13 +477,13 @@ class BlockPoolSlice {
         }
         // Restart meta doesn't exist or expired.
         if (loadRwr) {
-          newReplica = new ReplicaWaitingToBeRecovered(blockId,
+          newReplica = new ReplicaMetaWaitingToBeRecovered(blockId,
               validateIntegrityAndSetLength(file, genStamp),
               genStamp, volume, file.getParentFile());
         }
       }
 
-      ReplicaInfo oldReplica = volumeMap.get(bpid, newReplica.getBlockId());
+      ReplicaMetaInfo oldReplica = volumeMap.get(bpid, newReplica.getBlockId());
       if (oldReplica == null) {
         volumeMap.add(bpid, newReplica);
       } else {
@@ -527,17 +526,17 @@ class BlockPoolSlice {
    * @return the replica that is retained.
    * @throws IOException
    */
-  ReplicaInfo resolveDuplicateReplicas(
-      final ReplicaInfo replica1, final ReplicaInfo replica2,
-      final ReplicaMap volumeMap) throws IOException {
+  ReplicaMetaInfo resolveDuplicateReplicas(
+          final ReplicaMetaInfo replica1, final ReplicaMetaInfo replica2,
+          final ReplicaMap volumeMap) throws IOException {
 
     if (!deleteDuplicateReplicas) {
       // Leave both block replicas in place.
       return replica1;
     }
-    final ReplicaInfo replicaToDelete =
+    final ReplicaMetaInfo replicaToDelete =
         selectReplicaToDelete(replica1, replica2);
-    final ReplicaInfo replicaToKeep =
+    final ReplicaMetaInfo replicaToKeep =
         (replicaToDelete != replica1) ? replica1 : replica2;
     // Update volumeMap and delete the replica
     volumeMap.add(bpid, replicaToKeep);
@@ -548,10 +547,10 @@ class BlockPoolSlice {
   }
 
   @VisibleForTesting
-  static ReplicaInfo selectReplicaToDelete(final ReplicaInfo replica1,
-      final ReplicaInfo replica2) {
-    ReplicaInfo replicaToKeep;
-    ReplicaInfo replicaToDelete;
+  static ReplicaMetaInfo selectReplicaToDelete(final ReplicaMetaInfo replica1,
+                                               final ReplicaMetaInfo replica2) {
+    ReplicaMetaInfo replicaToKeep;
+    ReplicaMetaInfo replicaToDelete;
 
     // it's the same block so don't ever delete it, even if GS or size
     // differs.  caller should keep the one it just discovered on disk
@@ -580,7 +579,7 @@ class BlockPoolSlice {
     return replicaToDelete;
   }
 
-  private void deleteReplica(final ReplicaInfo replicaToDelete) {
+  private void deleteReplica(final ReplicaMetaInfo replicaToDelete) {
     // Delete the files on disk. Failure here is okay.
     final File blockFile = replicaToDelete.getBlockFile();
     if (!blockFile.delete()) {

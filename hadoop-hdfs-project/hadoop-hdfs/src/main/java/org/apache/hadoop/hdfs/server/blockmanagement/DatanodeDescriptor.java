@@ -861,7 +861,7 @@ public class DatanodeDescriptor extends DatanodeInfo {
       DatanodeStorageInfo storage = storageMap.get(s.getStorageID());
       if (storage == null) {
         LOG.info("Adding new storage ID " + s.getStorageID() +
-                 " for DN " + getXferAddr());
+                 " for DN " + getDataTransferIpAndPort());
         storage = new DatanodeStorageInfo(this, s);
         storageMap.put(s.getStorageID(), storage);
       } else if (storage.getState() != s.getState() ||

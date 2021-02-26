@@ -210,7 +210,7 @@
        <Bug pattern="NP_NULL_ON_SOME_PATH" />
      </Match>    
      <Match>
-       <Class name="org.apache.hadoop.hdfs.server.datanode.ReplicaInfo" />
+       <Class name="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo" />
        <Method name="setDirInternal" />
        <Bug pattern="DM_STRING_CTOR" />
      </Match>

@@ -396,7 +396,7 @@ public class TestRollingUpgrade {
       DataNode dn = cluster.getDataNodes().get(0);
 
       // check the datanode
-      final String dnAddr = dn.getDatanodeId().getIpcAddr(false);
+      final String dnAddr = dn.getDatanodeId().getIpcAddress(false);
       final String[] args1 = {"-getDatanodeInfo", dnAddr};
       runCmd(dfsadmin, true, args1);
 

@@ -21,9 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -40,7 +38,7 @@ import com.google.common.annotations.VisibleForTesting;
  * It provides a general interface for meta information of a replica.
  */
 @InterfaceAudience.Private
-abstract public class ReplicaInfo extends Block implements Replica {
+abstract public class ReplicaMetaInfo extends Block implements Replica {
   
   /** volume where the replica belongs */
   private FsVolumeSpi volume;
@@ -67,7 +65,7 @@ abstract public class ReplicaInfo extends Block implements Replica {
    * @param vol volume where replica is located
    * @param dir directory path where block and meta files are located
    */
-  ReplicaInfo(Block block, FsVolumeSpi vol, File dir) {
+  ReplicaMetaInfo(Block block, FsVolumeSpi vol, File dir) {
     this(block.getBlockId(), block.getNumBytes(), 
         block.getGenerationStamp(), vol, dir);
   }
@@ -80,8 +78,8 @@ abstract public class ReplicaInfo extends Block implements Replica {
    * @param vol volume where replica is located
    * @param dir directory path where block and meta files are located
    */
-  ReplicaInfo(long blockId, long len, long genStamp,
-      FsVolumeSpi vol, File dir) {
+  ReplicaMetaInfo(long blockId, long len, long genStamp,
+                  FsVolumeSpi vol, File dir) {
     super(blockId, len, genStamp);
     this.volume = vol;
     setDirInternal(dir);
@@ -91,7 +89,7 @@ abstract public class ReplicaInfo extends Block implements Replica {
    * Copy constructor.
    * @param from where to copy from
    */
-  ReplicaInfo(ReplicaInfo from) {
+  ReplicaMetaInfo(ReplicaMetaInfo from) {
     this(from, from.getVolume(), from.getDir());
   }
   

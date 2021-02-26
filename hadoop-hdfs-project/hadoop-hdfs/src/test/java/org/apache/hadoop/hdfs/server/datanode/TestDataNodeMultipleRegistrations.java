@@ -122,9 +122,9 @@ public class TestDataNodeMultipleRegistrations {
       assertEquals("wrong cid", dn.getClusterId(), cid1);
       assertEquals("cid should be same", cid2, cid1);
       assertEquals("namespace should be same",
-          bpos1.bpNSInfo.namespaceID, ns1);
+          bpos1.namespaceInfo.namespaceID, ns1);
       assertEquals("namespace should be same",
-          bpos2.bpNSInfo.namespaceID, ns2);
+          bpos2.namespaceInfo.namespaceID, ns2);
     } finally {
       cluster.shutdown();
     }
@@ -167,8 +167,8 @@ public class TestDataNodeMultipleRegistrations {
       assertEquals("number of volumes is wrong", 2, volInfos.size());
 
       for (BPOfferService bpos : dn.getAllBpOs()) {
-        LOG.info("reg: bpid=" + "; name=" + bpos.bpRegistration + "; sid="
-            + bpos.bpRegistration.getDatanodeUuid() + "; nna=" +
+        LOG.info("reg: bpid=" + "; name=" + bpos.datanodeRegistration + "; sid="
+            + bpos.datanodeRegistration.getDatanodeUuid() + "; nna=" +
             getNNSocketAddress(bpos));
       }
 

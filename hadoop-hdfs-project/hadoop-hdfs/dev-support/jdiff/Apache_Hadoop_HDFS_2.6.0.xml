@@ -7391,8 +7391,8 @@ order written.</p>]]>
     </doc>
   </interface>
   <!-- end interface org.apache.hadoop.hdfs.server.datanode.DataNodeMXBean -->
-  <!-- start class org.apache.hadoop.hdfs.server.datanode.FinalizedReplica -->
-  <class name="FinalizedReplica" extends="org.apache.hadoop.hdfs.server.datanode.ReplicaInfo"
+  <!-- start class org.apache.hadoop.hdfs.server.datanode.FinalizedReplicaMeta -->
+  <class name="FinalizedReplica" extends="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo"
     abstract="false"
     static="false" final="false" visibility="public"
     deprecated="not deprecated">
@@ -7418,7 +7418,7 @@ order written.</p>]]>
  @param dir directory path where block and meta files are located]]>
       </doc>
     </constructor>
-    <constructor name="FinalizedReplica" type="org.apache.hadoop.hdfs.server.datanode.FinalizedReplica"
+    <constructor name="FinalizedReplica" type="org.apache.hadoop.hdfs.server.datanode.FinalizedReplicaMeta"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
       <doc>
@@ -7471,7 +7471,7 @@ order written.</p>]]>
     <![CDATA[This class describes a replica that has been finalized.]]>
     </doc>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.datanode.FinalizedReplica -->
+  <!-- end class org.apache.hadoop.hdfs.server.datanode.FinalizedReplicaMeta -->
   <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaAlreadyExistsException -->
   <class name="ReplicaAlreadyExistsException" extends="java.io.IOException"
     abstract="false"
@@ -7491,8 +7491,8 @@ order written.</p>]]>
     </doc>
   </class>
   <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaAlreadyExistsException -->
-  <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaBeingWritten -->
-  <class name="ReplicaBeingWritten" extends="org.apache.hadoop.hdfs.server.datanode.ReplicaInPipeline"
+  <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaMetaBeingWritten -->
+  <class name="ReplicaBeingWritten" extends="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInPipeline"
     abstract="false"
     static="false" final="false" visibility="public"
     deprecated="not deprecated">
@@ -7535,7 +7535,7 @@ order written.</p>]]>
                        the estimated maximum block length.]]>
       </doc>
     </constructor>
-    <constructor name="ReplicaBeingWritten" type="org.apache.hadoop.hdfs.server.datanode.ReplicaBeingWritten"
+    <constructor name="ReplicaBeingWritten" type="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaBeingWritten"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
       <doc>
@@ -7570,8 +7570,8 @@ order written.</p>]]>
  are created in a pipeline initiated by a dfs client.]]>
     </doc>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaBeingWritten -->
-  <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaInfo.ReplicaDirInfo -->
+  <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaMetaBeingWritten -->
+  <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo.ReplicaDirInfo -->
   <class name="ReplicaInfo.ReplicaDirInfo" extends="java.lang.Object"
     abstract="false"
     static="true" final="false" visibility="public"
@@ -7591,9 +7591,9 @@ order written.</p>]]>
       deprecated="not deprecated">
     </field>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaInfo.ReplicaDirInfo -->
-  <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaInPipeline -->
-  <class name="ReplicaInPipeline" extends="org.apache.hadoop.hdfs.server.datanode.ReplicaInfo"
+  <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo.ReplicaDirInfo -->
+  <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInPipeline -->
+  <class name="ReplicaInPipeline" extends="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo"
     abstract="false"
     static="false" final="false" visibility="public"
     deprecated="not deprecated">
@@ -7611,7 +7611,7 @@ order written.</p>]]>
                        the estimated maximum block length.]]>
       </doc>
     </constructor>
-    <constructor name="ReplicaInPipeline" type="org.apache.hadoop.hdfs.server.datanode.ReplicaInPipeline"
+    <constructor name="ReplicaInPipeline" type="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInPipeline"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
       <doc>
@@ -7716,7 +7716,7 @@ order written.</p>]]>
  The base class implements a temporary replica]]>
     </doc>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaInPipeline -->
+  <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInPipeline -->
   <!-- start interface org.apache.hadoop.hdfs.server.datanode.ReplicaInPipelineInterface -->
   <interface name="ReplicaInPipelineInterface"    abstract="true"
     static="false" final="false" visibility="public"
@@ -7842,16 +7842,16 @@ order written.</p>]]>
     </doc>
   </class>
   <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaNotFoundException -->
-  <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaUnderRecovery -->
-  <class name="ReplicaUnderRecovery" extends="org.apache.hadoop.hdfs.server.datanode.ReplicaInfo"
+  <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaMetaUnderRecovery -->
+  <class name="ReplicaUnderRecovery" extends="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo"
     abstract="false"
     static="false" final="false" visibility="public"
     deprecated="not deprecated">
-    <constructor name="ReplicaUnderRecovery" type="org.apache.hadoop.hdfs.server.datanode.ReplicaInfo, long"
+    <constructor name="ReplicaUnderRecovery" type="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo, long"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
     </constructor>
-    <constructor name="ReplicaUnderRecovery" type="org.apache.hadoop.hdfs.server.datanode.ReplicaUnderRecovery"
+    <constructor name="ReplicaUnderRecovery" type="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaUnderRecovery"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
       <doc>
@@ -7878,7 +7878,7 @@ order written.</p>]]>
  @param recoveryId the new recoveryId]]>
       </doc>
     </method>
-    <method name="getOriginalReplica" return="org.apache.hadoop.hdfs.server.datanode.ReplicaInfo"
+    <method name="getOriginalReplica" return="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo"
       abstract="false" native="false" synchronized="false"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
@@ -7965,9 +7965,9 @@ order written.</p>]]>
  A recovery with higher recovery id preempts recoveries with a lower id.]]>
     </doc>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaUnderRecovery -->
-  <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaWaitingToBeRecovered -->
-  <class name="ReplicaWaitingToBeRecovered" extends="org.apache.hadoop.hdfs.server.datanode.ReplicaInfo"
+  <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaMetaUnderRecovery -->
+  <!-- start class org.apache.hadoop.hdfs.server.datanode.ReplicaMetaWaitingToBeRecovered -->
+  <class name="ReplicaWaitingToBeRecovered" extends="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaInfo"
     abstract="false"
     static="false" final="false" visibility="public"
     deprecated="not deprecated">
@@ -7993,7 +7993,7 @@ order written.</p>]]>
  @param dir directory path where block and meta files are located]]>
       </doc>
     </constructor>
-    <constructor name="ReplicaWaitingToBeRecovered" type="org.apache.hadoop.hdfs.server.datanode.ReplicaWaitingToBeRecovered"
+    <constructor name="ReplicaWaitingToBeRecovered" type="org.apache.hadoop.hdfs.server.datanode.ReplicaMetaWaitingToBeRecovered"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
       <doc>
@@ -8052,7 +8052,7 @@ order written.</p>]]>
  lease recovery.]]>
     </doc>
   </class>
-  <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaWaitingToBeRecovered -->
+  <!-- end class org.apache.hadoop.hdfs.server.datanode.ReplicaMetaWaitingToBeRecovered -->
   <!-- start class org.apache.hadoop.hdfs.server.datanode.SecureDataNodeStarter -->
   <class name="SecureDataNodeStarter" extends="java.lang.Object"
     abstract="false"

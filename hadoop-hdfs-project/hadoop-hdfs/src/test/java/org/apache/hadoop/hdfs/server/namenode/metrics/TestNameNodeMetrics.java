@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.hdfs.server.namenode.metrics;
 
-import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_NAMENODE_AUDIT_LOGGERS_KEY;
 import static org.apache.hadoop.test.MetricsAsserts.assertCounter;
 import static org.apache.hadoop.test.MetricsAsserts.assertGauge;
 import static org.apache.hadoop.test.MetricsAsserts.assertQuantileGauges;
@@ -55,12 +54,10 @@ import org.apache.hadoop.hdfs.server.datanode.fsdataset.FsVolumeSpi;
 import org.apache.hadoop.hdfs.server.datanode.fsdataset.impl.FsVolumeImpl;
 import org.apache.hadoop.hdfs.server.namenode.FSNamesystem;
 import org.apache.hadoop.hdfs.server.namenode.NameNodeAdapter;
-import org.apache.hadoop.hdfs.server.namenode.top.TopAuditLogger;
 import org.apache.hadoop.metrics2.MetricsRecordBuilder;
 import org.apache.hadoop.metrics2.MetricsSource;
 import org.apache.hadoop.metrics2.lib.DefaultMetricsSystem;
 import org.apache.hadoop.test.MetricsAsserts;
-import org.apache.hadoop.util.Time;
 import org.apache.log4j.Level;
 import org.junit.After;
 import org.junit.Before;
@@ -262,7 +259,7 @@ public class TestNameNodeMetrics {
     for (int i = 0; i < DATANODE_COUNT; i++) {
       dnDescriptors[i] = bm.getDatanodeManager()
           .getDatanode(dataNodes.get(i).getDatanodeId());
-      dnAddresses[i] = dnDescriptors[i].getXferAddr();
+      dnAddresses[i] = dnDescriptors[i].getDataTransferIpAndPort();
     }
     // First put all DNs into include
     DFSTestUtil.writeFile(localFs, includeFile,

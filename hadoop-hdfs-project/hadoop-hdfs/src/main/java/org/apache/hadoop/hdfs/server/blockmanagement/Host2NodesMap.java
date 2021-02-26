@@ -42,7 +42,7 @@ class Host2NodesMap {
       return false;
     }
       
-    String ipAddr = node.getIpAddr();
+    String ipAddr = node.getIp();
     hostmapLock.readLock().lock();
     try {
       DatanodeDescriptor[] nodes = map.get(ipAddr);
@@ -69,7 +69,7 @@ class Host2NodesMap {
         return false;
       }
       
-      String ipAddr = node.getIpAddr();
+      String ipAddr = node.getIp();
       String hostname = node.getHostName();
       
       mapHost.put(hostname, ipAddr);
@@ -99,7 +99,7 @@ class Host2NodesMap {
       return false;
     }
       
-    String ipAddr = node.getIpAddr();
+    String ipAddr = node.getIp();
     String hostname = node.getHostName();
     hostmapLock.writeLock().lock();
     try {
@@ -186,7 +186,7 @@ class Host2NodesMap {
         return null;
       }
       for(DatanodeDescriptor containedNode:nodes) {
-        if (xferPort == containedNode.getXferPort()) {
+        if (xferPort == containedNode.getDataStreamingPort()) {
           return containedNode;
         }
       }

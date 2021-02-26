@@ -59,7 +59,6 @@ import org.apache.hadoop.hdfs.protocol.proto.ClientDatanodeProtocolProtos.GetRec
 import org.apache.hadoop.hdfs.protocol.proto.ClientDatanodeProtocolProtos.ShutdownDatanodeRequestProto;
 import org.apache.hadoop.hdfs.protocol.proto.ClientDatanodeProtocolProtos.StartReconfigurationRequestProto;
 import org.apache.hadoop.hdfs.protocol.proto.ClientDatanodeProtocolProtos.TriggerBlockReportRequestProto;
-import org.apache.hadoop.hdfs.protocol.proto.ClientDatanodeProtocolProtos.TriggerBlockReportResponseProto;
 import org.apache.hadoop.hdfs.security.token.block.BlockTokenIdentifier;
 import org.apache.hadoop.ipc.ProtobufHelper;
 import org.apache.hadoop.ipc.ProtobufRpcEngine;
@@ -126,7 +125,7 @@ public class ClientDatanodeProtocolTranslatorPB implements
   public ClientDatanodeProtocolTranslatorPB(DatanodeID datanodeid,
       Configuration conf, int socketTimeout, boolean connectToDnViaHostname)
       throws IOException {
-    final String dnAddr = datanodeid.getIpcAddr(connectToDnViaHostname);
+    final String dnAddr = datanodeid.getIpcAddress(connectToDnViaHostname);
     InetSocketAddress addr = NetUtils.createSocketAddr(dnAddr);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Connecting to datanode " + dnAddr + " addr=" + addr);
@@ -139,7 +138,7 @@ public class ClientDatanodeProtocolTranslatorPB implements
   static ClientDatanodeProtocolPB createClientDatanodeProtocolProxy(
       DatanodeID datanodeid, Configuration conf, int socketTimeout,
       boolean connectToDnViaHostname, LocatedBlock locatedBlock) throws IOException {
-    final String dnAddr = datanodeid.getIpcAddr(connectToDnViaHostname);
+    final String dnAddr = datanodeid.getIpcAddress(connectToDnViaHostname);
     InetSocketAddress addr = NetUtils.createSocketAddr(dnAddr);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Connecting to datanode " + dnAddr + " addr=" + addr);

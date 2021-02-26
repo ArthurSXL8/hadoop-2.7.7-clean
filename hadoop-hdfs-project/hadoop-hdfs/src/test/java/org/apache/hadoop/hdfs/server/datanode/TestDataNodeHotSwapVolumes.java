@@ -550,7 +550,7 @@ public class TestDataNodeHotSwapVolumes {
       assertThat(volume.getBasePath(), is(not(anyOf(
           is(newDirs.get(0)), is(newDirs.get(2))))));
     }
-    DataStorage storage = dn.getStorage();
+    DataStorage storage = dn.getDataStorage();
     for (int i = 0; i < storage.getNumStorageDirs(); i++) {
       Storage.StorageDirectory sd = storage.getStorageDir(i);
       assertThat(sd.getRoot().toString(),
@@ -702,7 +702,7 @@ public class TestDataNodeHotSwapVolumes {
     for (int i = 0; i < cluster.getNumNameNodes(); i++) {
       String bpid = cluster.getNamesystem(i).getBlockPoolId();
       BlockPoolSliceStorage bpsStorage =
-          dn.getStorage().getBPStorage(bpid);
+          dn.getDataStorage().getBPStorage(bpid);
       // Make sure that there is no block pool level storage under removeDataDir.
       for (int j = 0; j < bpsStorage.getNumStorageDirs(); j++) {
         Storage.StorageDirectory sd = bpsStorage.getStorageDir(j);
@@ -710,7 +710,7 @@ public class TestDataNodeHotSwapVolumes {
             new File(removeDataDir).getAbsolutePath()
         ));
       }
-      assertEquals(dn.getStorage().getBPStorage(bpid).getNumStorageDirs(), 1);
+      assertEquals(dn.getDataStorage().getBPStorage(bpid).getNumStorageDirs(), 1);
     }
 
     // Bring the removed directory back. It only successes if all metadata about

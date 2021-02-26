@@ -806,7 +806,7 @@ public class DFSOutputStream extends FSOutputSummer
       // Is it a local node?
       InetAddress addr = null;
       try {
-        addr = InetAddress.getByName(nodes[index].getIpAddr());
+        addr = InetAddress.getByName(nodes[index].getIp());
       } catch (java.net.UnknownHostException e) {
         // we are passing an ip address. this should not happen.
         assert false;
@@ -1525,7 +1525,7 @@ public class DFSOutputStream extends FSOutputSummer
           if (firstBadLink.length() != 0) {
             for (int i = 0; i < nodes.length; i++) {
               // NB: Unconditionally using the xfer addr w/o hostname
-              if (firstBadLink.equals(nodes[i].getXferAddr())) {
+              if (firstBadLink.equals(nodes[i].getDataTransferIpAndPort())) {
                 errorIndex = i;
                 break;
               }
@@ -1706,7 +1706,7 @@ public class DFSOutputStream extends FSOutputSummer
    */
   static Socket createSocketForPipeline(final DatanodeInfo first,
       final int length, final DFSClient client) throws IOException {
-    final String dnAddr = first.getXferAddr(
+    final String dnAddr = first.getDataTransferIpAndPort(
         client.getConf().connectToDnViaHostname);
     if (DFSClient.LOG.isDebugEnabled()) {
       DFSClient.LOG.debug("Connecting to datanode " + dnAddr);

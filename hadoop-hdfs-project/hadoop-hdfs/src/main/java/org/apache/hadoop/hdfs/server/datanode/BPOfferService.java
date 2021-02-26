@@ -59,30 +59,30 @@ class BPOfferService {
    * is registering with. This is assigned after
    * the first phase of the handshake.
    */
-  NamespaceInfo bpNSInfo;
+  NamespaceInfo namespaceInfo;
 
   /**
    * The registration information for this block pool.
    * This is assigned after the second phase of the
    * handshake.
    */
-  volatile DatanodeRegistration bpRegistration;
+  volatile DatanodeRegistration datanodeRegistration;
   
-  private final DataNode dn;
+  private final DataNode dataNode;
 
   /**
    * A reference to the BPServiceActor associated with the currently
    * ACTIVE NN. In the case that all NameNodes are in STANDBY mode,
    * this can be null. If non-null, this must always refer to a member
-   * of the {@link #bpServices} list.
+   * of the {@link #bpServiceActors} list.
    */
-  private BPServiceActor bpServiceToActive = null;
+  private BPServiceActor activeBPServiceActor = null;
   
   /**
    * The list of all actors for namenodes in this nameservice, regardless
    * of their active or standby states.
    */
-  private final List<BPServiceActor> bpServices =
+  private final List<BPServiceActor> bpServiceActors =
     new CopyOnWriteArrayList<BPServiceActor>();
 
   /**
@@ -93,48 +93,48 @@ class BPOfferService {
    * ACTIVE state but with a too-low transaction ID. See HDFS-2627
    * for details. 
    */
-  private long lastActiveClaimTxId = -1;
+  private long lastestActiveNamenodeClaimedTransactionId = -1;
 
-  private final ReentrantReadWriteLock mReadWriteLock =
+  private final ReentrantReadWriteLock rwLock =
       new ReentrantReadWriteLock();
-  private final Lock mReadLock  = mReadWriteLock.readLock();
-  private final Lock mWriteLock = mReadWriteLock.writeLock();
+  private final Lock readLock = rwLock.readLock();
+  private final Lock writeLock = rwLock.writeLock();
 
   // utility methods to acquire and release read lock and write lock
   void readLock() {
-    mReadLock.lock();
+    readLock.lock();
   }
 
   void readUnlock() {
-    mReadLock.unlock();
+    readLock.unlock();
   }
 
   void writeLock() {
-    mWriteLock.lock();
+    writeLock.lock();
   }
 
   void writeUnlock() {
-    mWriteLock.unlock();
+    writeLock.unlock();
   }
 
-  BPOfferService(List<InetSocketAddress> nnAddrs, DataNode dn) {
-    Preconditions.checkArgument(!nnAddrs.isEmpty(),
+  BPOfferService(List<InetSocketAddress> namenodeAddressList, DataNode dataNode) {
+    Preconditions.checkArgument(!namenodeAddressList.isEmpty(),
         "Must pass at least one NN.");
-    this.dn = dn;
+    this.dataNode = dataNode;
 
-    for (InetSocketAddress addr : nnAddrs) {
-      this.bpServices.add(new BPServiceActor(addr, this));
+    for (InetSocketAddress namenodeAddress : namenodeAddressList) {
+      this.bpServiceActors.add(new BPServiceActor(namenodeAddress, this));
     }
   }
 
-  void refreshNNList(ArrayList<InetSocketAddress> addrs) throws IOException {
-    Set<InetSocketAddress> oldAddrs = Sets.newHashSet();
-    for (BPServiceActor actor : bpServices) {
-      oldAddrs.add(actor.getNNSocketAddress());
+  void refreshNNList(ArrayList<InetSocketAddress> namenodeAddressList) throws IOException {
+    Set<InetSocketAddress> oldNamenodeAddressSet = Sets.newHashSet();
+    for (BPServiceActor bpServiceActor : bpServiceActors) {
+      oldNamenodeAddressSet.add(bpServiceActor.getNNSocketAddress());
     }
-    Set<InetSocketAddress> newAddrs = Sets.newHashSet(addrs);
+    Set<InetSocketAddress> newNamenodeAddrssSet = Sets.newHashSet(namenodeAddressList);
     
-    if (!Sets.symmetricDifference(oldAddrs, newAddrs).isEmpty()) {
+    if (!Sets.symmetricDifference(oldNamenodeAddressSet, newNamenodeAddrssSet).isEmpty()) {
       // Keep things simple for now -- we can implement this at a later date.
       throw new IOException(
           "HA does not currently support adding a new standby to a running DN. " +
@@ -146,7 +146,7 @@ class BPOfferService {
    * @return true if the service has registered with at least one NameNode.
    */
   boolean isInitialized() {
-    return bpRegistration != null;
+    return datanodeRegistration != null;
   }
   
   /**
@@ -154,7 +154,7 @@ class BPOfferService {
    * talking to a NameNode.
    */
   boolean isAlive() {
-    for (BPServiceActor actor : bpServices) {
+    for (BPServiceActor actor : bpServiceActors) {
       if (actor.isAlive()) {
         return true;
       }
@@ -165,8 +165,8 @@ class BPOfferService {
   String getBlockPoolId() {
     readLock();
     try {
-      if (bpNSInfo != null) {
-        return bpNSInfo.getBlockPoolID();
+      if (namespaceInfo != null) {
+        return namespaceInfo.getBlockPoolID();
       } else {
         LOG.warn("Block pool ID needed, but service not yet registered with NN",
             new Exception("trace"));
@@ -184,7 +184,7 @@ class BPOfferService {
   NamespaceInfo getNamespaceInfo() {
     readLock();
     try {
-      return bpNSInfo;
+      return namespaceInfo;
     } finally {
       readUnlock();
     }
@@ -194,12 +194,12 @@ class BPOfferService {
   public String toString() {
     readLock();
     try {
-      if (bpNSInfo == null) {
+      if (namespaceInfo == null) {
         // If we haven't yet connected to our NN, we don't yet know our
         // own block pool ID.
         // If _none_ of the block pools have connected yet, we don't even
         // know the DatanodeID ID of this DN.
-        String datanodeUuid = dn.getDatanodeUuid();
+        String datanodeUuid = dataNode.getDatanodeUuid();
 
         if (datanodeUuid == null || datanodeUuid.isEmpty()) {
           datanodeUuid = "unassigned";
@@ -207,7 +207,7 @@ class BPOfferService {
         return "Block pool <registering> (Datanode Uuid " + datanodeUuid + ")";
       } else {
         return "Block pool " + getBlockPoolId() +
-            " (Datanode Uuid " + dn.getDatanodeUuid() +
+            " (Datanode Uuid " + dataNode.getDatanodeUuid() +
             ")";
       }
     } finally {
@@ -218,7 +218,7 @@ class BPOfferService {
   void reportBadBlocks(ExtendedBlock block,
                        String storageUuid, StorageType storageType) {
     checkBlock(block);
-    for (BPServiceActor actor : bpServices) {
+    for (BPServiceActor actor : bpServiceActors) {
       ReportBadBlockAction rbbAction = new ReportBadBlockAction
           (block, storageUuid, storageType);
       actor.bpThreadEnqueue(rbbAction);
@@ -251,9 +251,9 @@ class BPOfferService {
     checkBlock(block);
     final ReceivedDeletedBlockInfo info = new ReceivedDeletedBlockInfo(
         block.getLocalBlock(), status, delHint);
-    final DatanodeStorage storage = dn.getFSDataset().getStorage(storageUuid);
+    final DatanodeStorage storage = dataNode.getFSDataset().getStorage(storageUuid);
 
-    for (BPServiceActor actor : bpServices) {
+    for (BPServiceActor actor : bpServiceActors) {
       actor.getIbrManager().notifyNamenodeBlock(info, storage,
           isOnTransientStorage);
     }
@@ -270,7 +270,7 @@ class BPOfferService {
   //This must be called only by blockPoolManager
   void start() {
     // TODO-ZH 遍历BPOfferService里面的BPServiceActor
-    for (BPServiceActor actor : bpServices) {
+    for (BPServiceActor actor : bpServiceActors) {
       /*****************************************************************************************************
        *TODO-ZH starzy https://www.cnblogs.com/starzy
        * 注释：通过遍历方式向多个NameNode进行注册心跳
@@ -284,20 +284,20 @@ class BPOfferService {
   
   //This must be called only by blockPoolManager.
   void stop() {
-    for (BPServiceActor actor : bpServices) {
+    for (BPServiceActor actor : bpServiceActors) {
       actor.stop();
     }
   }
   
   //This must be called only by blockPoolManager
   void join() {
-    for (BPServiceActor actor : bpServices) {
+    for (BPServiceActor actor : bpServiceActors) {
       actor.join();
     }
   }
 
   DataNode getDataNode() {
-    return dn;
+    return dataNode;
   }
 
   /**
@@ -310,30 +310,30 @@ class BPOfferService {
   void verifyAndSetNamespaceInfo(NamespaceInfo nsInfo) throws IOException {
     writeLock();
     try {
-      if (this.bpNSInfo == null) {
-        this.bpNSInfo = nsInfo;
+      if (this.namespaceInfo == null) {
+        this.namespaceInfo = nsInfo;
         boolean success = false;
 
         // Now that we know the namespace ID, etc, we can pass this to the DN.
         // The DN can now initialize its local storage if we are the
         // first BP to handshake, etc.
         try {
-          dn.initBlockPool(this);
+          dataNode.initBlockPool(this);
           success = true;
         } finally {
           if (!success) {
             // The datanode failed to initialize the BP. We need to reset
             // the namespace info so that other BPService actors still have
             // a chance to set it, and re-initialize the datanode.
-            this.bpNSInfo = null;
+            this.namespaceInfo = null;
           }
         }
       } else {
-        checkNSEquality(bpNSInfo.getBlockPoolID(), nsInfo.getBlockPoolID(),
+        checkNSEquality(namespaceInfo.getBlockPoolID(), nsInfo.getBlockPoolID(),
             "Blockpool ID");
-        checkNSEquality(bpNSInfo.getNamespaceID(), nsInfo.getNamespaceID(),
+        checkNSEquality(namespaceInfo.getNamespaceID(), nsInfo.getNamespaceID(),
             "Namespace ID");
-        checkNSEquality(bpNSInfo.getClusterID(), nsInfo.getClusterID(),
+        checkNSEquality(namespaceInfo.getClusterID(), nsInfo.getClusterID(),
             "Cluster ID");
       }
     } finally {
@@ -350,18 +350,18 @@ class BPOfferService {
       DatanodeRegistration reg) throws IOException {
     writeLock();
     try {
-      if (bpRegistration != null) {
-        checkNSEquality(bpRegistration.getStorageInfo().getNamespaceID(),
+      if (datanodeRegistration != null) {
+        checkNSEquality(datanodeRegistration.getStorageInfo().getNamespaceID(),
             reg.getStorageInfo().getNamespaceID(), "namespace ID");
-        checkNSEquality(bpRegistration.getStorageInfo().getClusterID(),
+        checkNSEquality(datanodeRegistration.getStorageInfo().getClusterID(),
             reg.getStorageInfo().getClusterID(), "cluster ID");
       }
-      bpRegistration = reg;
+      datanodeRegistration = reg;
 
-      dn.bpRegistrationSucceeded(bpRegistration, getBlockPoolId());
+      dataNode.bpRegistrationSucceeded(datanodeRegistration, getBlockPoolId());
       // Add the initial block token secret keys to the DN's secret manager.
-      if (dn.isBlockTokenEnabled) {
-        dn.blockPoolTokenSecretManager.addKeys(getBlockPoolId(),
+      if (dataNode.isBlockTokenEnabled) {
+        dataNode.blockPoolTokenSecretManager.addKeys(getBlockPoolId(),
             reg.getExportedKeys());
       }
     } finally {
@@ -386,9 +386,9 @@ class BPOfferService {
   DatanodeRegistration createRegistration() {
     writeLock();
     try {
-      Preconditions.checkState(bpNSInfo != null,
+      Preconditions.checkState(namespaceInfo != null,
           "getRegistration() can only be called after initial handshake");
-      return dn.createBPRegistration(bpNSInfo);
+      return dataNode.createBPRegistration(namespaceInfo);
     } finally {
       writeUnlock();
     }
@@ -401,14 +401,14 @@ class BPOfferService {
   void shutdownActor(BPServiceActor actor) {
     writeLock();
     try {
-      if (bpServiceToActive == actor) {
-        bpServiceToActive = null;
+      if (activeBPServiceActor == actor) {
+        activeBPServiceActor = null;
       }
 
-      bpServices.remove(actor);
+      bpServiceActors.remove(actor);
 
-      if (bpServices.isEmpty()) {
-        dn.shutdownBlockPool(this);
+      if (bpServiceActors.isEmpty()) {
+        dataNode.shutdownBlockPool(this);
       }
     } finally {
       writeUnlock();
@@ -420,7 +420,7 @@ class BPOfferService {
    * Called by the DN to report an error to the NNs.
    */
   void trySendErrorReport(int errCode, String errMsg) {
-    for (BPServiceActor actor : bpServices) {
+    for (BPServiceActor actor : bpServiceActors) {
       ErrorReportAction errorReportAction = new ErrorReportAction 
           (errCode, errMsg);
       actor.bpThreadEnqueue(errorReportAction);
@@ -432,7 +432,7 @@ class BPOfferService {
    * the specified delay.
    */
   void scheduleBlockReport(long delay) {
-    for (BPServiceActor actor : bpServices) {
+    for (BPServiceActor actor : bpServiceActors) {
       actor.getScheduler().scheduleBlockReport(delay);
     }
   }
@@ -441,7 +441,7 @@ class BPOfferService {
    * Ask each of the actors to report a bad block hosted on another DN.
    */
   void reportRemoteBadBlock(DatanodeInfo dnInfo, ExtendedBlock block) {
-    for (BPServiceActor actor : bpServices) {
+    for (BPServiceActor actor : bpServiceActors) {
       try {
         actor.reportRemoteBadBlock(dnInfo, block);
       } catch (IOException e) {
@@ -458,8 +458,8 @@ class BPOfferService {
   DatanodeProtocolClientSideTranslatorPB getActiveNN() {
     readLock();
     try {
-      if (bpServiceToActive != null) {
-        return bpServiceToActive.bpNamenode;
+      if (activeBPServiceActor != null) {
+        return activeBPServiceActor.bpNamenode;
       } else {
         return null;
       }
@@ -470,7 +470,7 @@ class BPOfferService {
 
   @VisibleForTesting
   List<BPServiceActor> getBPServiceActors() {
-    return Lists.newArrayList(bpServices);
+    return Lists.newArrayList(bpServiceActors);
   }
   
   /**
@@ -484,11 +484,11 @@ class BPOfferService {
     }
     String bpid = getBlockPoolId();
     if (!rollingUpgradeStatus.isFinalized()) {
-      dn.getFSDataset().enableTrash(bpid);
-      dn.getFSDataset().setRollingUpgradeMarker(bpid);
+      dataNode.getFSDataset().enableTrash(bpid);
+      dataNode.getFSDataset().setRollingUpgradeMarker(bpid);
     } else {
-      dn.getFSDataset().clearTrash(bpid);
-      dn.getFSDataset().clearRollingUpgradeMarker(bpid);
+      dataNode.getFSDataset().clearTrash(bpid);
+      dataNode.getFSDataset().clearRollingUpgradeMarker(bpid);
     }
   }
 
@@ -508,8 +508,8 @@ class BPOfferService {
 
       final boolean nnClaimsActive =
           nnHaState.getState() == HAServiceState.ACTIVE;
-      final boolean bposThinksActive = bpServiceToActive == actor;
-      final boolean isMoreRecentClaim = txid > lastActiveClaimTxId;
+      final boolean bposThinksActive = activeBPServiceActor == actor;
+      final boolean isMoreRecentClaim = txid > lastestActiveNamenodeClaimedTransactionId;
 
       if (nnClaimsActive && !bposThinksActive) {
         LOG.info("Namenode " + actor + " trying to claim ACTIVE state with " +
@@ -520,26 +520,26 @@ class BPOfferService {
           // txid.
           LOG.warn("NN " + actor + " tried to claim ACTIVE state at txid=" +
               txid + " but there was already a more recent claim at txid=" +
-              lastActiveClaimTxId);
+                  lastestActiveNamenodeClaimedTransactionId);
           return;
         } else {
-          if (bpServiceToActive == null) {
+          if (activeBPServiceActor == null) {
             LOG.info("Acknowledging ACTIVE Namenode " + actor);
           } else {
             LOG.info("Namenode " + actor + " taking over ACTIVE state from " +
-                bpServiceToActive + " at higher txid=" + txid);
+                    activeBPServiceActor + " at higher txid=" + txid);
           }
-          bpServiceToActive = actor;
+          activeBPServiceActor = actor;
         }
       } else if (!nnClaimsActive && bposThinksActive) {
         LOG.info("Namenode " + actor + " relinquishing ACTIVE state with " +
             "txid=" + nnHaState.getTxId());
-        bpServiceToActive = null;
+        activeBPServiceActor = null;
       }
 
-      if (bpServiceToActive == actor) {
-        assert txid >= lastActiveClaimTxId;
-        lastActiveClaimTxId = txid;
+      if (activeBPServiceActor == actor) {
+        assert txid >= lastestActiveNamenodeClaimedTransactionId;
+        lastestActiveNamenodeClaimedTransactionId = txid;
       }
     } finally {
       writeUnlock();
@@ -551,7 +551,7 @@ class BPOfferService {
    * block pool
    */
   boolean containsNN(InetSocketAddress addr) {
-    for (BPServiceActor actor : bpServices) {
+    for (BPServiceActor actor : bpServiceActors) {
       if (actor.getNNSocketAddress().equals(addr)) {
         return true;
       }
@@ -561,7 +561,7 @@ class BPOfferService {
   
   @VisibleForTesting
   int countNameNodes() {
-    return bpServices.size();
+    return bpServiceActors.size();
   }
 
   /**
@@ -569,7 +569,7 @@ class BPOfferService {
    */
   @VisibleForTesting
   void triggerBlockReportForTests() throws IOException {
-    for (BPServiceActor actor : bpServices) {
+    for (BPServiceActor actor : bpServiceActors) {
       actor.triggerBlockReportForTests();
     }
   }
@@ -579,7 +579,7 @@ class BPOfferService {
    */
   @VisibleForTesting
   void triggerDeletionReportForTests() throws IOException {
-    for (BPServiceActor actor : bpServices) {
+    for (BPServiceActor actor : bpServiceActors) {
       actor.getIbrManager().triggerDeletionReportForTests();
     }
   }
@@ -589,14 +589,14 @@ class BPOfferService {
    */
   @VisibleForTesting
   void triggerHeartbeatForTests() throws IOException {
-    for (BPServiceActor actor : bpServices) {
+    for (BPServiceActor actor : bpServiceActors) {
       actor.triggerHeartbeatForTests();
     }
   }
 
   boolean processCommandFromActor(DatanodeCommand cmd,
       BPServiceActor actor) throws IOException {
-    assert bpServices.contains(actor);
+    assert bpServiceActors.contains(actor);
     if (cmd == null) {
       return true;
     }
@@ -615,7 +615,7 @@ class BPOfferService {
     }
     writeLock();
     try {
-      if (actor == bpServiceToActive) {
+      if (actor == activeBPServiceActor) {
         return processCommandFromActive(cmd, actor);
       } else {
         return processCommandFromStandby(cmd, actor);
@@ -626,7 +626,7 @@ class BPOfferService {
   }
 
   private String blockIdArrayToString(long ids[]) {
-    long maxNumberOfBlocksToLog = dn.getMaxNumberOfBlocksToLog();
+    long maxNumberOfBlocksToLog = dataNode.getMaxNumberOfBlocksToLog();
     StringBuilder bld = new StringBuilder();
     String prefix = "";
     for (int i = 0; i < ids.length; i++) {
@@ -658,9 +658,9 @@ class BPOfferService {
     switch(cmd.getAction()) {
     case DatanodeProtocol.DNA_TRANSFER:
       // Send a copy of a block to another datanode
-      dn.transferBlocks(bcmd.getBlockPoolId(), bcmd.getBlocks(),
+      dataNode.transferBlocks(bcmd.getBlockPoolId(), bcmd.getBlocks(),
           bcmd.getTargets(), bcmd.getTargetStorageTypes());
-      dn.metrics.incrBlocksReplicated(bcmd.getBlocks().length);
+      dataNode.metrics.incrBlocksReplicated(bcmd.getBlocks().length);
       break;
     case DatanodeProtocol.DNA_INVALIDATE:
       //
@@ -670,24 +670,24 @@ class BPOfferService {
       Block toDelete[] = bcmd.getBlocks();
       try {
         // using global fsdataset
-        dn.getFSDataset().invalidate(bcmd.getBlockPoolId(), toDelete);
+        dataNode.getFSDataset().invalidate(bcmd.getBlockPoolId(), toDelete);
       } catch(IOException e) {
         // Exceptions caught here are not expected to be disk-related.
         throw e;
       }
-      dn.metrics.incrBlocksRemoved(toDelete.length);
+      dataNode.metrics.incrBlocksRemoved(toDelete.length);
       break;
     case DatanodeProtocol.DNA_CACHE:
       LOG.info("DatanodeCommand action: DNA_CACHE for " +
         blockIdCmd.getBlockPoolId() + " of [" +
           blockIdArrayToString(blockIdCmd.getBlockIds()) + "]");
-      dn.getFSDataset().cache(blockIdCmd.getBlockPoolId(), blockIdCmd.getBlockIds());
+      dataNode.getFSDataset().cache(blockIdCmd.getBlockPoolId(), blockIdCmd.getBlockIds());
       break;
     case DatanodeProtocol.DNA_UNCACHE:
       LOG.info("DatanodeCommand action: DNA_UNCACHE for " +
         blockIdCmd.getBlockPoolId() + " of [" +
           blockIdArrayToString(blockIdCmd.getBlockIds()) + "]");
-      dn.getFSDataset().uncache(blockIdCmd.getBlockPoolId(), blockIdCmd.getBlockIds());
+      dataNode.getFSDataset().uncache(blockIdCmd.getBlockPoolId(), blockIdCmd.getBlockIds());
       break;
     case DatanodeProtocol.DNA_SHUTDOWN:
       // TODO: DNA_SHUTDOWN appears to be unused - the NN never sends this command
@@ -700,16 +700,16 @@ class BPOfferService {
         "BP " + getBlockPoolId() + " received DNA_FINALIZE " +
         "for other block pool " + bp;
 
-      dn.finalizeUpgradeForPool(bp);
+      dataNode.finalizeUpgradeForPool(bp);
       break;
     case DatanodeProtocol.DNA_RECOVERBLOCK:
       String who = "NameNode at " + actor.getNNSocketAddress();
-      dn.recoverBlocks(who, ((BlockRecoveryCommand)cmd).getRecoveringBlocks());
+      dataNode.recoverBlocks(who, ((BlockRecoveryCommand)cmd).getRecoveringBlocks());
       break;
     case DatanodeProtocol.DNA_ACCESSKEYUPDATE:
       LOG.info("DatanodeCommand action: DNA_ACCESSKEYUPDATE");
-      if (dn.isBlockTokenEnabled) {
-        dn.blockPoolTokenSecretManager.addKeys(
+      if (dataNode.isBlockTokenEnabled) {
+        dataNode.blockPoolTokenSecretManager.addKeys(
             getBlockPoolId(), 
             ((KeyUpdateCommand) cmd).getExportedKeys());
       }
@@ -720,7 +720,7 @@ class BPOfferService {
                  ((BalancerBandwidthCommand) cmd).getBalancerBandwidthValue();
       if (bandwidth > 0) {
         DataXceiverServer dxcs =
-                     (DataXceiverServer) dn.dataXceiverServer.getRunnable();
+                     (DataXceiverServer) dataNode.dataXceiverServerDaemon.getRunnable();
         LOG.info("Updating balance throttler bandwidth from "
             + dxcs.balanceThrottler.getBandwidth() + " bytes/s "
             + "to: " + bandwidth + " bytes/s.");
@@ -742,8 +742,8 @@ class BPOfferService {
     switch(cmd.getAction()) {
     case DatanodeProtocol.DNA_ACCESSKEYUPDATE:
       LOG.info("DatanodeCommand action from standby: DNA_ACCESSKEYUPDATE");
-      if (dn.isBlockTokenEnabled) {
-        dn.blockPoolTokenSecretManager.addKeys(
+      if (dataNode.isBlockTokenEnabled) {
+        dataNode.blockPoolTokenSecretManager.addKeys(
             getBlockPoolId(), 
             ((KeyUpdateCommand) cmd).getExportedKeys());
       }
