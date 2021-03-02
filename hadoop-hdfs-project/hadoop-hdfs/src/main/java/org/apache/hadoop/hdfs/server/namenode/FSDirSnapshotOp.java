@@ -36,8 +36,8 @@ import java.util.List;
 
 class FSDirSnapshotOp {
   /** Verify if the snapshot name is legal. */
-  static void verifySnapshotName(FSDirectory fsd, String snapshotName,
-      String path)
+  static void verifySnapshotName(FSVolatileNamespace fsd, String snapshotName,
+                                 String path)
       throws FSLimitException.PathComponentTooLongException {
     if (snapshotName.contains(Path.SEPARATOR)) {
       throw new HadoopIllegalArgumentException(
@@ -49,7 +49,7 @@ class FSDirSnapshotOp {
   }
 
   /** Allow snapshot on a directory. */
-  static void allowSnapshot(FSDirectory fsd, SnapshotManager snapshotManager,
+  static void allowSnapshot(FSVolatileNamespace fsd, SnapshotManager snapshotManager,
                             String path) throws IOException {
     fsd.writeLock();
     try {
@@ -61,8 +61,8 @@ class FSDirSnapshotOp {
   }
 
   static void disallowSnapshot(
-      FSDirectory fsd, SnapshotManager snapshotManager,
-      String path) throws IOException {
+          FSVolatileNamespace fsd, SnapshotManager snapshotManager,
+          String path) throws IOException {
     fsd.writeLock();
     try {
       snapshotManager.resetSnapshottable(path);
@@ -78,8 +78,8 @@ class FSDirSnapshotOp {
    * @param snapshotName The name of the snapshot
    */
   static String createSnapshot(
-      FSDirectory fsd, SnapshotManager snapshotManager, String snapshotRoot,
-      String snapshotName, boolean logRetryCache)
+          FSVolatileNamespace fsd, SnapshotManager snapshotManager, String snapshotRoot,
+          String snapshotName, boolean logRetryCache)
       throws IOException {
     final INodesInPath iip = fsd.getINodesInPath4Write(snapshotRoot);
     if (fsd.isPermissionEnabled()) {
@@ -108,9 +108,9 @@ class FSDirSnapshotOp {
     return snapshotPath;
   }
 
-  static void renameSnapshot(FSDirectory fsd, SnapshotManager snapshotManager,
-      String path, String snapshotOldName, String snapshotNewName,
-      boolean logRetryCache) throws IOException {
+  static void renameSnapshot(FSVolatileNamespace fsd, SnapshotManager snapshotManager,
+                             String path, String snapshotOldName, String snapshotNewName,
+                             boolean logRetryCache) throws IOException {
     final INodesInPath iip = fsd.getINodesInPath4Write(path);
     if (fsd.isPermissionEnabled()) {
       FSPermissionChecker pc = fsd.getPermissionChecker();
@@ -129,7 +129,7 @@ class FSDirSnapshotOp {
   }
 
   static SnapshottableDirectoryStatus[] getSnapshottableDirListing(
-      FSDirectory fsd, SnapshotManager snapshotManager) throws IOException {
+          FSVolatileNamespace fsd, SnapshotManager snapshotManager) throws IOException {
     FSPermissionChecker pc = fsd.getPermissionChecker();
     fsd.readLock();
     try {
@@ -140,9 +140,9 @@ class FSDirSnapshotOp {
     }
   }
 
-  static SnapshotDiffReport getSnapshotDiffReport(FSDirectory fsd,
-      SnapshotManager snapshotManager, String path,
-      String fromSnapshot, String toSnapshot) throws IOException {
+  static SnapshotDiffReport getSnapshotDiffReport(FSVolatileNamespace fsd,
+                                                  SnapshotManager snapshotManager, String path,
+                                                  String fromSnapshot, String toSnapshot) throws IOException {
     SnapshotDiffReport diffs;
     final FSPermissionChecker pc = fsd.getPermissionChecker();
     fsd.readLock();
@@ -166,8 +166,8 @@ class FSDirSnapshotOp {
    * @throws IOException
    */
   static INode.BlocksMapUpdateInfo deleteSnapshot(
-      FSDirectory fsd, SnapshotManager snapshotManager, String snapshotRoot,
-      String snapshotName, boolean logRetryCache)
+          FSVolatileNamespace fsd, SnapshotManager snapshotManager, String snapshotRoot,
+          String snapshotName, boolean logRetryCache)
       throws IOException {
     final INodesInPath iip = fsd.getINodesInPath4Write(snapshotRoot);
     if (fsd.isPermissionEnabled()) {
@@ -193,8 +193,8 @@ class FSDirSnapshotOp {
   }
 
   private static void checkSubtreeReadPermission(
-      FSDirectory fsd, final FSPermissionChecker pc, String snapshottablePath,
-      String snapshot) throws IOException {
+          FSVolatileNamespace fsd, final FSPermissionChecker pc, String snapshottablePath,
+          String snapshot) throws IOException {
     final String fromPath = snapshot == null ?
         snapshottablePath : Snapshot.getSnapshotPath(snapshottablePath,
         snapshot);

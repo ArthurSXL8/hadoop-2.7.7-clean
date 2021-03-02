@@ -61,7 +61,7 @@ public class TestGetBlockLocations {
   @Test(timeout = 30000)
   public void testGetBlockLocationsRacingWithDelete() throws IOException {
     FSNamesystem fsn = spy(setupFileSystem());
-    final FSDirectory fsd = fsn.getFSDirectory();
+    final FSVolatileNamespace fsd = fsn.getFSDirectory();
     FSEditLog editlog = fsn.getEditLog();
 
     doAnswer(new Answer<Void>() {
@@ -84,7 +84,7 @@ public class TestGetBlockLocations {
   @Test(timeout = 30000)
   public void testGetBlockLocationsRacingWithRename() throws IOException {
     FSNamesystem fsn = spy(setupFileSystem());
-    final FSDirectory fsd = fsn.getFSDirectory();
+    final FSVolatileNamespace fsd = fsn.getFSDirectory();
     FSEditLog editlog = fsn.getEditLog();
     final String DST_PATH = "/bar";
     final boolean[] renamed = new boolean[1];
@@ -117,7 +117,7 @@ public class TestGetBlockLocations {
     when(image.getEditLog()).thenReturn(editlog);
     final FSNamesystem fsn = new FSNamesystem(conf, image, true);
 
-    final FSDirectory fsd = fsn.getFSDirectory();
+    final FSVolatileNamespace fsd = fsn.getFSDirectory();
     INodesInPath iip = fsd.getINodesInPath("/", true);
     PermissionStatus perm = new PermissionStatus(
         "hdfs", "supergroup",

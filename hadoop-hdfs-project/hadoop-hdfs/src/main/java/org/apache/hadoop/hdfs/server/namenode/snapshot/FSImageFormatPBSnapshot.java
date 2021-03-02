@@ -45,7 +45,7 @@ import org.apache.hadoop.hdfs.protocolPB.PBHelper;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfo;
 import org.apache.hadoop.hdfs.server.namenode.AclEntryStatusFormat;
 import org.apache.hadoop.hdfs.server.namenode.AclFeature;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.FSImageFormatPBINode;
 import org.apache.hadoop.hdfs.server.namenode.FSImageFormatProtobuf;
 import org.apache.hadoop.hdfs.server.namenode.FSImageFormatProtobuf.LoaderContext;
@@ -88,7 +88,7 @@ public class FSImageFormatPBSnapshot {
    */
   public final static class Loader {
     private final FSNamesystem fsn;
-    private final FSDirectory fsDir;
+    private final FSVolatileNamespace fsDir;
     private final FSImageFormatProtobuf.Loader parent;
     private final Map<Integer, Snapshot> snapshotMap;
 

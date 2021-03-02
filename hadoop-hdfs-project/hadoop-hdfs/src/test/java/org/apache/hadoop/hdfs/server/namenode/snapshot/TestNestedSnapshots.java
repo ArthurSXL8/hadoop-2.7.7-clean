@@ -36,7 +36,7 @@ import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.hdfs.protocol.SnapshotException;
 import org.apache.hadoop.hdfs.server.namenode.EditLogFileOutputStream;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.INode;
 import org.apache.hadoop.hdfs.server.namenode.INodeDirectory;
 import org.junit.After;
@@ -316,7 +316,7 @@ public class TestNestedSnapshots {
     final Path file = new Path(sub, "file");
     DFSTestUtil.createFile(hdfs, file, BLOCKSIZE, REPLICATION, SEED);
     
-    FSDirectory fsdir = cluster.getNamesystem().getFSDirectory();
+    FSVolatileNamespace fsdir = cluster.getNamesystem().getFSDirectory();
     INode subNode = fsdir.getINode(sub.toString());
     assertTrue(subNode.asDirectory().isWithSnapshot());
     

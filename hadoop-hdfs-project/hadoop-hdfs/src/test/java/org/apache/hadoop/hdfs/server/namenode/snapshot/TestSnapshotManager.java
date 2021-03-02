@@ -26,7 +26,7 @@ import static org.mockito.Mockito.spy;
 import java.util.ArrayList;
 
 import org.apache.hadoop.hdfs.protocol.SnapshotException;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.INode;
 import org.apache.hadoop.hdfs.server.namenode.INodeDirectory;
 import org.apache.hadoop.hdfs.server.namenode.INodesInPath;
@@ -49,7 +49,7 @@ public class TestSnapshotManager {
     // Setup mock objects for SnapshotManager.createSnapshot.
     //
     INodeDirectory ids = mock(INodeDirectory.class);
-    FSDirectory fsdir = mock(FSDirectory.class);
+    FSVolatileNamespace fsdir = mock(FSVolatileNamespace.class);
     INodesInPath iip = mock(INodesInPath.class);
 
     SnapshotManager sm = spy(new SnapshotManager(fsdir));

@@ -42,7 +42,7 @@ import org.apache.hadoop.hdfs.server.common.HdfsServerConstants.BlockUCState;
 import org.apache.hadoop.hdfs.server.namenode.CacheManager;
 import org.apache.hadoop.hdfs.server.namenode.CachePool;
 import org.apache.hadoop.hdfs.server.namenode.CachedBlock;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.FSNamesystem;
 import org.apache.hadoop.hdfs.server.namenode.INode;
 import org.apache.hadoop.hdfs.server.namenode.INodeDirectory;
@@ -320,7 +320,7 @@ public class CacheReplicationMonitor extends Thread implements Closeable {
    * what cache replication factor each block should have.
    */
   private void rescanCacheDirectives() {
-    FSDirectory fsDir = namesystem.getFSDirectory();
+    FSVolatileNamespace fsDir = namesystem.getFSDirectory();
     final long now = new Date().getTime();
     for (CacheDirective directive : cacheManager.getCacheDirectives()) {
       scannedDirectives++;

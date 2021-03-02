@@ -47,14 +47,14 @@ import static org.apache.hadoop.util.Time.now;
  */
 class FSDirConcatOp {
 
-  static HdfsFileStatus concat(FSDirectory fsd, String target, String[] srcs,
-    boolean logRetryCache) throws IOException {
+  static HdfsFileStatus concat(FSVolatileNamespace fsd, String target, String[] srcs,
+                               boolean logRetryCache) throws IOException {
     Preconditions.checkArgument(!target.isEmpty(), "Target file name is empty");
     Preconditions.checkArgument(srcs != null && srcs.length > 0,
       "No sources given");
     assert srcs != null;
-    if (FSDirectory.LOG.isDebugEnabled()) {
-      FSDirectory.LOG.debug("concat {} to {}", Arrays.toString(srcs), target);
+    if (FSVolatileNamespace.LOG.isDebugEnabled()) {
+      FSVolatileNamespace.LOG.debug("concat {} to {}", Arrays.toString(srcs), target);
     }
 
     final INodesInPath targetIIP = fsd.getINodesInPath4Write(target);
@@ -86,8 +86,8 @@ class FSDirConcatOp {
     return fsd.getAuditFileInfo(targetIIP);
   }
 
-  private static void verifyTargetFile(FSDirectory fsd, final String target,
-      final INodesInPath targetIIP) throws IOException {
+  private static void verifyTargetFile(FSVolatileNamespace fsd, final String target,
+                                       final INodesInPath targetIIP) throws IOException {
     // check the target
     if (fsd.getEZForPath(targetIIP) != null) {
       throw new HadoopIllegalArgumentException(
@@ -101,8 +101,8 @@ class FSDirConcatOp {
     }
   }
 
-  private static INodeFile[] verifySrcFiles(FSDirectory fsd, String[] srcs,
-      INodesInPath targetIIP, FSPermissionChecker pc) throws IOException {
+  private static INodeFile[] verifySrcFiles(FSVolatileNamespace fsd, String[] srcs,
+                                            INodesInPath targetIIP, FSPermissionChecker pc) throws IOException {
     // to make sure no two files are the same
     Set<INodeFile> si = new LinkedHashSet<>();
     final INodeFile targetINode = targetIIP.getLastINode().asFile();
@@ -165,8 +165,8 @@ class FSDirConcatOp {
     return si.toArray(new INodeFile[si.size()]);
   }
 
-  private static QuotaCounts computeQuotaDeltas(FSDirectory fsd,
-      INodeFile target, INodeFile[] srcList) {
+  private static QuotaCounts computeQuotaDeltas(FSVolatileNamespace fsd,
+                                                INodeFile target, INodeFile[] srcList) {
     QuotaCounts deltas = new QuotaCounts.Builder().build();
     final short targetRepl = target.getBlockReplication();
     for (INodeFile src : srcList) {
@@ -195,21 +195,21 @@ class FSDirConcatOp {
     return deltas;
   }
 
-  private static void verifyQuota(FSDirectory fsd, INodesInPath targetIIP,
-      QuotaCounts deltas) throws QuotaExceededException {
+  private static void verifyQuota(FSVolatileNamespace fsd, INodesInPath targetIIP,
+                                  QuotaCounts deltas) throws QuotaExceededException {
     if (!fsd.getFSNamesystem().isImageLoaded() || fsd.shouldSkipQuotaChecks()) {
       // Do not check quota if editlog is still being processed
       return;
     }
-    FSDirectory.verifyQuota(targetIIP, targetIIP.length() - 1, deltas, null);
+    FSVolatileNamespace.verifyQuota(targetIIP, targetIIP.length() - 1, deltas, null);
   }
 
   /**
    * Concat all the blocks from srcs to trg and delete the srcs files
    * @param fsd FSDirectory
    */
-  static void unprotectedConcat(FSDirectory fsd, INodesInPath targetIIP,
-      INodeFile[] srcList, long timestamp) throws IOException {
+  static void unprotectedConcat(FSVolatileNamespace fsd, INodesInPath targetIIP,
+                                INodeFile[] srcList, long timestamp) throws IOException {
     assert fsd.hasWriteLock();
     if (NameNode.stateChangeLog.isDebugEnabled()) {
       NameNode.stateChangeLog.debug("DIR* FSNamesystem.concat to "
@@ -241,6 +241,6 @@ class FSDirConcatOp {
     trgInode.setModificationTime(timestamp, targetIIP.getLatestSnapshotId());
     trgParent.updateModificationTime(timestamp, targetIIP.getLatestSnapshotId());
     // update quota on the parent directory with deltas
-    FSDirectory.unprotectedUpdateCount(targetIIP, targetIIP.length() - 1, deltas);
+    FSVolatileNamespace.unprotectedUpdateCount(targetIIP, targetIIP.length() - 1, deltas);
   }
 }

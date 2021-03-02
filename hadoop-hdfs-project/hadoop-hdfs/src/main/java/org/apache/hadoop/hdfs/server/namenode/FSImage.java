@@ -909,8 +909,8 @@ public class FSImage implements Closeable {
     } finally {
       FSEditLog.closeAllStreams(editStreams);
       // update the counts
-      updateCountForQuota(target.getBlockManager().getStoragePolicySuite(),
-          target.dir.rootDir, quotaInitThreads);
+      updateCountForQuota(target.getBlockManager().getBlockStoragePolicySuite(),
+          target.fsVolatileNamespace.rootDir, quotaInitThreads);
     }
     prog.endPhase(Phase.LOADING_EDITS);
     return lastAppliedTxId - prevLastAppliedTxId;

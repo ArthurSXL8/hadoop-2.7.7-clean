@@ -37,7 +37,7 @@ public interface Namesystem extends RwLock, SafeMode {
   /** @return the block pool ID */
   public String getBlockPoolId();
 
-  public FSDirectory getFSDirectory();
+  public FSVolatileNamespace getFSDirectory();
 
   public boolean isInStandbyState();
 

@@ -638,7 +638,7 @@ public class TestSaveNamespace {
       out.close();
 
       // add a bogus filediff
-      FSDirectory dir = cluster.getNamesystem().getFSDirectory();
+      FSVolatileNamespace dir = cluster.getNamesystem().getFSDirectory();
       INodeFile file = dir.getINode(path).asFile();
       file.addSnapshotFeature(null).getDiffs()
           .saveSelf2Snapshot(-1, file, null, false);

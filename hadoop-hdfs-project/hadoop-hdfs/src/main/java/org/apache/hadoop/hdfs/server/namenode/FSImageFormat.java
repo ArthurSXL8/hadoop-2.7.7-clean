@@ -380,7 +380,7 @@ public class FSImageFormat {
         if (NameNodeLayoutVersion.supports(
             LayoutVersion.Feature.ADD_INODE_ID, imgVersion)) {
           long lastInodeId = in.readLong();
-          namesystem.dir.resetLastInodeId(lastInodeId);
+          namesystem.fsVolatileNamespace.resetLastInodeId(lastInodeId);
           if (LOG.isDebugEnabled()) {
             LOG.debug("load last allocated InodeId from fsimage:" + lastInodeId);
           }
@@ -452,7 +452,7 @@ public class FSImageFormat {
     final QuotaCounts q = root.getQuotaCounts();
     final long nsQuota = q.getNameSpace();
     final long dsQuota = q.getStorageSpace();
-    FSDirectory fsDir = namesystem.dir;
+    FSVolatileNamespace fsDir = namesystem.fsVolatileNamespace;
     if (nsQuota != -1 || dsQuota != -1) {
       fsDir.rootDir.getDirectoryWithQuotaFeature().setQuota(nsQuota, dsQuota);
     }
@@ -549,7 +549,7 @@ public class FSImageFormat {
         throws IOException {
       // Step 1. Identify the parent INode
       long inodeId = in.readLong();
-      final INodeDirectory parent = this.namesystem.dir.getInode(inodeId)
+      final INodeDirectory parent = this.namesystem.fsVolatileNamespace.getInode(inodeId)
           .asDirectory();
       
       // Check if the whole subtree has been saved (for reference nodes)
@@ -598,7 +598,7 @@ public class FSImageFormat {
      // Rename .snapshot paths if we're doing an upgrade
      parentPath = renameReservedPathsOnUpgrade(parentPath, getLayoutVersion());
      final INodeDirectory parent = INodeDirectory.valueOf(
-         namesystem.dir.getINode(parentPath, true), parentPath);
+         namesystem.fsVolatileNamespace.getINode(parentPath, true), parentPath);
      return loadChildren(parent, in, counter);
    }
 
@@ -614,7 +614,7 @@ public class FSImageFormat {
       throws IOException {
     byte[][] pathComponents;
     byte[][] parentPath = {{}};      
-    FSDirectory fsDir = namesystem.dir;
+    FSVolatileNamespace fsDir = namesystem.fsVolatileNamespace;
     INodeDirectory parentINode = fsDir.rootDir;
     for (long i = 0; i < numFiles; i++) {
       pathComponents = FSImageSerialization.readPathComponents(in);
@@ -637,7 +637,7 @@ public class FSImageFormat {
         continue;
       }
 
-      namesystem.dir.addToInodeMap(newNode);
+      namesystem.fsVolatileNamespace.addToInodeMap(newNode);
       // check if the new inode belongs to the same parent
       if(!isParent(pathComponents, parentPath)) {
         parentINode = getParentINodeDirectory(pathComponents);
@@ -656,7 +656,7 @@ public class FSImageFormat {
       return null;
     }
     // Gets the parent INode
-    final INodesInPath inodes = namesystem.dir.getExistingPathINodes(
+    final INodesInPath inodes = namesystem.fsVolatileNamespace.getExistingPathINodes(
         pathComponents);
     return INodeDirectory.valueOf(inodes.getINode(-2), pathComponents);
   }
@@ -668,7 +668,7 @@ public class FSImageFormat {
    */
   private void addToParent(INodeDirectory parent, INode child)
       throws IllegalReservedPathException {
-    FSDirectory fsDir = namesystem.dir;
+    FSVolatileNamespace fsDir = namesystem.fsVolatileNamespace;
     if (parent == fsDir.rootDir) {
         child.setLocalName(renameReservedRootComponentOnUpgrade(
             child.getLocalNameBytes(), getLayoutVersion()));
@@ -677,7 +677,7 @@ public class FSImageFormat {
     if (!parent.addChild(child)) {
       return;
     }
-    namesystem.dir.cacheName(child);
+    namesystem.fsVolatileNamespace.cacheName(child);
 
     if (child.isFile()) {
       updateBlocksMap(child.asFile());
@@ -696,8 +696,8 @@ public class FSImageFormat {
     }
 
     /** @return The FSDirectory of the namesystem where the fsimage is loaded */
-    public FSDirectory getFSDirectoryInLoading() {
-      return namesystem.dir;
+    public FSVolatileNamespace getFSDirectoryInLoading() {
+      return namesystem.fsVolatileNamespace;
     }
 
     public INode loadINodeWithLocalName(boolean isSnapshotINode, DataInput in,
@@ -713,7 +713,7 @@ public class FSImageFormat {
           renameReservedComponentOnUpgrade(localName, getLayoutVersion());
       INode inode = loadINode(localName, isSnapshotINode, in, counter);
       if (updateINodeMap) {
-        namesystem.dir.addToInodeMap(inode);
+        namesystem.fsVolatileNamespace.addToInodeMap(inode);
       }
       return inode;
     }
@@ -736,7 +736,7 @@ public class FSImageFormat {
 
     long inodeId = NameNodeLayoutVersion.supports(
         LayoutVersion.Feature.ADD_INODE_ID, imgVersion) ? in.readLong()
-        : namesystem.dir.allocateNewInodeId();
+        : namesystem.fsVolatileNamespace.allocateNewInodeId();
     
     final short replication = namesystem.getBlockManager().adjustReplication(
         in.readShort());
@@ -927,7 +927,7 @@ public class FSImageFormat {
   
     private void loadFilesUnderConstruction(DataInput in,
         boolean supportSnapshot, Counter counter) throws IOException {
-      FSDirectory fsDir = namesystem.dir;
+      FSVolatileNamespace fsDir = namesystem.fsVolatileNamespace;
       int size = in.readInt();
 
       LOG.info("Number of files under construction = " + size);
@@ -941,13 +941,13 @@ public class FSImageFormat {
         String path = cons.getLocalName();
         INodeFile oldnode = null;
         boolean inSnapshot = false;
-        if (path != null && FSDirectory.isReservedName(path) && 
+        if (path != null && FSVolatileNamespace.isReservedName(path) &&
             NameNodeLayoutVersion.supports(
                 LayoutVersion.Feature.ADD_INODE_ID, getLayoutVersion())) {
           // TODO: for HDFS-5428, we use reserved path for those INodeFileUC in
           // snapshot. If we support INode ID in the layout version, we can use
           // the inode id to find the oldnode.
-          oldnode = namesystem.dir.getInode(cons.getId()).asFile();
+          oldnode = namesystem.fsVolatileNamespace.getInode(cons.getId()).asFile();
           inSnapshot = true;
         } else {
           path = renameReservedPathsOnUpgrade(path, getLayoutVersion());
@@ -1132,7 +1132,7 @@ public class FSImageFormat {
   }
 
   private final static String RESERVED_ERROR_MSG = 
-      FSDirectory.DOT_RESERVED_PATH_PREFIX + " is a reserved path and "
+      FSVolatileNamespace.DOT_RESERVED_PATH_PREFIX + " is a reserved path and "
       + HdfsConstants.DOT_SNAPSHOT_DIR + " is a reserved path component in"
       + " this version of HDFS. Please rollback and delete or rename"
       + " this path, or upgrade with the "
@@ -1168,15 +1168,15 @@ public class FSImageFormat {
       final int layoutVersion) throws IllegalReservedPathException {
     // If the LV doesn't support inode IDs, we're doing an upgrade
     if (!NameNodeLayoutVersion.supports(Feature.ADD_INODE_ID, layoutVersion)) {
-      if (Arrays.equals(component, FSDirectory.DOT_RESERVED)) {
+      if (Arrays.equals(component, FSVolatileNamespace.DOT_RESERVED)) {
         if (!renameReservedMap.containsKey(HdfsConstants.DOT_SNAPSHOT_DIR)) {
           throw new IllegalReservedPathException(RESERVED_ERROR_MSG);
         }
         final String renameString = renameReservedMap
-            .get(FSDirectory.DOT_RESERVED_STRING);
+            .get(FSVolatileNamespace.DOT_RESERVED_STRING);
         component =
             DFSUtil.string2Bytes(renameString);
-        LOG.info("Renamed root path " + FSDirectory.DOT_RESERVED_STRING
+        LOG.info("Renamed root path " + FSVolatileNamespace.DOT_RESERVED_STRING
             + " to " + renameString);
       }
     }
@@ -1238,7 +1238,7 @@ public class FSImageFormat {
       checkNotSaved();
 
       final FSNamesystem sourceNamesystem = context.getSourceNamesystem();
-      final INodeDirectory rootDir = sourceNamesystem.dir.rootDir;
+      final INodeDirectory rootDir = sourceNamesystem.fsVolatileNamespace.rootDir;
       final long numINodes = rootDir.getDirectoryWithQuotaFeature()
           .getSpaceConsumed().getNameSpace();
       String sdPath = newFile.getParentFile().getParentFile().getAbsolutePath();
@@ -1271,7 +1271,7 @@ public class FSImageFormat {
         out.writeLong(sourceNamesystem.getBlockIdManager().getGenerationStampAtblockIdSwitch());
         out.writeLong(sourceNamesystem.getBlockIdManager().getLastAllocatedBlockId());
         out.writeLong(context.getTxId());
-        out.writeLong(sourceNamesystem.dir.getLastInodeId());
+        out.writeLong(sourceNamesystem.fsVolatileNamespace.getLastInodeId());
 
 
         sourceNamesystem.getSnapshotManager().write(out);

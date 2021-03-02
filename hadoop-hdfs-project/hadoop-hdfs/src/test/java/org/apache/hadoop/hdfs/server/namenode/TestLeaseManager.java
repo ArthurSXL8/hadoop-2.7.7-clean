@@ -66,7 +66,7 @@ public class TestLeaseManager {
    */
   @Test (timeout=1000)
   public void testCheckLeaseNotInfiniteLoop() {
-    FSDirectory dir = Mockito.mock(FSDirectory.class);
+    FSVolatileNamespace dir = Mockito.mock(FSVolatileNamespace.class);
     FSNamesystem fsn = Mockito.mock(FSNamesystem.class);
     Mockito.when(fsn.isRunning()).thenReturn(true);
     Mockito.when(fsn.hasWriteLock()).thenReturn(true);
@@ -102,7 +102,7 @@ public class TestLeaseManager {
       FSDataOutputStream out = dfs.create(new Path(path));
 
       // Remove the lease from the lease manager, but leave it in the inode.
-      FSDirectory dir = cluster.getNamesystem().getFSDirectory();
+      FSVolatileNamespace dir = cluster.getNamesystem().getFSDirectory();
       INodeFile file = dir.getINode(path).asFile();
       cluster.getNamesystem().leaseManager.removeLease(
           file.getFileUnderConstructionFeature().getClientName(), path);

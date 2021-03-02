@@ -155,7 +155,7 @@ public class FSEditLogLoader {
   long loadEditRecords(EditLogInputStream in, boolean closeOnExit,
       long expectedStartingTxId, StartupOption startOpt,
       MetaRecoveryContext recovery) throws IOException {
-    FSDirectory fsDir = fsNamesys.dir;
+    FSVolatileNamespace fsDir = fsNamesys.fsVolatileNamespace;
 
     EnumMap<FSEditLogOpCodes, Holder<Integer>> opCounts =
       new EnumMap<FSEditLogOpCodes, Holder<Integer>>(FSEditLogOpCodes.class);
@@ -179,7 +179,7 @@ public class FSEditLogLoader {
     prog.setTotal(Phase.LOADING_EDITS, step, numTxns);
     Counter counter = prog.getCounter(Phase.LOADING_EDITS, step);
     long lastLogTime = monotonicNow();
-    long lastInodeId = fsNamesys.dir.getLastInodeId();
+    long lastInodeId = fsNamesys.fsVolatileNamespace.getLastInodeId();
     
     try {
       while (true) {
@@ -279,7 +279,7 @@ public class FSEditLogLoader {
         }
       }
     } finally {
-      fsNamesys.dir.resetLastInodeId(lastInodeId);
+      fsNamesys.fsVolatileNamespace.resetLastInodeId(lastInodeId);
       if(closeOnExit) {
         in.close();
       }
@@ -308,19 +308,19 @@ public class FSEditLogLoader {
         throw new IOException("The layout version " + logVersion
             + " supports inodeId but gave bogus inodeId");
       }
-      inodeId = fsNamesys.dir.allocateNewInodeId();
+      inodeId = fsNamesys.fsVolatileNamespace.allocateNewInodeId();
     } else {
       // need to reset lastInodeId. fsnamesys gets lastInodeId firstly from
       // fsimage but editlog captures more recent inodeId allocations
       if (inodeId > lastInodeId) {
-        fsNamesys.dir.resetLastInodeId(inodeId);
+        fsNamesys.fsVolatileNamespace.resetLastInodeId(inodeId);
       }
     }
     return inodeId;
   }
 
   @SuppressWarnings("deprecation")
-  private long applyEditLogOp(FSEditLogOp op, FSDirectory fsDir,
+  private long applyEditLogOp(FSEditLogOp op, FSVolatileNamespace fsDir,
       StartupOption startOpt, int logVersion, long lastInodeId) throws IOException {
     long inodeId = INodeId.GRANDFATHER_INODE_ID;
     if (LOG.isTraceEnabled()) {
@@ -380,7 +380,7 @@ public class FSEditLogLoader {
         // add the op into retry cache if necessary
         if (toAddRetryCache) {
           HdfsFileStatus stat = FSDirStatAndListingOp.createFileStatusForEditLog(
-              fsNamesys.dir, path, HdfsFileStatus.EMPTY_NAME,
+              fsNamesys.fsVolatileNamespace, path, HdfsFileStatus.EMPTY_NAME,
                   BlockStoragePolicySuite.ID_UNSPECIFIED, Snapshot.CURRENT_STATE_ID,
               false, iip);
           fsNamesys.addCacheEntryWithPayload(addCloseOp.rpcClientId,
@@ -399,7 +399,7 @@ public class FSEditLogLoader {
           // add the op into retry cache if necessary
           if (toAddRetryCache) {
             HdfsFileStatus stat = FSDirStatAndListingOp.createFileStatusForEditLog(
-                fsNamesys.dir, path, HdfsFileStatus.EMPTY_NAME,
+                fsNamesys.fsVolatileNamespace, path, HdfsFileStatus.EMPTY_NAME,
                     BlockStoragePolicySuite.ID_UNSPECIFIED,
                 Snapshot.CURRENT_STATE_ID, false, iip);
             fsNamesys.addCacheEntryWithPayload(addCloseOp.rpcClientId,
@@ -472,7 +472,7 @@ public class FSEditLogLoader {
         // add the op into retry cache if necessary
         if (toAddRetryCache) {
           HdfsFileStatus stat = FSDirStatAndListingOp.createFileStatusForEditLog(
-              fsNamesys.dir, path, HdfsFileStatus.EMPTY_NAME,
+              fsNamesys.fsVolatileNamespace, path, HdfsFileStatus.EMPTY_NAME,
                   BlockStoragePolicySuite.ID_UNSPECIFIED,
               Snapshot.CURRENT_STATE_ID, false, iip);
           fsNamesys.addCacheEntryWithPayload(appendOp.rpcClientId,
@@ -737,7 +737,7 @@ public class FSEditLogLoader {
           collectedBlocks, removedINodes);
       fsNamesys.removeBlocksAndUpdateSafemodeTotal(collectedBlocks);
       collectedBlocks.clear();
-      fsNamesys.dir.removeFromInodeMap(removedINodes);
+      fsNamesys.fsVolatileNamespace.removeFromInodeMap(removedINodes);
       removedINodes.clear();
       
       if (toAddRetryCache) {
@@ -944,7 +944,7 @@ public class FSEditLogLoader {
   /**
    * Add a new block into the given INodeFile
    */
-  private void addNewBlock(FSDirectory fsDir, AddBlockOp op, INodeFile file)
+  private void addNewBlock(FSVolatileNamespace fsDir, AddBlockOp op, INodeFile file)
       throws IOException {
     BlockNeighborInfo[] oldBlocks = file.getBlockNeighborInfos();
     Block pBlock = op.getPenultimateBlock();
@@ -983,8 +983,8 @@ public class FSEditLogLoader {
    * Update in-memory data structures with new block information.
    * @throws IOException
    */
-  private void updateBlocks(FSDirectory fsDir, BlockListUpdatingOp op,
-      INodesInPath iip, INodeFile file) throws IOException {
+  private void updateBlocks(FSVolatileNamespace fsDir, BlockListUpdatingOp op,
+                            INodesInPath iip, INodeFile file) throws IOException {
     // Update its block list
     BlockNeighborInfo[] oldBlocks = file.getBlockNeighborInfos();
     Block[] newBlocks = op.getBlocks();

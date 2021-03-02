@@ -46,7 +46,7 @@ import org.apache.hadoop.fs.permission.AclStatus;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.ha.HAServiceProtocol.HAServiceState;
-import org.apache.hadoop.hdfs.inotify.EventBatch;
+import org.apache.hadoop.hdfs.inotify.EventBatchInOneTransaction;
 import org.apache.hadoop.hdfs.protocol.BlockStoragePolicy;
 import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.inotify.Event;
@@ -2616,7 +2616,7 @@ public class PBHelper {
     final long firstTxid = list.getFirstTxid();
     final long lastTxid = list.getLastTxid();
 
-    List<EventBatch> batches = Lists.newArrayList();
+    List<EventBatchInOneTransaction> batches = Lists.newArrayList();
     if (list.getEventsList().size() > 0) {
       throw new IOException("Can't handle old inotify server response.");
     }
@@ -2702,7 +2702,7 @@ public class PBHelper {
                 p.getType());
         }
       }
-      batches.add(new EventBatch(txid, events.toArray(new Event[0])));
+      batches.add(new EventBatchInOneTransaction(txid, events.toArray(new Event[0])));
     }
     return new EventBatchList(batches, resp.getEventsList().getFirstTxid(),
         resp.getEventsList().getLastTxid(), resp.getEventsList().getSyncTxid());
@@ -2711,7 +2711,7 @@ public class PBHelper {
   public static GetEditsFromTxidResponseProto convertEditsResponse(EventBatchList el) {
     InotifyProtos.EventsListProto.Builder builder =
         InotifyProtos.EventsListProto.newBuilder();
-    for (EventBatch b : el.getBatches()) {
+    for (EventBatchInOneTransaction b : el.getBatches()) {
       List<InotifyProtos.EventProto> events = Lists.newArrayList();
       for (Event e : b.getEvents()) {
         switch (e.getEventType()) {

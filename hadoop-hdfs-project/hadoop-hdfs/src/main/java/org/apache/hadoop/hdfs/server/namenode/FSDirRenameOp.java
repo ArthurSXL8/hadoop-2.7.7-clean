@@ -50,8 +50,8 @@ import static org.apache.hadoop.hdfs.protocol.FSLimitException.PathComponentTooL
 class FSDirRenameOp {
   @Deprecated
   static RenameOldResult renameToInt(
-      FSDirectory fsd, final String srcArg, final String dstArg,
-      boolean logRetryCache)
+          FSVolatileNamespace fsd, final String srcArg, final String dstArg,
+          boolean logRetryCache)
       throws IOException {
     String src = srcArg;
     String dst = dstArg;
@@ -82,8 +82,8 @@ class FSDirRenameOp {
    * Verify quota for rename operation where srcInodes[srcInodes.length-1] moves
    * dstInodes[dstInodes.length-1]
    */
-  private static void verifyQuotaForRename(FSDirectory fsd, INodesInPath src,
-      INodesInPath dst) throws QuotaExceededException {
+  private static void verifyQuotaForRename(FSVolatileNamespace fsd, INodesInPath src,
+                                           INodesInPath dst) throws QuotaExceededException {
     if (!fsd.getFSNamesystem().isImageLoaded() || fsd.shouldSkipQuotaChecks()) {
       // Do not check quota if edits log is still being processed
       return;
@@ -99,15 +99,15 @@ class FSDirRenameOp {
     if (dstINode != null) {
       delta.subtract(dstINode.computeQuotaUsage(bsps));
     }
-    FSDirectory.verifyQuota(dst, dst.length() - 1, delta, src.getINode(i - 1));
+    FSVolatileNamespace.verifyQuota(dst, dst.length() - 1, delta, src.getINode(i - 1));
   }
 
   /**
    * Checks file system limits (max component length and max directory items)
    * during a rename operation.
    */
-  static void verifyFsLimitsForRename(FSDirectory fsd, INodesInPath srcIIP,
-      INodesInPath dstIIP)
+  static void verifyFsLimitsForRename(FSVolatileNamespace fsd, INodesInPath srcIIP,
+                                      INodesInPath dstIIP)
       throws PathComponentTooLongException, MaxDirectoryItemsExceededException {
     byte[] dstChildName = dstIIP.getLastLocalName();
     final String parentPath = dstIIP.getParentPath();
@@ -125,8 +125,8 @@ class FSDirRenameOp {
    */
   @Deprecated
   @SuppressWarnings("deprecation")
-  static boolean renameForEditLog(FSDirectory fsd, String src, String dst,
-      long timestamp) throws IOException {
+  static boolean renameForEditLog(FSVolatileNamespace fsd, String src, String dst,
+                                  long timestamp) throws IOException {
     if (fsd.isDir(dst)) {
       dst += Path.SEPARATOR + new Path(src).getName();
     }
@@ -142,12 +142,12 @@ class FSDirRenameOp {
    * @param src source path
    * @param dst destination path
    * @return true if rename succeeds; false otherwise
-   * @deprecated See {@link #renameToInt(FSDirectory, String, String,
+   * @deprecated See {@link #renameToInt(FSVolatileNamespace, String, String,
    * boolean, Options.Rename...)}
    */
   @Deprecated
-  static boolean unprotectedRenameTo(FSDirectory fsd, String src, String dst,
-      final INodesInPath srcIIP, final INodesInPath dstIIP, long timestamp)
+  static boolean unprotectedRenameTo(FSVolatileNamespace fsd, String src, String dst,
+                                     final INodesInPath srcIIP, final INodesInPath dstIIP, long timestamp)
       throws IOException {
     assert fsd.hasWriteLock();
     final INode srcInode = srcIIP.getLastINode();
@@ -225,8 +225,8 @@ class FSDirRenameOp {
    * The new rename which has the POSIX semantic.
    */
   static Map.Entry<BlocksMapUpdateInfo, HdfsFileStatus> renameToInt(
-      FSDirectory fsd, final String srcArg, final String dstArg,
-      boolean logRetryCache, Options.Rename... options)
+          FSVolatileNamespace fsd, final String srcArg, final String dstArg,
+          boolean logRetryCache, Options.Rename... options)
       throws IOException {
     String src = srcArg;
     String dst = dstArg;
@@ -250,12 +250,12 @@ class FSDirRenameOp {
   }
 
   /**
-   * @see {@link #unprotectedRenameTo(FSDirectory, String, String, INodesInPath,
+   * @see {@link #unprotectedRenameTo(FSVolatileNamespace, String, String, INodesInPath,
    * INodesInPath, long, BlocksMapUpdateInfo, Options.Rename...)}
    */
-  static String renameTo(FSDirectory fsd, FSPermissionChecker pc, String src,
-      String dst, BlocksMapUpdateInfo collectedBlocks, boolean logRetryCache,
-      Options.Rename... options) throws IOException {
+  static String renameTo(FSVolatileNamespace fsd, FSPermissionChecker pc, String src,
+                         String dst, BlocksMapUpdateInfo collectedBlocks, boolean logRetryCache,
+                         Options.Rename... options) throws IOException {
     final INodesInPath srcIIP = fsd.resolvePathForWrite(pc, src, false);
     final INodesInPath dstIIP = fsd.resolvePathForWrite(pc, dst, false);
     src = srcIIP.getPath();
@@ -321,8 +321,8 @@ class FSDirRenameOp {
    * @param options   Rename options
    */
   static boolean renameForEditLog(
-      FSDirectory fsd, String src, String dst, long timestamp,
-      Options.Rename... options)
+          FSVolatileNamespace fsd, String src, String dst, long timestamp,
+          Options.Rename... options)
       throws IOException {
     BlocksMapUpdateInfo collectedBlocks = new BlocksMapUpdateInfo();
     final INodesInPath srcIIP = fsd.getINodesInPath4Write(src, false);
@@ -348,9 +348,9 @@ class FSDirRenameOp {
    * @param options         Rename options
    * @return whether a file/directory gets overwritten in the dst path
    */
-  static boolean unprotectedRenameTo(FSDirectory fsd, String src, String dst,
-      final INodesInPath srcIIP, final INodesInPath dstIIP, long timestamp,
-      BlocksMapUpdateInfo collectedBlocks, Options.Rename... options)
+  static boolean unprotectedRenameTo(FSVolatileNamespace fsd, String src, String dst,
+                                     final INodesInPath srcIIP, final INodesInPath dstIIP, long timestamp,
+                                     BlocksMapUpdateInfo collectedBlocks, Options.Rename... options)
       throws IOException {
     assert fsd.hasWriteLock();
     boolean overwrite = options != null
@@ -458,13 +458,13 @@ class FSDirRenameOp {
   }
 
   /**
-   * @deprecated Use {@link #renameToInt(FSDirectory, String, String,
+   * @deprecated Use {@link #renameToInt(FSVolatileNamespace, String, String,
    * boolean, Options.Rename...)}
    */
   @Deprecated
   @SuppressWarnings("deprecation")
-  private static boolean renameTo(FSDirectory fsd, FSPermissionChecker pc,
-      INodesInPath srcIIP, INodesInPath dstIIP, boolean logRetryCache)
+  private static boolean renameTo(FSVolatileNamespace fsd, FSPermissionChecker pc,
+                                  INodesInPath srcIIP, INodesInPath dstIIP, boolean logRetryCache)
           throws IOException {
     String src = srcIIP.getPath();
     String dst = dstIIP.getPath();
@@ -573,7 +573,7 @@ class FSDirRenameOp {
   }
 
   private static class RenameOperation {
-    private final FSDirectory fsd;
+    private final FSVolatileNamespace fsd;
     private INodesInPath srcIIP;
     private final INodesInPath srcParentIIP;
     private INodesInPath dstIIP;
@@ -590,7 +590,7 @@ class FSDirRenameOp {
     private INode srcChild;
     private INode oldDstChild;
 
-    RenameOperation(FSDirectory fsd, String src, String dst,
+    RenameOperation(FSVolatileNamespace fsd, String src, String dst,
                     INodesInPath srcIIP, INodesInPath dstIIP)
         throws QuotaExceededException {
       this.fsd = fsd;

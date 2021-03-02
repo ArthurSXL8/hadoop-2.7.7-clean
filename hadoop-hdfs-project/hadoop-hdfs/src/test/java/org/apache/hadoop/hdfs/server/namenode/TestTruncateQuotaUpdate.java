@@ -51,7 +51,7 @@ public class TestTruncateQuotaUpdate {
   private static final Path file = new Path(dir, "file");
 
   private MiniDFSCluster cluster;
-  private FSDirectory fsdir;
+  private FSVolatileNamespace fsdir;
   private DistributedFileSystem dfs;
 
   @Before

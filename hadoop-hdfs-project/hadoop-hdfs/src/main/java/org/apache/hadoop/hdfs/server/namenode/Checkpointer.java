@@ -179,38 +179,38 @@ class Checkpointer extends Daemon {
    * Create a new checkpoint
    */
   void doCheckpoint() throws IOException {
-    BackupImage bnImage = getFSImage();
-    NNStorage bnStorage = bnImage.getStorage();
+    BackupImage backupImage = getFSImage();
+    NNStorage bnStorage = backupImage.getStorage();
 
     long startTime = monotonicNow();
-    bnImage.freezeNamespaceAtNextRoll();
+    backupImage.freezeNamespaceAtNextRoll();
     
-    NamenodeCommand cmd = 
+    NamenodeCommand namenodeCommand =
       getRemoteNamenodeProxy().startCheckpoint(backupNode.getRegistration());
-    CheckpointCommand cpCmd = null;
-    switch(cmd.getAction()) {
+    CheckpointCommand checkpointCommand = null;
+    switch(namenodeCommand.getAction()) {
       case NamenodeProtocol.ACT_SHUTDOWN:
         shutdown();
         throw new IOException("Name-node " + backupNode.nnRpcAddress
                                            + " requested shutdown.");
       case NamenodeProtocol.ACT_CHECKPOINT:
-        cpCmd = (CheckpointCommand)cmd;
+        checkpointCommand = (CheckpointCommand)namenodeCommand;
         break;
       default:
-        throw new IOException("Unsupported NamenodeCommand: "+cmd.getAction());
+        throw new IOException("Unsupported NamenodeCommand: "+namenodeCommand.getAction());
     }
 
-    bnImage.waitUntilNamespaceFrozen();
+    backupImage.waitUntilNamespaceFrozen();
     
-    CheckpointSignature sig = cpCmd.getSignature();
+    CheckpointSignature checkpointSignature = checkpointCommand.getSignature();
 
     // Make sure we're talking to the same NN!
-    sig.validateStorageInfo(bnImage);
+    checkpointSignature.validateStorageInfo(backupImage);
 
-    long lastApplied = bnImage.getLastAppliedTxId();
+    long lastApplied = backupImage.getLastAppliedTxId();
     LOG.debug("Doing checkpoint. Last applied: " + lastApplied);
     RemoteEditLogManifest manifest =
-      getRemoteNamenodeProxy().getEditLogManifest(bnImage.getLastAppliedTxId() + 1);
+      getRemoteNamenodeProxy().getEditLogManifest(backupImage.getLastAppliedTxId() + 1);
 
     boolean needReloadImage = false;
     if (!manifest.getLogs().isEmpty()) {
@@ -219,13 +219,13 @@ class Checkpointer extends Daemon {
       // to download and load the image.
       if (firstRemoteLog.getStartTxId() > lastApplied + 1) {
         LOG.info("Unable to roll forward using only logs. Downloading " +
-            "image with txid " + sig.mostRecentCheckpointTxId);
+            "image with txid " + checkpointSignature.mostRecentCheckpointTxId);
         MD5Hash downloadedHash = TransferFsImage.downloadImageToStorage(
-            backupNode.nnHttpAddress, sig.mostRecentCheckpointTxId, bnStorage,
+            backupNode.nnHttpAddress, checkpointSignature.mostRecentCheckpointTxId, bnStorage,
             true);
-        bnImage.saveDigestAndRenameCheckpointImage(NameNodeFile.IMAGE,
-            sig.mostRecentCheckpointTxId, downloadedHash);
-        lastApplied = sig.mostRecentCheckpointTxId;
+        backupImage.saveDigestAndRenameCheckpointImage(NameNodeFile.IMAGE,
+            checkpointSignature.mostRecentCheckpointTxId, downloadedHash);
+        lastApplied = checkpointSignature.mostRecentCheckpointTxId;
         needReloadImage = true;
       }
 
@@ -240,15 +240,15 @@ class Checkpointer extends Daemon {
       }
 
       if(needReloadImage) {
-        LOG.info("Loading image with txid " + sig.mostRecentCheckpointTxId);
+        LOG.info("Loading image with txid " + checkpointSignature.mostRecentCheckpointTxId);
         File file = bnStorage.findImageFile(NameNodeFile.IMAGE,
-            sig.mostRecentCheckpointTxId);
-        bnImage.reloadFromImageFile(file, backupNode.getNamesystem());
+            checkpointSignature.mostRecentCheckpointTxId);
+        backupImage.reloadFromImageFile(file, backupNode.getNamesystem());
       }
-      rollForwardByApplyingLogs(manifest, bnImage, backupNode.getNamesystem());
+      rollForwardByApplyingLogs(manifest, backupImage, backupNode.getNamesystem());
     }
     
-    long txid = bnImage.getLastAppliedTxId();
+    long txid = backupImage.getLastAppliedTxId();
     
     backupNode.namesystem.writeLock();
     try {
@@ -256,25 +256,25 @@ class Checkpointer extends Daemon {
       if(backupNode.namesystem.getBlocksTotal() > 0) {
         backupNode.namesystem.setBlockTotal();
       }
-      bnImage.saveFSImageInAllDirs(backupNode.getNamesystem(), txid);
+      backupImage.saveFSImageInAllDirs(backupNode.getNamesystem(), txid);
       bnStorage.writeAll();
     } finally {
       backupNode.namesystem.writeUnlock("doCheckpoint");
     }
 
-    if(cpCmd.needToReturnImage()) {
+    if(checkpointCommand.needToReturnImage()) {
       TransferFsImage.uploadImageFromStorage(backupNode.nnHttpAddress, conf,
           bnStorage, NameNodeFile.IMAGE, txid);
     }
 
-    getRemoteNamenodeProxy().endCheckpoint(backupNode.getRegistration(), sig);
+    getRemoteNamenodeProxy().endCheckpoint(backupNode.getRegistration(), checkpointSignature);
 
     if (backupNode.getRole() == NamenodeRole.BACKUP) {
-      bnImage.convergeJournalSpool();
+      backupImage.convergeJournalSpool();
     }
     backupNode.setRegistration(); // keep registration up to date
     
-    long imageSize = bnImage.getStorage().getFsImageName(txid).length();
+    long imageSize = backupImage.getStorage().getFsImageName(txid).length();
     LOG.info("Checkpoint completed in "
         + (monotonicNow() - startTime)/1000 + " seconds."
         + " New Image Size: " + imageSize);

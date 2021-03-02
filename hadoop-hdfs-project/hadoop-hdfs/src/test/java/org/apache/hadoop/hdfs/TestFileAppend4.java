@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -44,7 +43,7 @@ import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.hdfs.protocol.LocatedBlocks;
 import org.apache.hadoop.hdfs.server.datanode.DataNode;
 import org.apache.hadoop.hdfs.server.datanode.SimulatedFSDataset;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.INodeFile;
 import org.apache.hadoop.hdfs.server.protocol.NamenodeProtocols;
 import org.apache.hadoop.test.GenericTestUtils;
@@ -382,7 +381,7 @@ public class TestFileAppend4 {
       } catch (IOException e){
         LOG.info("Expected exception: ", e);
       }
-      FSDirectory dir = cluster.getNamesystem().getFSDirectory();
+      FSVolatileNamespace dir = cluster.getNamesystem().getFSDirectory();
       final INodeFile inode = INodeFile.
           valueOf(dir.getINode("/testAppend"), "/testAppend");
       assertTrue("File should remain closed", !inode.isUnderConstruction());

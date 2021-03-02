@@ -204,7 +204,7 @@ public class TestEditLog {
       FSEditLog editLog = namesystem.getEditLog();
 
       for (int i = 0; i < numTransactions; i++) {
-        INodeFile inode = new INodeFile(namesystem.dir.allocateNewInodeId(), null,
+        INodeFile inode = new INodeFile(namesystem.fsVolatileNamespace.allocateNewInodeId(), null,
             p, 0L, 0L, BlockNeighborInfo.EMPTY_ARRAY, replication, blockSize);
         inode.toUnderConstruction("", "");
 
@@ -235,7 +235,7 @@ public class TestEditLog {
   @Test
   public void testPreTxIdEditLogNoEdits() throws Exception {
     FSNamesystem namesys = Mockito.mock(FSNamesystem.class);
-    namesys.dir = Mockito.mock(FSDirectory.class);
+    namesys.fsVolatileNamespace = Mockito.mock(FSVolatileNamespace.class);
     long numEdits = testLoad(
         StringUtils.hexStringToByte("ffffffed"), // just version number
         namesys);
@@ -375,7 +375,7 @@ public class TestEditLog {
       // Remember the current lastInodeId and will reset it back to test
       // loading editlog segments.The transactions in the following allocate new
       // inode id to write to editlogs but doesn't create ionde in namespace
-      long originalLastInodeId = namesystem.dir.getLastInodeId();
+      long originalLastInodeId = namesystem.fsVolatileNamespace.getLastInodeId();
       
       // Create threads and make them run transactions concurrently.
       Thread threadId[] = new Thread[NUM_THREADS];
@@ -409,7 +409,7 @@ public class TestEditLog {
       // If there were any corruptions, it is likely that the reading in
       // of these transactions will throw an exception.
       //
-      namesystem.dir.resetLastInodeIdWithoutChecking(originalLastInodeId);
+      namesystem.fsVolatileNamespace.resetLastInodeIdWithoutChecking(originalLastInodeId);
       for (Iterator<StorageDirectory> it = 
               fsimage.getStorage().dirIterator(NameNodeDirType.EDITS); it.hasNext();) {
         FSEditLogLoader loader = new FSEditLogLoader(namesystem, 0);

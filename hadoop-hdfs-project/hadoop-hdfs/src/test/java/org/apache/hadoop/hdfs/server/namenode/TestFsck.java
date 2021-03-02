@@ -804,7 +804,7 @@ public class TestFsck {
       DFSTestUtil.waitReplication(fs, filePath, (short)1);
       
       // intentionally corrupt NN data structure
-      INodeFile node = (INodeFile) cluster.getNamesystem().dir.getINode
+      INodeFile node = (INodeFile) cluster.getNamesystem().fsVolatileNamespace.getINode
           (fileName, true);
       final BlockNeighborInfo[] blocks = node.getBlockNeighborInfos();
       assertEquals(blocks.length, 1);
@@ -1311,7 +1311,7 @@ public class TestFsck {
           .getBlockManager().getBlockSet(eb.getLocalBlock())
           .getBlockNeighborInfos()[0].getDatanode(0);
       cluster.getNameNode().getNamesystem().getBlockManager()
-          .getDatanodeManager().getDecomManager().startDecommission(dn);
+          .getDatanodeManager().getDecommissionManager().startDecommission(dn);
       String dnName = dn.getDataTransferIpAndPort();
 
       //wait for decommission start

@@ -35,7 +35,7 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.hdfs.protocol.SnapshotException;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.FSNamesystem;
 import org.apache.hadoop.hdfs.server.namenode.INodeDirectory;
 import org.apache.hadoop.hdfs.server.namenode.snapshot.DirectoryWithSnapshotFeature.DirectoryDiff;
@@ -65,7 +65,7 @@ public class TestSnapshotRename {
   MiniDFSCluster cluster;
   FSNamesystem fsn;
   DistributedFileSystem hdfs;
-  FSDirectory fsdir;
+  FSVolatileNamespace fsdir;
   
   @Before
   public void setUp() throws Exception {

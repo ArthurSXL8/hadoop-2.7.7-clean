@@ -32,7 +32,6 @@ import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hdfs.client.HdfsDataOutputStream;
 import org.apache.hadoop.hdfs.server.datanode.SimulatedFSDataset;
-import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.test.GenericTestUtils;
 import org.junit.Test;
 
@@ -63,7 +62,7 @@ public class TestFileLimit {
   {
     // wait for number of blocks to decrease
     while (true) {
-      long total = namesys.getBlocksTotal() + namesys.dir.totalInodes();
+      long total = namesys.getBlocksTotal() + namesys.fsVolatileNamespace.totalInodes();
       System.out.println("Comparing current nodes " + total +
                          " to become " + num);
       if (total == num) {

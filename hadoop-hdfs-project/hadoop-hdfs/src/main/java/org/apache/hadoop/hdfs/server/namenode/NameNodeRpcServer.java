@@ -70,7 +70,7 @@ import org.apache.hadoop.ha.protocolPB.HAServiceProtocolServerSideTranslatorPB;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.HDFSPolicyProvider;
-import org.apache.hadoop.hdfs.inotify.EventBatch;
+import org.apache.hadoop.hdfs.inotify.EventBatchInOneTransaction;
 import org.apache.hadoop.hdfs.inotify.EventBatchList;
 import org.apache.hadoop.hdfs.protocol.AclException;
 import org.apache.hadoop.hdfs.protocol.AlreadyBeingCreatedException;
@@ -199,7 +199,7 @@ class NameNodeRpcServer implements NamenodeProtocols {
   
   // Dependencies from other parts of NN.
   protected final FSNamesystem namesystem;
-  protected final NameNode nn;
+  protected final NameNode nameNode;
   private final NameNodeMetrics metrics;
 
   private final RetryCache retryCache;
@@ -214,12 +214,12 @@ class NameNodeRpcServer implements NamenodeProtocols {
   protected final RPC.Server clientRpcServer;
   protected final InetSocketAddress clientRpcAddress;
   
-  private final String minimumDataNodeVersion;
+  private final String minDNVersion;
 
-  public NameNodeRpcServer(Configuration conf, NameNode nn)
+  public NameNodeRpcServer(Configuration conf, NameNode nameNode)
       throws IOException {
-    this.nn = nn;
-    this.namesystem = nn.getNamesystem();
+    this.nameNode = nameNode;
+    this.namesystem = nameNode.getNamesystem();
     this.retryCache = namesystem.getRetryCache();
     this.metrics = NameNode.getNameNodeMetrics();
     
@@ -283,9 +283,9 @@ class NameNodeRpcServer implements NamenodeProtocols {
     
     WritableRpcEngine.ensureInitialized();
 
-    InetSocketAddress serviceRpcAddr = nn.getServiceRpcServerAddress(conf);
+    InetSocketAddress serviceRpcAddr = nameNode.getServiceRpcServerAddress(conf);
     if (serviceRpcAddr != null) {
-      String bindHost = nn.getServiceRpcServerBindHost(conf);
+      String bindHost = nameNode.getServiceRpcServerBindHost(conf);
       if (bindHost == null) {
         bindHost = serviceRpcAddr.getHostName();
       }
@@ -331,13 +331,13 @@ class NameNodeRpcServer implements NamenodeProtocols {
       InetSocketAddress listenAddr = serviceRpcServer.getListenerAddress();
       serviceRPCAddress = new InetSocketAddress(
             serviceRpcAddr.getHostName(), listenAddr.getPort());
-      nn.setRpcServiceServerAddress(conf, serviceRPCAddress);
+      nameNode.setRpcServiceServerAddress(conf, serviceRPCAddress);
     } else {
       serviceRpcServer = null;
       serviceRPCAddress = null;
     }
-    InetSocketAddress rpcAddr = nn.getRpcServerAddress(conf);
-    String bindHost = nn.getRpcServerBindHost(conf);
+    InetSocketAddress rpcAddr = nameNode.getRpcServerAddress(conf);
+    String bindHost = nameNode.getRpcServerBindHost(conf);
     if (bindHost == null) {
       bindHost = rpcAddr.getHostName();
     }
@@ -385,9 +385,9 @@ class NameNodeRpcServer implements NamenodeProtocols {
     InetSocketAddress listenAddr = clientRpcServer.getListenerAddress();
       clientRpcAddress = new InetSocketAddress(
           rpcAddr.getHostName(), listenAddr.getPort());
-    nn.setRpcServerAddress(conf, clientRpcAddress);
+    nameNode.setRpcServerAddress(conf, clientRpcAddress);
     
-    minimumDataNodeVersion = conf.get(
+    minDNVersion = conf.get(
         DFSConfigKeys.DFS_NAMENODE_MIN_SUPPORTED_DATANODE_VERSION_KEY,
         DFSConfigKeys.DFS_NAMENODE_MIN_SUPPORTED_DATANODE_VERSION_DEFAULT);
 
@@ -512,18 +512,18 @@ class NameNodeRpcServer implements NamenodeProtocols {
     checkNNStartup();
     namesystem.checkSuperuserPrivilege();
     verifyLayoutVersion(registration.getVersion());
-    NamenodeRegistration myRegistration = nn.setRegistration();
-    namesystem.registerBackupNode(registration, myRegistration);
-    return myRegistration;
+    NamenodeRegistration namenodeRegistration = nameNode.setRegistration();
+    namesystem.registerBackupNode(registration, namenodeRegistration);
+    return namenodeRegistration;
   }
 
   @Override // NamenodeProtocol
-  public NamenodeCommand startCheckpoint(NamenodeRegistration registration)
+  public NamenodeCommand startCheckpoint(NamenodeRegistration namenodeRegistration)
       throws IOException {
     checkNNStartup();
     namesystem.checkSuperuserPrivilege();
-    verifyRequest(registration);
-    if(!nn.isRole(NamenodeRole.NAMENODE))
+    verifyRequest(namenodeRegistration);
+    if(!nameNode.isRole(NamenodeRole.NAMENODE))
       throw new IOException("Only an ACTIVE node can invoke startCheckpoint.");
 
     CacheEntryWithPayload cacheEntry = RetryCache.waitForCompletion(retryCache,
@@ -531,18 +531,18 @@ class NameNodeRpcServer implements NamenodeProtocols {
     if (cacheEntry != null && cacheEntry.isSuccess()) {
       return (NamenodeCommand) cacheEntry.getPayload();
     }
-    NamenodeCommand ret = null;
+    NamenodeCommand namenodeCommand = null;
     try {
-      ret = namesystem.startCheckpoint(registration, nn.setRegistration());
+      namenodeCommand = namesystem.startCheckpoint(namenodeRegistration, nameNode.setRegistration());
     } finally {
-      RetryCache.setState(cacheEntry, ret != null, ret);
+      RetryCache.setState(cacheEntry, namenodeCommand != null, namenodeCommand);
     }
-    return ret;
+    return namenodeCommand;
   }
 
   @Override // NamenodeProtocol
   public void endCheckpoint(NamenodeRegistration registration,
-                            CheckpointSignature sig) throws IOException {
+                            CheckpointSignature checkpointSignature) throws IOException {
     checkNNStartup();
     namesystem.checkSuperuserPrivilege();
     CacheEntry cacheEntry = RetryCache.waitForCompletion(retryCache);
@@ -551,7 +551,7 @@ class NameNodeRpcServer implements NamenodeProtocols {
     }
     boolean success = false;
     try {
-      namesystem.endCheckpoint(registration, sig);
+      namesystem.endCheckpoint(registration, checkpointSignature);
       success = true;
     } finally {
       RetryCache.setState(cacheEntry, success);
@@ -580,14 +580,14 @@ class NameNodeRpcServer implements NamenodeProtocols {
   }
   
   @Override // ClientProtocol
-  public LocatedBlocks getBlockLocations(String src, 
+  public LocatedBlocks getBlockLocations(String fileName,
                                           long offset, 
                                           long length) 
       throws IOException {
     checkNNStartup();
     metrics.incrGetBlockLocations();
     return namesystem.getBlockLocations(getClientMachine(), 
-                                        src, offset, length);
+                                        fileName, offset, length);
   }
   
   @Override // ClientProtocol
@@ -597,7 +597,7 @@ class NameNodeRpcServer implements NamenodeProtocols {
   }
 
   @Override // ClientProtocol
-  public HdfsFileStatus create(String src, FsPermission masked,
+  public HdfsFileStatus create(String filePath, FsPermission masked,
       String clientName, EnumSetWritable<CreateFlag> flag,
       boolean createParent, short replication, long blockSize, 
       CryptoProtocolVersion[] supportedVersions)
@@ -606,9 +606,9 @@ class NameNodeRpcServer implements NamenodeProtocols {
     String clientMachine = getClientMachine();
     if (stateChangeLog.isDebugEnabled()) {
       stateChangeLog.debug("*DIR* NameNode.create: file "
-          +src+" for "+clientName+" at "+clientMachine);
+          + filePath + " for " + clientName + " at " + clientMachine);
     }
-    if (!checkPathLength(src)) {
+    if (!checkPathLength(filePath)) {
       throw new IOException("create: Pathname too long.  Limit "
           + MAX_PATH_LENGTH + " characters, " + MAX_PATH_DEPTH + " levels.");
     }
@@ -622,7 +622,7 @@ class NameNodeRpcServer implements NamenodeProtocols {
     try {
       PermissionStatus perm = new PermissionStatus(getRemoteUser()
           .getShortUserName(), null, masked);
-      status = namesystem.startFile(src, perm, clientName, clientMachine,
+      status = namesystem.startFile(filePath, perm, clientName, clientMachine,
           flag.get(), createParent, replication, blockSize, supportedVersions,
           cacheEntry != null);
     } finally {
@@ -635,13 +635,13 @@ class NameNodeRpcServer implements NamenodeProtocols {
   }
 
   @Override // ClientProtocol
-  public LastBlockWithStatus append(String src, String clientName,
+  public LastBlockWithStatus append(String filePath, String clientName,
       EnumSetWritable<CreateFlag> flag) throws IOException {
     checkNNStartup();
     String clientMachine = getClientMachine();
     if (stateChangeLog.isDebugEnabled()) {
       stateChangeLog.debug("*DIR* NameNode.append: file "
-          +src+" for "+clientName+" at "+clientMachine);
+          +filePath+" for "+clientName+" at "+clientMachine);
     }
     namesystem.checkOperation(OperationCategory.WRITE);
     CacheEntryWithPayload cacheEntry = RetryCache.waitForCompletion(retryCache,
@@ -653,7 +653,7 @@ class NameNodeRpcServer implements NamenodeProtocols {
     LastBlockWithStatus info = null;
     boolean success = false;
     try {
-      info = namesystem.appendFile(src, clientName, clientMachine, flag.get(),
+      info = namesystem.appendFile(filePath, clientName, clientMachine, flag.get(),
           cacheEntry != null);
       success = true;
     } finally {
@@ -921,16 +921,16 @@ class NameNodeRpcServer implements NamenodeProtocols {
   }
 
   @Override // ClientProtocol
-  public boolean truncate(String src, long newLength, String clientName)
+  public boolean truncate(String filePath, long newLength, String clientName)
       throws IOException {
     if(stateChangeLog.isDebugEnabled()) {
-      stateChangeLog.debug("*DIR* NameNode.truncate: " + src + " to " +
+      stateChangeLog.debug("*DIR* NameNode.truncate: " + filePath + " to " +
           newLength);
     }
     String clientMachine = getClientMachine();
     try {
       return namesystem.truncate(
-          src, newLength, clientName, clientMachine, now());
+          filePath, newLength, clientName, clientMachine, now());
     } finally {
       metrics.incrFilesTruncated();
     }
@@ -1336,9 +1336,9 @@ class NameNodeRpcServer implements NamenodeProtocols {
       metrics.incrStorageBlockReportOps();
     }
 
-    if (nn.getFSImage().isUpgradeFinalized() &&
+    if (nameNode.getFSImage().isUpgradeFinalized() &&
         !namesystem.isRollingUpgrade() &&
-        !nn.isStandbyState() &&
+        !nameNode.isStandbyState() &&
         noStaleStorages) {
       return new FinalizeCommand(poolId);
     }
@@ -1494,30 +1494,30 @@ class NameNodeRpcServer implements NamenodeProtocols {
   public synchronized void monitorHealth() throws HealthCheckFailedException,
       AccessControlException, IOException {
     checkNNStartup();
-    nn.monitorHealth();
+    nameNode.monitorHealth();
   }
   
   @Override // HAServiceProtocol
   public synchronized void transitionToActive(StateChangeRequestInfo req) 
       throws ServiceFailedException, AccessControlException, IOException {
     checkNNStartup();
-    nn.checkHaStateChange(req);
-    nn.transitionToActive();
+    nameNode.checkHaStateChange(req);
+    nameNode.transitionToActive();
   }
   
   @Override // HAServiceProtocol
   public synchronized void transitionToStandby(StateChangeRequestInfo req) 
       throws ServiceFailedException, AccessControlException, IOException {
     checkNNStartup();
-    nn.checkHaStateChange(req);
-    nn.transitionToStandby();
+    nameNode.checkHaStateChange(req);
+    nameNode.transitionToStandby();
   }
 
   @Override // HAServiceProtocol
   public synchronized HAServiceStatus getServiceStatus() 
       throws AccessControlException, ServiceFailedException, IOException {
     checkNNStartup();
-    return nn.getServiceStatus();
+    return nameNode.getServiceStatus();
   }
 
   /**
@@ -1534,9 +1534,9 @@ class NameNodeRpcServer implements NamenodeProtocols {
   private void verifySoftwareVersion(DatanodeRegistration dnReg)
       throws IncorrectVersionException {
     String dnVersion = dnReg.getSoftwareVersion();
-    if (VersionUtil.compareVersions(dnVersion, minimumDataNodeVersion) < 0) {
+    if (VersionUtil.compareVersions(dnVersion, minDNVersion) < 0) {
       IncorrectVersionException ive = new IncorrectVersionException(
-          minimumDataNodeVersion, dnVersion, "DataNode", "NameNode");
+              minDNVersion, dnVersion, "DataNode", "NameNode");
       LOG.warn(ive.getMessage() + " DN: " + dnReg);
       throw ive;
     }
@@ -1545,7 +1545,7 @@ class NameNodeRpcServer implements NamenodeProtocols {
       String messagePrefix = "Reported DataNode version '" + dnVersion +
           "' of DN " + dnReg + " does not match NameNode version '" +
           nnVersion + "'";
-      long nnCTime = nn.getFSImage().getStorage().getCTime();
+      long nnCTime = nameNode.getFSImage().getStorage().getCTime();
       long dnCTime = dnReg.getStorageInfo().getCTime();
       if (nnCTime != dnCTime) {
         IncorrectVersionException ive = new IncorrectVersionException(
@@ -1809,17 +1809,17 @@ class NameNodeRpcServer implements NamenodeProtocols {
   }
 
   @Override // ClientProtocol
-  public void modifyAclEntries(String src, List<AclEntry> aclSpec)
+  public void modifyAclEntries(String src, List<AclEntry> aclEntryList)
       throws IOException {
     checkNNStartup();
-    namesystem.modifyAclEntries(src, aclSpec);
+    namesystem.modifyAclEntries(src, aclEntryList);
   }
 
   @Override // ClienProtocol
-  public void removeAclEntries(String src, List<AclEntry> aclSpec)
+  public void removeAclEntries(String src, List<AclEntry> aclEntryList)
       throws IOException {
     checkNNStartup();
-    namesystem.removeAclEntries(src, aclSpec);
+    namesystem.removeAclEntries(src, aclEntryList);
   }
 
   @Override // ClientProtocol
@@ -1835,9 +1835,9 @@ class NameNodeRpcServer implements NamenodeProtocols {
   }
 
   @Override // ClientProtocol
-  public void setAcl(String src, List<AclEntry> aclSpec) throws IOException {
+  public void setAcl(String src, List<AclEntry> aclEntryList) throws IOException {
     checkNNStartup();
-    namesystem.setAcl(src, aclSpec);
+    namesystem.setAcl(src, aclEntryList);
   }
 
   @Override // ClientProtocol
@@ -1927,8 +1927,8 @@ class NameNodeRpcServer implements NamenodeProtocols {
   }
 
   private void checkNNStartup() throws IOException {
-    if (!this.nn.isStarted()) {
-      throw new RetriableException(this.nn.getRole() + " still not started");
+    if (!this.nameNode.isStarted()) {
+      throw new RetriableException(this.nameNode.getRole() + " still not started");
     }
   }
 
@@ -1972,11 +1972,11 @@ class NameNodeRpcServer implements NamenodeProtocols {
     checkNNStartup();
     namesystem.checkOperation(OperationCategory.READ); // only active
     namesystem.checkSuperuserPrivilege();
-    int maxEventsPerRPC = nn.conf.getInt(
+    int maxEventsPerRPC = nameNode.conf.getInt(
         DFSConfigKeys.DFS_NAMENODE_INOTIFY_MAX_EVENTS_PER_RPC_KEY,
         DFSConfigKeys.DFS_NAMENODE_INOTIFY_MAX_EVENTS_PER_RPC_DEFAULT);
-    FSEditLog log = namesystem.getFSImage().getEditLog();
-    long syncTxid = log.getSyncTxId();
+    FSEditLog fsEditLog = namesystem.getFSImage().getEditLog();
+    long syncTxid = fsEditLog.getSyncTxId();
     // If we haven't synced anything yet, we can only read finalized
     // segments since we can't reliably determine which txns in in-progress
     // segments have actually been committed (e.g. written to a quorum of JNs).
@@ -1987,26 +1987,26 @@ class NameNodeRpcServer implements NamenodeProtocols {
     // guaranteed to have been written by this NameNode.)
     boolean readInProgress = syncTxid > 0;
 
-    List<EventBatch> batches = Lists.newArrayList();
+    List<EventBatchInOneTransaction> eventBatchInOneTransactions = Lists.newArrayList();
     int totalEvents = 0;
     long maxSeenTxid = -1;
     long firstSeenTxid = -1;
 
     if (syncTxid > 0 && txid > syncTxid) {
       // we can't read past syncTxid, so there's no point in going any further
-      return new EventBatchList(batches, firstSeenTxid, maxSeenTxid, syncTxid);
+      return new EventBatchList(eventBatchInOneTransactions, firstSeenTxid, maxSeenTxid, syncTxid);
     }
 
     Collection<EditLogInputStream> streams = null;
     try {
-      streams = log.selectInputStreams(txid, 0, null, readInProgress);
+      streams = fsEditLog.selectInputStreams(txid, 0, null, readInProgress);
     } catch (IllegalStateException e) { // can happen if we have
       // transitioned out of active and haven't yet transitioned to standby
       // and are using QJM -- the edit log will be closed and this exception
       // will result
       LOG.info("NN is transitioning from active to standby and FSEditLog " +
       "is closed -- could not read edits");
-      return new EventBatchList(batches, firstSeenTxid, maxSeenTxid, syncTxid);
+      return new EventBatchList(eventBatchInOneTransactions, firstSeenTxid, maxSeenTxid, syncTxid);
     }
 
     boolean breakOuter = false;
@@ -2024,10 +2024,10 @@ class NameNodeRpcServer implements NamenodeProtocols {
             break;
           }
 
-          EventBatch eventBatch = InotifyFSEditLogOpTranslator.translate(op);
-          if (eventBatch != null) {
-            batches.add(eventBatch);
-            totalEvents += eventBatch.getEvents().length;
+          EventBatchInOneTransaction eventBatchInOneTransaction = InotifyFSEditLogOpTranslator.translate(op);
+          if (eventBatchInOneTransaction != null) {
+            eventBatchInOneTransactions.add(eventBatchInOneTransaction);
+            totalEvents += eventBatchInOneTransaction.getEvents().length;
           }
           if (op.getTransactionId() > maxSeenTxid) {
             maxSeenTxid = op.getTransactionId();
@@ -2050,27 +2050,27 @@ class NameNodeRpcServer implements NamenodeProtocols {
       }
     }
 
-    return new EventBatchList(batches, firstSeenTxid, maxSeenTxid, syncTxid);
+    return new EventBatchList(eventBatchInOneTransactions, firstSeenTxid, maxSeenTxid, syncTxid);
   }
 
   @Override // TraceAdminProtocol
   public SpanReceiverInfo[] listSpanReceivers() throws IOException {
     checkNNStartup();
     namesystem.checkSuperuserPrivilege();
-    return nn.spanReceiverHost.listSpanReceivers();
+    return nameNode.spanReceiverHost.listSpanReceivers();
   }
 
   @Override // TraceAdminProtocol
   public long addSpanReceiver(SpanReceiverInfo info) throws IOException {
     checkNNStartup();
     namesystem.checkSuperuserPrivilege();
-    return nn.spanReceiverHost.addSpanReceiver(info);
+    return nameNode.spanReceiverHost.addSpanReceiver(info);
   }
 
   @Override // TraceAdminProtocol
   public void removeSpanReceiver(long id) throws IOException {
     checkNNStartup();
     namesystem.checkSuperuserPrivilege();
-    nn.spanReceiverHost.removeSpanReceiver(id);
+    nameNode.spanReceiverHost.removeSpanReceiver(id);
   }
 }

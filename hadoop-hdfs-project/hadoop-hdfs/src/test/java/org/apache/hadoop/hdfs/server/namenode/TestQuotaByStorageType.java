@@ -49,7 +49,7 @@ public class TestQuotaByStorageType {
 
   private Configuration conf;
   private MiniDFSCluster cluster;
-  private FSDirectory fsdir;
+  private FSVolatileNamespace fsdir;
   private DistributedFileSystem dfs;
   private FSNamesystem fsn;
 
@@ -199,7 +199,7 @@ public class TestQuotaByStorageType {
     assertEquals(0, storageTypeConsumed);
 
     QuotaCounts counts = new QuotaCounts.Builder().build();
-    fnode.computeQuotaUsage(fsn.getBlockManager().getStoragePolicySuite(), counts, true);
+    fnode.computeQuotaUsage(fsn.getBlockManager().getBlockStoragePolicySuite(), counts, true);
     assertEquals(fnode.dumpTreeRecursively().toString(), 0,
         counts.getTypeSpaces().get(StorageType.SSD));
 
@@ -458,7 +458,7 @@ public class TestQuotaByStorageType {
 
     // Validate the computeQuotaUsage()
     QuotaCounts counts = new QuotaCounts.Builder().build();
-    fnode.computeQuotaUsage(fsn.getBlockManager().getStoragePolicySuite(), counts, true);
+    fnode.computeQuotaUsage(fsn.getBlockManager().getBlockStoragePolicySuite(), counts, true);
     assertEquals(fnode.dumpTreeRecursively().toString(), 1,
         counts.getNameSpace());
     assertEquals(fnode.dumpTreeRecursively().toString(), 0,
@@ -570,7 +570,7 @@ public class TestQuotaByStorageType {
     assertEquals(file1Len, ssdConsumed);
 
     QuotaCounts counts1 = new QuotaCounts.Builder().build();
-    sub1Node.computeQuotaUsage(fsn.getBlockManager().getStoragePolicySuite(), counts1, true);
+    sub1Node.computeQuotaUsage(fsn.getBlockManager().getBlockStoragePolicySuite(), counts1, true);
     assertEquals(sub1Node.dumpTreeRecursively().toString(), file1Len,
         counts1.getTypeSpaces().get(StorageType.SSD));
 
@@ -588,7 +588,7 @@ public class TestQuotaByStorageType {
     assertEquals(0, ssdConsumed);
 
     QuotaCounts counts2 = new QuotaCounts.Builder().build();
-    sub1Node.computeQuotaUsage(fsn.getBlockManager().getStoragePolicySuite(), counts2, true);
+    sub1Node.computeQuotaUsage(fsn.getBlockManager().getBlockStoragePolicySuite(), counts2, true);
     assertEquals(sub1Node.dumpTreeRecursively().toString(), 0,
         counts2.getTypeSpaces().get(StorageType.SSD));
 

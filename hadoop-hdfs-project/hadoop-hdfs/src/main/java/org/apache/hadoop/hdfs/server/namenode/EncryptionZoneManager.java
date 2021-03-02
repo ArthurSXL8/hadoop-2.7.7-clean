@@ -98,7 +98,7 @@ public class EncryptionZoneManager {
   }
 
   private TreeMap<Long, EncryptionZoneInt> encryptionZones = null;
-  private final FSDirectory dir;
+  private final FSVolatileNamespace dir;
   private final int maxListEncryptionZonesResponses;
 
   /**
@@ -106,7 +106,7 @@ public class EncryptionZoneManager {
    *
    * @param dir Enclosing FSDirectory
    */
-  public EncryptionZoneManager(FSDirectory dir, Configuration conf) {
+  public EncryptionZoneManager(FSVolatileNamespace dir, Configuration conf) {
     this.dir = dir;
     maxListEncryptionZonesResponses = conf.getInt(
         DFSConfigKeys.DFS_NAMENODE_LIST_ENCRYPTION_ZONES_NUM_RESPONSES,

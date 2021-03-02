@@ -42,7 +42,7 @@ class FSDirMkdirOp {
 
   static HdfsFileStatus mkdirs(FSNamesystem fsn, String src,
       PermissionStatus permissions, boolean createParent) throws IOException {
-    FSDirectory fsd = fsn.getFSDirectory();
+    FSVolatileNamespace fsd = fsn.getFSDirectory();
     if(NameNode.stateChangeLog.isDebugEnabled()) {
       NameNode.stateChangeLog.debug("DIR* NameSystem.mkdirs: " + src);
     }
@@ -117,7 +117,7 @@ class FSDirMkdirOp {
    * relative path. Or return null if there are errors.
    */
   static Map.Entry<INodesInPath, String> createAncestorDirectories(
-      FSDirectory fsd, INodesInPath iip, PermissionStatus permission)
+          FSVolatileNamespace fsd, INodesInPath iip, PermissionStatus permission)
       throws IOException {
     final String last = DFSUtil.bytes2String(iip.getLastLocalName());
     INodesInPath existing = iip.getExistingINodes();
@@ -155,8 +155,8 @@ class FSDirMkdirOp {
    * the returned INodesInPath. The function return null if the operation has
    * failed.
    */
-  private static INodesInPath createChildrenDirectories(FSDirectory fsd,
-      INodesInPath existing, List<String> children, PermissionStatus perm)
+  private static INodesInPath createChildrenDirectories(FSVolatileNamespace fsd,
+                                                        INodesInPath existing, List<String> children, PermissionStatus perm)
       throws IOException {
     assert fsd.hasWriteLock();
 
@@ -169,8 +169,8 @@ class FSDirMkdirOp {
     return existing;
   }
 
-  static void mkdirForEditLog(FSDirectory fsd, long inodeId, String src,
-      PermissionStatus permissions, List<AclEntry> aclEntries, long timestamp)
+  static void mkdirForEditLog(FSVolatileNamespace fsd, long inodeId, String src,
+                              PermissionStatus permissions, List<AclEntry> aclEntries, long timestamp)
       throws QuotaExceededException, UnresolvedLinkException, AclException,
       FileAlreadyExistsException {
     assert fsd.hasWriteLock();
@@ -182,8 +182,8 @@ class FSDirMkdirOp {
         timestamp);
   }
 
-  private static INodesInPath createSingleDirectory(FSDirectory fsd,
-      INodesInPath existing, String localName, PermissionStatus perm)
+  private static INodesInPath createSingleDirectory(FSVolatileNamespace fsd,
+                                                    INodesInPath existing, String localName, PermissionStatus perm)
       throws IOException {
     assert fsd.hasWriteLock();
     existing = unprotectedMkdir(fsd, fsd.allocateNewInodeId(), existing,
@@ -219,9 +219,9 @@ class FSDirMkdirOp {
   /**
    * create a directory at path specified by parent
    */
-  private static INodesInPath unprotectedMkdir(FSDirectory fsd, long inodeId,
-      INodesInPath parent, byte[] name, PermissionStatus permission,
-      List<AclEntry> aclEntries, long timestamp)
+  private static INodesInPath unprotectedMkdir(FSVolatileNamespace fsd, long inodeId,
+                                               INodesInPath parent, byte[] name, PermissionStatus permission,
+                                               List<AclEntry> aclEntries, long timestamp)
       throws QuotaExceededException, AclException, FileAlreadyExistsException {
     assert fsd.hasWriteLock();
     assert parent.getLastINode() != null;

@@ -24,11 +24,11 @@ import org.apache.hadoop.classification.InterfaceAudience;
  * A batch of events that all happened on the same transaction ID.
  */
 @InterfaceAudience.Public
-public class EventBatch {
+public class EventBatchInOneTransaction {
   private final long txid;
   private final Event[] events;
 
-  public EventBatch(long txid, Event[] events) {
+  public EventBatchInOneTransaction(long txid, Event[] events) {
     this.txid = txid;
     this.events = events;
   }

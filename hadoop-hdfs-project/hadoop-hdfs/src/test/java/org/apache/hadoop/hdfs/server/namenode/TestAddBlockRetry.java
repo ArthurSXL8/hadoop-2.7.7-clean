@@ -120,7 +120,7 @@ public class TestAddBlockRetry {
     final FSNamesystem ns = cluster.getNamesystem();
     ns.readLock();
     try {
-      return ns.checkFileProgress(src, ns.dir.getINode(src).asFile(), checkall);
+      return ns.checkFileProgress(src, ns.fsVolatileNamespace.getINode(src).asFile(), checkall);
     } finally {
       ns.readUnlock();
     }

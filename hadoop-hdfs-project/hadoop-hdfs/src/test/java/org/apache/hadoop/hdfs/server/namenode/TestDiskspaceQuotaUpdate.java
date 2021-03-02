@@ -27,7 +27,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -42,7 +41,6 @@ import org.apache.hadoop.hdfs.TestFileCreation;
 import org.apache.hadoop.hdfs.client.HdfsDataOutputStream;
 import org.apache.hadoop.hdfs.protocol.DSQuotaExceededException;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
-import org.apache.hadoop.hdfs.protocol.QuotaByStorageTypeExceededException;
 import org.apache.hadoop.hdfs.server.datanode.DataNodeTestUtils;
 import org.apache.hadoop.hdfs.server.namenode.snapshot.Snapshot;
 import org.apache.hadoop.ipc.RemoteException;
@@ -51,9 +49,6 @@ import org.apache.hadoop.hdfs.server.protocol.DatanodeRegistration;
 import org.apache.hadoop.hdfs.server.protocol.StorageReceivedDeletedBlocks;
 import org.apache.hadoop.test.GenericTestUtils;
 import org.apache.hadoop.test.GenericTestUtils.LogCapturer;
-import org.apache.log4j.Appender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.helpers.AppenderAttachableImpl;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -104,7 +99,7 @@ public class TestDiskspaceQuotaUpdate {
     return new Path(BASE_DIR, testName);
   }
 
-  private FSDirectory getFSDirectory() {
+  private FSVolatileNamespace getFSDirectory() {
     return cluster.getNamesystem().getFSDirectory();
   }
 
@@ -382,15 +377,15 @@ public class TestDiskspaceQuotaUpdate {
     scanDirsWithQuota(root, nsMap, dsMap, false);
 
     FSImage.updateCountForQuota(
-        getFSDirectory().getBlockManager().getStoragePolicySuite(), root, 1);
+        getFSDirectory().getBlockManager().getBlockStoragePolicySuite(), root, 1);
     scanDirsWithQuota(root, nsMap, dsMap, true);
 
     FSImage.updateCountForQuota(
-        getFSDirectory().getBlockManager().getStoragePolicySuite(), root, 2);
+        getFSDirectory().getBlockManager().getBlockStoragePolicySuite(), root, 2);
     scanDirsWithQuota(root, nsMap, dsMap, true);
 
     FSImage.updateCountForQuota(
-        getFSDirectory().getBlockManager().getStoragePolicySuite(), root, 4);
+        getFSDirectory().getBlockManager().getBlockStoragePolicySuite(), root, 4);
     scanDirsWithQuota(root, nsMap, dsMap, true);
   }
 

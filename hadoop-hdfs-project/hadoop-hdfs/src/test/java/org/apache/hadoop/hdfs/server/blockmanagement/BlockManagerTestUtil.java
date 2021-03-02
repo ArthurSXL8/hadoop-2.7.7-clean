@@ -87,7 +87,7 @@ public class BlockManagerTestUtil {
     try {
       return new int[]{getNumberOfRacks(bm, b),
           bm.getReplicaCount(b).liveReplicas(),
-          bm.neededReplications.contains(b) ? 1 : 0};
+          bm.underReplicatedBlocks.contains(b) ? 1 : 0};
     } finally {
       namesystem.readUnlock();
     }
@@ -122,7 +122,7 @@ public class BlockManagerTestUtil {
    */
   public static Daemon getReplicationThread(final BlockManager blockManager)
   {
-    return blockManager.replicationThread;
+    return blockManager.replicationMonitorDaemon;
   }
   
   /**
@@ -131,9 +131,9 @@ public class BlockManagerTestUtil {
   public static void stopReplicationThread(final BlockManager blockManager) 
       throws IOException {
     blockManager.enableRMTerminationForTesting();
-    blockManager.replicationThread.interrupt();
+    blockManager.replicationMonitorDaemon.interrupt();
     try {
-      blockManager.replicationThread.join();
+      blockManager.replicationMonitorDaemon.join();
     } catch(InterruptedException ie) {
       throw new IOException(
           "Interrupted while trying to stop ReplicationMonitor");
@@ -326,6 +326,6 @@ public class BlockManagerTestUtil {
    */
   public static void recheckDecommissionState(DatanodeManager dm)
       throws ExecutionException, InterruptedException {
-    dm.getDecomManager().runMonitor();
+    dm.getDecommissionManager().runMonitor();
   }
 }

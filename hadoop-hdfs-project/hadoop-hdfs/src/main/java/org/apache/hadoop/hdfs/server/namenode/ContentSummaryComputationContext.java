@@ -25,7 +25,7 @@ import org.apache.hadoop.hdfs.server.blockmanagement.BlockStoragePolicySuite;
 @InterfaceAudience.Private
 @InterfaceStability.Unstable
 public class ContentSummaryComputationContext {
-  private FSDirectory dir = null;
+  private FSVolatileNamespace dir = null;
   private FSNamesystem fsn = null;
   private BlockStoragePolicySuite bsps = null;
   private ContentCounts counts = null;
@@ -44,8 +44,8 @@ public class ContentSummaryComputationContext {
    *        locking period. 0 or a negative number means
    *        no limit (i.e. no yielding)
    */
-  public ContentSummaryComputationContext(FSDirectory dir,
-      FSNamesystem fsn, long limitPerRun, long sleepMicroSec) {
+  public ContentSummaryComputationContext(FSVolatileNamespace dir,
+                                          FSNamesystem fsn, long limitPerRun, long sleepMicroSec) {
     this.dir = dir;
     this.fsn = fsn;
     this.limitPerRun = limitPerRun;
@@ -130,6 +130,6 @@ public class ContentSummaryComputationContext {
         "BlockStoragePolicySuite must be either initialized or available via" +
             " FSNameSystem");
     return (bsps != null) ? bsps:
-        fsn.getBlockManager().getStoragePolicySuite();
+        fsn.getBlockManager().getBlockStoragePolicySuite();
   }
 }

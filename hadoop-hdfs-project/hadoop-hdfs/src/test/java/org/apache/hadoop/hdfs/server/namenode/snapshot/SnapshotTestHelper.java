@@ -50,7 +50,7 @@ import org.apache.hadoop.hdfs.server.datanode.BlockPoolSliceStorage;
 import org.apache.hadoop.hdfs.server.datanode.BlockScanner;
 import org.apache.hadoop.hdfs.server.datanode.DataNode;
 import org.apache.hadoop.hdfs.server.datanode.DirectoryScanner;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.FSNamesystem;
 import org.apache.hadoop.hdfs.server.namenode.INode;
 import org.apache.hadoop.hdfs.server.namenode.INodeDirectory;
@@ -263,7 +263,7 @@ public class SnapshotTestHelper {
     }
   }
 
-  public static void dumpTree2File(FSDirectory fsdir, File f) throws IOException{
+  public static void dumpTree2File(FSVolatileNamespace fsdir, File f) throws IOException{
     final PrintWriter out = new PrintWriter(new FileWriter(f, false), true);
     fsdir.getINode("/").dumpTreeRecursively(out, new StringBuilder(),
         Snapshot.CURRENT_STATE_ID);

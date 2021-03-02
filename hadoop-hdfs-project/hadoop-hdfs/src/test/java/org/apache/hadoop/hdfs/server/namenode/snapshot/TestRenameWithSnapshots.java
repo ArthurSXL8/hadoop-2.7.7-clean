@@ -55,7 +55,7 @@ import org.apache.hadoop.hdfs.protocol.SnapshotDiffReport;
 import org.apache.hadoop.hdfs.protocol.SnapshotDiffReport.DiffReportEntry;
 import org.apache.hadoop.hdfs.protocol.SnapshotDiffReport.DiffType;
 import org.apache.hadoop.hdfs.protocol.SnapshottableDirectoryStatus;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.FSNamesystem;
 import org.apache.hadoop.hdfs.server.namenode.INode;
 import org.apache.hadoop.hdfs.server.namenode.INodeDirectory;
@@ -92,7 +92,7 @@ public class TestRenameWithSnapshots {
   private static final Configuration conf = new Configuration();
   private static MiniDFSCluster cluster;
   private static FSNamesystem fsn;
-  private static FSDirectory fsdir;
+  private static FSVolatileNamespace fsdir;
   private static DistributedFileSystem hdfs;
   private static final String testDir =
       System.getProperty("test.build.data", "build/test/data");
@@ -1565,7 +1565,7 @@ public class TestRenameWithSnapshots {
     hdfs.setQuota(dir2, 4, Long.MAX_VALUE - 1);
     
     final Path foo2 = new Path(subdir2, foo.getName());
-    FSDirectory fsdir2 = Mockito.spy(fsdir);
+    FSVolatileNamespace fsdir2 = Mockito.spy(fsdir);
     Mockito.doThrow(new NSQuotaExceededException("fake exception")).when(fsdir2)
         .addLastINode((INodesInPath) Mockito.anyObject(),
             (INode) Mockito.anyObject(), Mockito.anyBoolean());
@@ -1638,7 +1638,7 @@ public class TestRenameWithSnapshots {
     // set ns quota of dir2 to 4, so the current remaining is 1 (already has
     // dir2, sub_dir2, and subsub_dir2)
     hdfs.setQuota(dir2, 4, Long.MAX_VALUE - 1);
-    FSDirectory fsdir2 = Mockito.spy(fsdir);
+    FSVolatileNamespace fsdir2 = Mockito.spy(fsdir);
     Mockito.doThrow(new RuntimeException("fake exception")).when(fsdir2)
         .removeLastINode((INodesInPath) Mockito.anyObject());
     Whitebox.setInternalState(fsn, "dir", fsdir2);

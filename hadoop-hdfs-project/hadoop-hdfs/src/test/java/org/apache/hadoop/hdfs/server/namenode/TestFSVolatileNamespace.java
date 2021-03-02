@@ -51,10 +51,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * Test {@link FSDirectory}, the in-memory namespace tree.
+ * Test {@link FSVolatileNamespace}, the in-memory namespace tree.
  */
-public class TestFSDirectory {
-  public static final Log LOG = LogFactory.getLog(TestFSDirectory.class);
+public class TestFSVolatileNamespace {
+  public static final Log LOG = LogFactory.getLog(TestFSVolatileNamespace.class);
 
   private static final long seed = 0;
   private static final short REPLICATION = 3;
@@ -75,7 +75,7 @@ public class TestFSDirectory {
   private Configuration conf;
   private MiniDFSCluster cluster;
   private FSNamesystem fsn;
-  private FSDirectory fsdir;
+  private FSVolatileNamespace fsdir;
 
   private DistributedFileSystem hdfs;
 

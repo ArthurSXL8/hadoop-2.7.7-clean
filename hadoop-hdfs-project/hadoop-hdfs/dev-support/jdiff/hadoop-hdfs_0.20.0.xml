@@ -7409,7 +7409,7 @@ order written.</p>]]>
       static="true" final="true" visibility="public"
       deprecated="not deprecated">
     </field>
-    <field name="dir" type="org.apache.hadoop.hdfs.server.namenode.FSDirectory"
+    <field name="dir" type="org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace"
       transient="false" volatile="false"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">

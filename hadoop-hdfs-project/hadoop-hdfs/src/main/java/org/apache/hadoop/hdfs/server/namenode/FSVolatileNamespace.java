@@ -96,8 +96,8 @@ import static org.apache.hadoop.util.Time.now;
  * @see org.apache.hadoop.hdfs.server.namenode.FSNamesystem
  **/
 @InterfaceAudience.Private
-public class FSDirectory implements Closeable {
-  static final Logger LOG = LoggerFactory.getLogger(FSDirectory.class);
+public class FSVolatileNamespace implements Closeable {
+  static final Logger LOG = LoggerFactory.getLogger(FSVolatileNamespace.class);
   private static INodeDirectory createRoot(FSNamesystem namesystem) {
     final INodeDirectory r = new INodeDirectory(
         INodeId.ROOT_INODE_ID,
@@ -221,7 +221,7 @@ public class FSDirectory implements Closeable {
    */
   private final NameCache<ByteArray> nameCache;
 
-  FSDirectory(FSNamesystem ns, Configuration conf) throws IOException {
+  FSVolatileNamespace(FSNamesystem ns, Configuration conf) throws IOException {
     this.dirLock = new ReentrantReadWriteLock(true); // fair
     this.inodeId = new INodeId();
     rootDir = createRoot(ns);
@@ -322,7 +322,7 @@ public class FSDirectory implements Closeable {
   }
 
   public BlockStoragePolicySuite getBlockStoragePolicySuite() {
-    return getBlockManager().getStoragePolicySuite();
+    return getBlockManager().getBlockStoragePolicySuite();
   }
 
   boolean isPermissionEnabled() {
@@ -489,22 +489,22 @@ public class FSDirectory implements Closeable {
                              Block block, DatanodeStorageInfo[] targets) throws IOException {
     writeLock();
     try {
-      final INodeFile fileINode = inodesInPath.getLastINode().asFile();
-      Preconditions.checkState(fileINode.isUnderConstruction());
+      final INodeFile iNodeFile = inodesInPath.getLastINode().asFile();
+      Preconditions.checkState(iNodeFile.isUnderConstruction());
 
       // check quota limits and updated space consumed
-      updateCount(inodesInPath, 0, fileINode.getPreferredBlockSize(),
-          fileINode.getBlockReplication(), true);
+      updateCount(inodesInPath, 0, iNodeFile.getPreferredBlockSize(),
+          iNodeFile.getBlockReplication(), true);
 
       // associate new last block for the file
       BlockNeighborInfoUnderConstruction blockInfo =
         new BlockNeighborInfoUnderConstruction(
             block,
-            fileINode.getFileReplication(),
+            iNodeFile.getFileReplication(),
             BlockUCState.UNDER_CONSTRUCTION,
             targets);
-      getBlockManager().addBlockSet(blockInfo, fileINode);
-      fileINode.addBlock(blockInfo);
+      getBlockManager().addBlockSet(blockInfo, iNodeFile);
+      iNodeFile.addBlock(blockInfo);
 
       if(NameNode.stateChangeLog.isDebugEnabled()) {
         NameNode.stateChangeLog.debug("DIR* FSDirectory.addBlock: "
@@ -533,11 +533,11 @@ public class FSDirectory implements Closeable {
     }
   }
   
-  boolean unprotectedRemoveBlock(String path, INodesInPath iip,
-      INodeFile fileNode, Block block) throws IOException {
+  boolean unprotectedRemoveBlock(String path, INodesInPath iNodesInPath,
+      INodeFile iNodeFile, Block block) throws IOException {
     // modify file-> block and blocksMap
     // fileNode should be under construction
-    boolean removed = fileNode.removeLastBlock(block);
+    boolean removed = iNodeFile.removeLastBlock(block);
     if (!removed) {
       return false;
     }
@@ -550,8 +550,8 @@ public class FSDirectory implements Closeable {
     }
 
     // update space consumed
-    updateCount(iip, 0, -fileNode.getPreferredBlockSize(),
-        fileNode.getBlockReplication(), true);
+    updateCount(iNodesInPath, 0, -iNodeFile.getPreferredBlockSize(),
+        iNodeFile.getBlockReplication(), true);
     return true;
   }
 
@@ -625,7 +625,7 @@ public class FSDirectory implements Closeable {
 
   // this method can be removed after IIP is used more extensively
   static String resolvePath(String src,
-      FSDirectory fsd) throws FileNotFoundException {
+      FSVolatileNamespace fsd) throws FileNotFoundException {
     byte[][] pathComponents = INode.getPathComponents(src);
     pathComponents = resolveComponents(pathComponents, fsd);
     return DFSUtil.byteArray2PathString(pathComponents);
@@ -806,7 +806,7 @@ public class FSDirectory implements Closeable {
                                           INodesInPath inodes) throws IOException {
     assert namesystem.hasWriteLock();
     INodesInPath iip = inodes != null ? inodes :
-        INodesInPath.fromINode((INodeFile) completeBlk.getBlockCollection());
+        INodesInPath.fromINode((INodeFile) completeBlk.getBlockSet());
     INodeFile fileINode = iip.getLastINode().asFile();
     // Adjust disk space consumption if required
     final long diff =
@@ -1534,7 +1534,7 @@ public class FSDirectory implements Closeable {
    * @throws FileNotFoundException if inodeid is invalid
    */
   static byte[][] resolveComponents(byte[][] pathComponents,
-      FSDirectory fsd) throws FileNotFoundException {
+      FSVolatileNamespace fsd) throws FileNotFoundException {
     final int nComponents = pathComponents.length;
     if (nComponents < 3 || !isReservedName(pathComponents)) {
       /* This is not a /.reserved/ path so do nothing. */
@@ -1556,7 +1556,7 @@ public class FSDirectory implements Closeable {
   }
 
   private static byte[][] resolveDotInodesPath(
-      byte[][] pathComponents, FSDirectory fsd)
+      byte[][] pathComponents, FSVolatileNamespace fsd)
       throws FileNotFoundException {
     final String inodeId = DFSUtil.bytes2String(pathComponents[3]);
     final long id;

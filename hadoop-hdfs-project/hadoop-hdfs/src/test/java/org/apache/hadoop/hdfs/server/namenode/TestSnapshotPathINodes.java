@@ -49,7 +49,7 @@ public class TestSnapshotPathINodes {
   static private final Path file2 = new Path(sub1, "file2");
 
   static private MiniDFSCluster cluster;
-  static private FSDirectory fsdir;
+  static private FSVolatileNamespace fsdir;
 
   static private DistributedFileSystem hdfs;
 

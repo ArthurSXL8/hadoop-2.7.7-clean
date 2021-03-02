@@ -81,7 +81,7 @@ public class DecommissionManager {
 
   private final Namesystem namesystem;
   private final BlockManager blockManager;
-  private final HeartbeatManager hbManager;
+  private final HeartbeatManager heartbeatManager;
   private final ScheduledExecutorService executor;
 
   /**
@@ -113,10 +113,10 @@ public class DecommissionManager {
   private Monitor monitor = null;
 
   DecommissionManager(final Namesystem namesystem,
-      final BlockManager blockManager, final HeartbeatManager hbManager) {
+      final BlockManager blockManager, final HeartbeatManager heartbeatManager) {
     this.namesystem = namesystem;
     this.blockManager = blockManager;
-    this.hbManager = hbManager;
+    this.heartbeatManager = heartbeatManager;
 
     executor = Executors.newScheduledThreadPool(1,
         new ThreadFactoryBuilder().setNameFormat("DecommissionMonitor-%d")
@@ -172,8 +172,7 @@ public class DecommissionManager {
 
     monitor = new Monitor(blocksPerInterval, 
         nodesPerInterval, maxConcurrentTrackedNodes);
-    executor.scheduleAtFixedRate(monitor, intervalSecs, intervalSecs,
-        TimeUnit.SECONDS);
+    executor.scheduleAtFixedRate(monitor, intervalSecs, intervalSecs, TimeUnit.SECONDS);
 
     LOG.debug("Activating DecommissionManager with interval {} seconds, " +
             "{} max blocks per interval, {} max nodes per interval, " +
@@ -199,7 +198,7 @@ public class DecommissionManager {
   public void startDecommission(DatanodeDescriptor node) {
     if (!node.isDecommissionInProgress() && !node.isDecommissioned()) {
       // Update DN stats maintained by HeartbeatManager
-      hbManager.startDecommission(node);
+      heartbeatManager.startDecommission(node);
       // hbManager.startDecommission will set dead node to decommissioned.
       if (node.isDecommissionInProgress()) {
         for (DatanodeStorageInfo storage : node.getStorageInfos()) {
@@ -223,7 +222,7 @@ public class DecommissionManager {
   public void stopDecommission(DatanodeDescriptor node) {
     if (node.isDecommissionInProgress() || node.isDecommissioned()) {
       // Update DN stats maintained by HeartbeatManager
-      hbManager.stopDecommission(node);
+      heartbeatManager.stopDecommission(node);
       // Over-replicated blocks will be detected and processed when
       // the dead node comes back and send in its full block report.
       if (node.isAlive) {
@@ -592,11 +591,11 @@ public class DecommissionManager {
         // pending
         if (blockManager.isNeededReplication(block, bc.getBlockReplication(),
             liveReplicas)) {
-          if (!blockManager.neededReplications.contains(block) &&
-              blockManager.pendingReplications.getNumReplicas(block) == 0 &&
+          if (!blockManager.underReplicatedBlocks.contains(block) &&
+              blockManager.pendingReplicationBlocks.getNumReplicas(block) == 0 &&
               namesystem.isPopulatingReplQueues()) {
             // Process these blocks only when active NN is out of safe mode.
-            blockManager.neededReplications.add(block,
+            blockManager.underReplicatedBlocks.add(block,
                 curReplicas,
                 num.decommissionedAndDecommissioning(),
                 bc.getBlockReplication());

@@ -230,12 +230,12 @@ public class TestNamenodeCapacityReport {
         DFSTestUtil.setDatanodeDead(dnd);
         BlockManagerTestUtil.checkHeartbeat(namesystem.getBlockManager());
         //Verify decommission of dead node won't impact nodesInService metrics.
-        dnm.getDecomManager().startDecommission(dnd);
+        dnm.getDecommissionManager().startDecommission(dnd);
         expectedInServiceNodes--;
         assertEquals(expectedInServiceNodes, namesystem.getNumLiveDataNodes());
         assertEquals(expectedInServiceNodes, getNumDNInService(namesystem));
         //Verify recommission of dead node won't impact nodesInService metrics.
-        dnm.getDecomManager().stopDecommission(dnd);
+        dnm.getDecommissionManager().stopDecommission(dnd);
         assertEquals(expectedInServiceNodes, getNumDNInService(namesystem));
       }
 
@@ -271,7 +271,7 @@ public class TestNamenodeCapacityReport {
         DatanodeDescriptor dnd =
             dnm.getDatanode(datanodes.get(i).getDatanodeId());
         expectedInServiceLoad -= dnd.getXceiverCount();
-        dnm.getDecomManager().startDecommission(dnd);
+        dnm.getDecommissionManager().startDecommission(dnd);
         DataNodeTestUtils.triggerHeartbeat(datanodes.get(i));
         Thread.sleep(100);
         checkClusterHealth(nodes, namesystem, expectedTotalLoad, expectedInServiceNodes, expectedInServiceLoad);

@@ -38,7 +38,7 @@ import org.apache.hadoop.hdfs.protocol.ExtendedBlock;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants.SafeModeAction;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfo;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockManager;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.FSNamesystem;
 import org.apache.hadoop.hdfs.server.namenode.INodeFile;
 import org.apache.hadoop.hdfs.server.namenode.NameNode;
@@ -62,7 +62,7 @@ public class TestSnapshotBlocksMap {
   protected Configuration conf;
   protected MiniDFSCluster cluster;
   protected FSNamesystem fsn;
-  FSDirectory fsdir;
+  FSVolatileNamespace fsdir;
   BlockManager blockmanager;
   protected DistributedFileSystem hdfs;
 
@@ -105,7 +105,7 @@ public class TestSnapshotBlocksMap {
   }
 
   static INodeFile assertBlockCollection(String path, int numBlocks,
-     final FSDirectory dir, final BlockManager blkManager) throws Exception {
+                                         final FSVolatileNamespace dir, final BlockManager blkManager) throws Exception {
     final INodeFile file = INodeFile.valueOf(dir.getINode(path), path);
     assertEquals(numBlocks, file.getBlockNeighborInfos().length);
     for(BlockNeighborInfo b : file.getBlockNeighborInfos()) {
@@ -118,7 +118,7 @@ public class TestSnapshotBlocksMap {
       final INodeFile file, final BlockNeighborInfo b) {
     Assert.assertSame(b, blkManager.getStoredBlock(b));
     Assert.assertSame(file, blkManager.getBlockSet(b));
-    Assert.assertSame(file, b.getBlockCollection());
+    Assert.assertSame(file, b.getBlockSet());
   }
 
   /**

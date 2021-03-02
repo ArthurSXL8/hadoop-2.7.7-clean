@@ -28,7 +28,7 @@ import org.apache.hadoop.fs.XAttrSetFlag;
 import org.apache.hadoop.fs.permission.AclEntry;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.inotify.Event;
-import org.apache.hadoop.hdfs.inotify.EventBatch;
+import org.apache.hadoop.hdfs.inotify.EventBatchInOneTransaction;
 import org.apache.hadoop.hdfs.inotify.MissingEventsException;
 import org.apache.hadoop.hdfs.qjournal.MiniQJMHACluster;
 import org.apache.hadoop.hdfs.server.namenode.FSEditLogOpCodes;
@@ -51,14 +51,14 @@ public class TestDFSInotifyEventInputStream {
   private static final Log LOG = LogFactory.getLog(
       TestDFSInotifyEventInputStream.class);
 
-  public static EventBatch waitForNextEvents(DFSInotifyEventInputStream eis)
+  public static EventBatchInOneTransaction waitForNextEvents(DFSInotifyEventInputStream eis)
     throws IOException, MissingEventsException {
-    EventBatch batch = null;
+    EventBatchInOneTransaction batch = null;
     while ((batch = eis.poll()) == null);
     return batch;
   }
 
-  private static long checkTxid(EventBatch batch, long prevTxid){
+  private static long checkTxid(EventBatchInOneTransaction batch, long prevTxid){
     Assert.assertTrue("Previous txid " + prevTxid + " was not less than " +
         "new txid " + batch.getTxid(), prevTxid < batch.getTxid());
     return batch.getTxid();
@@ -137,7 +137,7 @@ public class TestDFSInotifyEventInputStream {
       client.removeAcl("/file5"); // SetAclOp -> MetadataUpdateEvent
       client.rename("/file5", "/dir"); // RenameOldOp -> RenameEvent
 
-      EventBatch batch = null;
+      EventBatchInOneTransaction batch = null;
 
       // RenameOp
       batch = waitForNextEvents(eis);
@@ -386,7 +386,7 @@ public class TestDFSInotifyEventInputStream {
       }
       cluster.getDfsCluster().shutdownNameNode(0);
       cluster.getDfsCluster().transitionToActive(1);
-      EventBatch batch = null;
+      EventBatchInOneTransaction batch = null;
       // we can read all of the edits logged by the old active from the new
       // active
       for (int i = 0; i < 10; i++) {
@@ -427,7 +427,7 @@ public class TestDFSInotifyEventInputStream {
       // make sure that the old active can't read any further than the edits
       // it logged itself (it has no idea whether the in-progress edits from
       // the other writer have actually been committed)
-      EventBatch batch = null;
+      EventBatchInOneTransaction batch = null;
       for (int i = 0; i < 10; i++) {
         batch = waitForNextEvents(eis);
         Assert.assertEquals(1, batch.getEvents().length);
@@ -473,7 +473,7 @@ public class TestDFSInotifyEventInputStream {
       }, 1, TimeUnit.SECONDS);
       // a very generous wait period -- the edit will definitely have been
       // processed by the time this is up
-      EventBatch batch = eis.poll(5, TimeUnit.SECONDS);
+      EventBatchInOneTransaction batch = eis.poll(5, TimeUnit.SECONDS);
       Assert.assertNotNull(batch);
       Assert.assertEquals(1, batch.getEvents().length);
       Assert.assertTrue(batch.getEvents()[0].getEventType() == Event.EventType.CREATE);

@@ -40,7 +40,7 @@ import org.apache.hadoop.hdfs.client.HdfsDataOutputStream;
 import org.apache.hadoop.hdfs.client.HdfsDataOutputStream.SyncFlag;
 import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.hdfs.protocol.LocatedBlocks;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.FSNamesystem;
 import org.apache.hadoop.hdfs.server.namenode.INode;
 import org.apache.hadoop.hdfs.server.namenode.INodeDirectory;
@@ -70,7 +70,7 @@ public class TestINodeFileUnderConstructionWithSnapshot {
   MiniDFSCluster cluster;
   FSNamesystem fsn;
   DistributedFileSystem hdfs;
-  FSDirectory fsdir;
+  FSVolatileNamespace fsdir;
   
   @Before
   public void setUp() throws Exception {

@@ -48,7 +48,7 @@ import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_STORAGE_POLICY_ENABLED_KE
 
 public class FSDirAttrOp {
   static HdfsFileStatus setPermission(
-      FSDirectory fsd, final String srcArg, FsPermission permission)
+          FSVolatileNamespace fsd, final String srcArg, FsPermission permission)
       throws IOException {
     String src = srcArg;
     FSPermissionChecker pc = fsd.getPermissionChecker();
@@ -67,7 +67,7 @@ public class FSDirAttrOp {
   }
 
   static HdfsFileStatus setOwner(
-      FSDirectory fsd, String src, String username, String group)
+          FSVolatileNamespace fsd, String src, String username, String group)
       throws IOException {
     FSPermissionChecker pc = fsd.getPermissionChecker();
     INodesInPath iip;
@@ -95,7 +95,7 @@ public class FSDirAttrOp {
   }
 
   static HdfsFileStatus setTimes(
-      FSDirectory fsd, String src, long mtime, long atime)
+          FSVolatileNamespace fsd, String src, long mtime, long atime)
       throws IOException {
     if (!fsd.isAccessTimeSupported() && atime != -1) {
       throw new IOException(
@@ -132,7 +132,7 @@ public class FSDirAttrOp {
   }
 
   static boolean setReplication(
-      FSDirectory fsd, BlockManager bm, String src, final short replication)
+          FSVolatileNamespace fsd, BlockManager bm, String src, final short replication)
       throws IOException {
     bm.verifyReplication(src, replication, null);
     final boolean isFile;
@@ -160,7 +160,7 @@ public class FSDirAttrOp {
   }
 
   static HdfsFileStatus setStoragePolicy(
-      FSDirectory fsd, BlockManager bm, String src, final String policyName)
+          FSVolatileNamespace fsd, BlockManager bm, String src, final String policyName)
       throws IOException {
     if (!fsd.isStoragePolicyEnabled()) {
       throw new IOException(
@@ -171,7 +171,7 @@ public class FSDirAttrOp {
     INodesInPath iip;
     fsd.writeLock();
     try {
-      src = FSDirectory.resolvePath(src, fsd);
+      src = FSVolatileNamespace.resolvePath(src, fsd);
       iip = fsd.getINodesInPath4Write(src);
 
       if (fsd.isPermissionEnabled()) {
@@ -197,7 +197,7 @@ public class FSDirAttrOp {
     return bm.getStoragePolicies();
   }
 
-  static long getPreferredBlockSize(FSDirectory fsd, String src)
+  static long getPreferredBlockSize(FSVolatileNamespace fsd, String src)
       throws IOException {
     FSPermissionChecker pc = fsd.getPermissionChecker();
     fsd.readLock();
@@ -219,8 +219,8 @@ public class FSDirAttrOp {
    *
    * Note: This does not support ".inodes" relative path.
    */
-  static void setQuota(FSDirectory fsd, String src, long nsQuota, long ssQuota,
-      StorageType type) throws IOException {
+  static void setQuota(FSVolatileNamespace fsd, String src, long nsQuota, long ssQuota,
+                       StorageType type) throws IOException {
     if (fsd.isPermissionEnabled()) {
       FSPermissionChecker pc = fsd.getPermissionChecker();
       pc.checkSuperuserPrivilege();
@@ -244,7 +244,7 @@ public class FSDirAttrOp {
   }
 
   static void unprotectedSetPermission(
-      FSDirectory fsd, String src, FsPermission permissions)
+          FSVolatileNamespace fsd, String src, FsPermission permissions)
       throws FileNotFoundException, UnresolvedLinkException,
              QuotaExceededException, SnapshotAccessControlException {
     assert fsd.hasWriteLock();
@@ -258,7 +258,7 @@ public class FSDirAttrOp {
   }
 
   static void unprotectedSetOwner(
-      FSDirectory fsd, String src, String username, String groupname)
+          FSVolatileNamespace fsd, String src, String username, String groupname)
       throws FileNotFoundException, UnresolvedLinkException,
       QuotaExceededException, SnapshotAccessControlException {
     assert fsd.hasWriteLock();
@@ -276,8 +276,8 @@ public class FSDirAttrOp {
   }
 
   static boolean setTimes(
-      FSDirectory fsd, INode inode, long mtime, long atime, boolean force,
-      int latestSnapshotId) throws QuotaExceededException {
+          FSVolatileNamespace fsd, INode inode, long mtime, long atime, boolean force,
+          int latestSnapshotId) throws QuotaExceededException {
     fsd.writeLock();
     try {
       return unprotectedSetTimes(fsd, inode, mtime, atime, force,
@@ -288,7 +288,7 @@ public class FSDirAttrOp {
   }
 
   static boolean unprotectedSetTimes(
-      FSDirectory fsd, String src, long mtime, long atime, boolean force)
+          FSVolatileNamespace fsd, String src, long mtime, long atime, boolean force)
       throws UnresolvedLinkException, QuotaExceededException {
     assert fsd.hasWriteLock();
     final INodesInPath i = fsd.getINodesInPath(src, true);
@@ -310,7 +310,7 @@ public class FSDirAttrOp {
    * @throws SnapshotAccessControlException if path is in RO snapshot
    */
   static INodeDirectory unprotectedSetQuota(
-      FSDirectory fsd, String src, long nsQuota, long ssQuota, StorageType type)
+          FSVolatileNamespace fsd, String src, long nsQuota, long ssQuota, StorageType type)
       throws FileNotFoundException, PathIsNotDirectoryException,
       QuotaExceededException, UnresolvedLinkException,
       SnapshotAccessControlException, UnsupportedActionException {
@@ -334,7 +334,7 @@ public class FSDirAttrOp {
           nsQuota);
     }
 
-    String srcs = FSDirectory.normalizePath(src);
+    String srcs = FSVolatileNamespace.normalizePath(src);
     final INodesInPath iip = fsd.getINodesInPath4Write(srcs, true);
     INodeDirectory dirNode = INodeDirectory.valueOf(iip.getLastINode(), srcs);
     if (dirNode.isRoot() && nsQuota == HdfsConstants.QUOTA_RESET) {
@@ -372,7 +372,7 @@ public class FSDirAttrOp {
   }
 
   static Block[] unprotectedSetReplication(
-      FSDirectory fsd, String src, short replication, short[] blockRepls)
+          FSVolatileNamespace fsd, String src, short replication, short[] blockRepls)
       throws QuotaExceededException, UnresolvedLinkException,
              SnapshotAccessControlException {
     assert fsd.hasWriteLock();
@@ -409,7 +409,7 @@ public class FSDirAttrOp {
   }
 
   static void unprotectedSetStoragePolicy(
-      FSDirectory fsd, BlockManager bm, INodesInPath iip, byte policyId)
+          FSVolatileNamespace fsd, BlockManager bm, INodesInPath iip, byte policyId)
       throws IOException {
     assert fsd.hasWriteLock();
     final INode inode = iip.getLastINode();
@@ -443,8 +443,8 @@ public class FSDirAttrOp {
   }
 
   private static void setDirStoragePolicy(
-      FSDirectory fsd, INodeDirectory inode, byte policyId,
-      int latestSnapshotId) throws IOException {
+          FSVolatileNamespace fsd, INodeDirectory inode, byte policyId,
+          int latestSnapshotId) throws IOException {
     List<XAttr> existingXAttrs = XAttrStorage.readINodeXAttrs(inode);
     XAttr xAttr = BlockStoragePolicySuite.buildXAttr(policyId);
     List<XAttr> newXAttrs = FSDirXAttrOp.setINodeXAttrs(fsd, existingXAttrs,
@@ -456,8 +456,8 @@ public class FSDirAttrOp {
   }
 
   private static boolean unprotectedSetTimes(
-      FSDirectory fsd, INode inode, long mtime, long atime, boolean force,
-      int latest) throws QuotaExceededException {
+          FSVolatileNamespace fsd, INode inode, long mtime, long atime, boolean force,
+          int latest) throws QuotaExceededException {
     assert fsd.hasWriteLock();
     boolean status = false;
     if (mtime != -1) {

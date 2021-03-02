@@ -18,10 +18,7 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
 import org.apache.commons.logging.*;
-import org.apache.hadoop.hdfs.server.namenode.INode;
-import org.apache.hadoop.fs.Options.Rename;
 import org.apache.hadoop.fs.TestFiRename;
-import org.apache.hadoop.hdfs.protocol.QuotaExceededException;
 
 /**
  * The aspects here are used for testing HDFS implementation of rename
@@ -33,9 +30,9 @@ public privileged aspect RenameAspects {
 
   /** When removeChild is called during rename, throw exception */
   pointcut callRemove(INode[] inodes, int pos) : 
-    call(* FSDirectory.removeChild(INode[], int))
+    call(* org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace.removeChild(INode[], int))
     && args(inodes, pos)
-    && withincode (* FSDirectory.unprotectedRenameTo(String, 
+    && withincode (* org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace.unprotectedRenameTo(String,
         String, long, Rename...));
 
   before(INode[] inodes, int pos) throws RuntimeException :
@@ -49,9 +46,9 @@ public privileged aspect RenameAspects {
 
   /** When addChildNoQuotaCheck is called during rename, throw exception */
   pointcut callAddChildNoQuotaCheck(INode[] inodes, int pos, INode node, long diskspace, boolean flag) :
-    call(* FSDirectory.addChildNoQuotaCheck(INode[], int, INode, long, boolean)) 
+    call(* org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace.addChildNoQuotaCheck(INode[], int, INode, long, boolean))
     && args(inodes, pos, node, diskspace, flag)
-    && withincode (* FSDirectory.unprotectedRenameTo(String, 
+    && withincode (* org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace.unprotectedRenameTo(String,
         String, long, Rename...));
 
   before(INode[] inodes, int pos, INode node, long diskspace, boolean flag)

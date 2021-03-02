@@ -273,12 +273,12 @@ public class NNStorage extends Storage implements Closeable,
    *
    * Synchronized due to initialization of storageDirs and removedStorageDirs.
    *
-   * @param fsNameDirs Locations to store images.
+   * @param fsImageDirs Locations to store images.
    * @param fsEditsDirs Locations to store edit logs.
    * @throws IOException
    */
   @VisibleForTesting
-  synchronized void setStorageDirectories(Collection<URI> fsNameDirs,
+  synchronized void setStorageDirectories(Collection<URI> fsImageDirs,
                                           Collection<URI> fsEditsDirs,
                                           Collection<URI> sharedEditsDirs)
       throws IOException {
@@ -286,11 +286,11 @@ public class NNStorage extends Storage implements Closeable,
     this.removedStorageDirs.clear();
 
    // Add all name dirs with appropriate NameNodeDirType
-    for (URI dirName : fsNameDirs) {
-      checkSchemeConsistency(dirName);
+    for (URI fsImageDir : fsImageDirs) {
+      checkSchemeConsistency(fsImageDir);
       boolean isAlsoEdits = false;
       for (URI editsDirName : fsEditsDirs) {
-        if (editsDirName.compareTo(dirName) == 0) {
+        if (editsDirName.compareTo(fsImageDir) == 0) {
           isAlsoEdits = true;
           fsEditsDirs.remove(editsDirName);
           break;
@@ -301,21 +301,21 @@ public class NNStorage extends Storage implements Closeable,
                           NameNodeDirType.IMAGE;
       // Add to the list of storage directories, only if the
       // URI is of type file://
-      if(dirName.getScheme().compareTo("file") == 0) {
-        this.addStorageDir(new StorageDirectory(new File(dirName.getPath()),
+      if(fsImageDir.getScheme().compareTo("file") == 0) {
+        this.addStorageDir(new StorageDirectory(new File(fsImageDir.getPath()),
             dirType,
-            sharedEditsDirs.contains(dirName))); // Don't lock the dir if it's shared.
+            sharedEditsDirs.contains(fsImageDir))); // Don't lock the dir if it's shared.
       }
     }
 
     // Add edits dirs if they are different from name dirs
-    for (URI dirName : fsEditsDirs) {
-      checkSchemeConsistency(dirName);
+    for (URI fsEditDir : fsEditsDirs) {
+      checkSchemeConsistency(fsEditDir);
       // Add to the list of storage directories, only if the
       // URI is of type file://
-      if(dirName.getScheme().compareTo("file") == 0)
-        this.addStorageDir(new StorageDirectory(new File(dirName.getPath()),
-                    NameNodeDirType.EDITS, sharedEditsDirs.contains(dirName)));
+      if(fsEditDir.getScheme().compareTo("file") == 0)
+        this.addStorageDir(new StorageDirectory(new File(fsEditDir.getPath()),
+                    NameNodeDirType.EDITS, sharedEditsDirs.contains(fsEditDir)));
     }
   }
 

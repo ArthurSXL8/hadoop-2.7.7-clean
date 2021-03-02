@@ -148,7 +148,7 @@ public class TestDeleteRace {
       try {
         Thread.sleep(1000);
         LOG.info("Deleting" + path);
-        final FSDirectory fsdir = cluster.getNamesystem().dir;
+        final FSVolatileNamespace fsdir = cluster.getNamesystem().fsVolatileNamespace;
         INode fileINode = fsdir.getINode4Write(path.toString());
         INodeMap inodeMap = (INodeMap) Whitebox.getInternalState(fsdir,
             "inodeMap");

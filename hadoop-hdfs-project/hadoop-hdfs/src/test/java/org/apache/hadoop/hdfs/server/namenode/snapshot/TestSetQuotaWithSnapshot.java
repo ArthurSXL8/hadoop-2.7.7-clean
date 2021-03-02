@@ -33,7 +33,7 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.hdfs.protocol.SnapshottableDirectoryStatus;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.FSNamesystem;
 import org.apache.hadoop.hdfs.server.namenode.INode;
 import org.apache.hadoop.hdfs.server.namenode.INodeDirectory;
@@ -53,7 +53,7 @@ public class TestSetQuotaWithSnapshot {
   protected Configuration conf;
   protected MiniDFSCluster cluster;
   protected FSNamesystem fsn;
-  protected FSDirectory fsdir;
+  protected FSVolatileNamespace fsdir;
   protected DistributedFileSystem hdfs;
   
   @Rule

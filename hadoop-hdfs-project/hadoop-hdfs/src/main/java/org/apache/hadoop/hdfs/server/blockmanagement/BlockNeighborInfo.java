@@ -37,7 +37,7 @@ public class BlockNeighborInfo extends Block
     implements LightWeightGSet.LinkedElement {
   public static final BlockNeighborInfo[] EMPTY_ARRAY = {};
 
-  private BlockSet bc;
+  private BlockSet blockSet;
 
   /** For implementing {@link LightWeightGSet.LinkedElement} interface */
   private LightWeightGSet.LinkedElement nextLinkedElement;
@@ -61,14 +61,14 @@ public class BlockNeighborInfo extends Block
    * @param replication the block's replication factor
    */
   public BlockNeighborInfo(short replication) {
-    this.triplets = new Object[3*replication];
-    this.bc = null;
+    this.triplets = new Object[3 * replication];
+    this.blockSet = null;
   }
   
-  public BlockNeighborInfo(Block blk, short replication) {
-    super(blk);
+  public BlockNeighborInfo(Block block, short replication) {
+    super(block);
     this.triplets = new Object[3*replication];
-    this.bc = null;
+    this.blockSet = null;
   }
 
   /**
@@ -77,16 +77,16 @@ public class BlockNeighborInfo extends Block
    * @param from BlockInfo to copy from.
    */
   protected BlockNeighborInfo(BlockNeighborInfo from) {
-    this(from, from.bc.getBlockReplication());
-    this.bc = from.bc;
+    this(from, from.blockSet.getBlockReplication());
+    this.blockSet = from.blockSet;
   }
 
-  public BlockSet getBlockCollection() {
-    return bc;
+  public BlockSet getBlockSet() {
+    return blockSet;
   }
 
-  public void setBlockSet(BlockSet bc) {
-    this.bc = bc;
+  public void setBlockSet(BlockSet blockSet) {
+    this.blockSet = blockSet;
   }
 
   public DatanodeDescriptor getDatanode(int index) {
@@ -112,18 +112,18 @@ public class BlockNeighborInfo extends Block
 
   BlockNeighborInfo getNext(int index) {
     assert this.triplets != null : "BlockInfo is not initialized";
-    assert index >= 0 && index*3+2 < triplets.length : "Index is out of bound";
-    BlockNeighborInfo info = (BlockNeighborInfo)triplets[index*3+2];
+    assert index >= 0 && index * 3 + 2 < triplets.length : "Index is out of bound";
+    BlockNeighborInfo info = (BlockNeighborInfo)triplets[index * 3 + 2];
     assert info == null || info.getClass().getName().startsWith(
         BlockNeighborInfo.class.getName()) :
-        "BlockInfo is expected at " + index*3;
+        "BlockInfo is expected at " + index * 3;
     return info;
   }
 
   private void setStorageInfo(int index, DatanodeStorageInfo storage) {
     assert this.triplets != null : "BlockInfo is not initialized";
-    assert index >= 0 && index*3 < triplets.length : "Index is out of bound";
-    triplets[index*3] = storage;
+    assert index >= 0 && index * 3 < triplets.length : "Index is out of bound";
+    triplets[index * 3] = storage;
   }
 
   /**
@@ -137,8 +137,8 @@ public class BlockNeighborInfo extends Block
   private BlockNeighborInfo setPrevious(int index, BlockNeighborInfo to) {
     assert this.triplets != null : "BlockInfo is not initialized";
     assert index >= 0 && index*3+1 < triplets.length : "Index is out of bound";
-    BlockNeighborInfo info = (BlockNeighborInfo)triplets[index*3+1];
-    triplets[index*3+1] = to;
+    BlockNeighborInfo info = (BlockNeighborInfo)triplets[index * 3 + 1];
+    triplets[index * 3 + 1] = to;
     return info;
   }
 
@@ -147,15 +147,15 @@ public class BlockNeighborInfo extends Block
    * position index. Set the next block on the list to "to".
    *
    * @param index - the datanode index
-   * @param to - block to be set to next on the list of blocks
+   * @param next - block to be set to next on the list of blocks
    *    * @return current next block on the list of blocks
    */
-  private BlockNeighborInfo setNext(int index, BlockNeighborInfo to) {
+  private BlockNeighborInfo setNext(int index, BlockNeighborInfo next) {
     assert this.triplets != null : "BlockInfo is not initialized";
     assert index >= 0 && index*3+2 < triplets.length : "Index is out of bound";
-    BlockNeighborInfo info = (BlockNeighborInfo)triplets[index*3+2];
-    triplets[index*3+2] = to;
-    return info;
+    BlockNeighborInfo blockNeighborInfo = (BlockNeighborInfo)triplets[index * 3 + 2];
+    triplets[index * 3 + 2] = next;
+    return blockNeighborInfo;
   }
 
   public int getCapacity() {
@@ -378,8 +378,8 @@ public class BlockNeighborInfo extends Block
     if(isComplete()) {
       BlockNeighborInfoUnderConstruction ucBlock =
           new BlockNeighborInfoUnderConstruction(this,
-          getBlockCollection().getBlockReplication(), s, targets);
-      ucBlock.setBlockSet(getBlockCollection());
+          getBlockSet().getBlockReplication(), s, targets);
+      ucBlock.setBlockSet(getBlockSet());
       return ucBlock;
     }
     // the block is already under construction
@@ -387,7 +387,7 @@ public class BlockNeighborInfo extends Block
         (BlockNeighborInfoUnderConstruction)this;
     ucBlock.setBlockUCState(s);
     ucBlock.setExpectedLocations(targets);
-    ucBlock.setBlockSet(getBlockCollection());
+    ucBlock.setBlockSet(getBlockSet());
     return ucBlock;
   }
 

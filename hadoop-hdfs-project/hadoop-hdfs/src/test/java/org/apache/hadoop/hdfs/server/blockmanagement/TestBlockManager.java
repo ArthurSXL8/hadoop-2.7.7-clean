@@ -527,12 +527,12 @@ public class TestBlockManager {
     list_all.add(list_p1); // for priority 1
 
     assertEquals("Block not initially pending replication", 0,
-        bm.pendingReplications.getNumReplicas(block));
+        bm.pendingReplicationBlocks.getNumReplicas(block));
     assertEquals(
         "computeReplicationWork should indicate replication is needed", 1,
         bm.computeReplicationWorkForBlocks(list_all));
     assertTrue("replication is pending after work is computed",
-        bm.pendingReplications.getNumReplicas(block) > 0);
+        bm.pendingReplicationBlocks.getNumReplicas(block) > 0);
 
     LinkedListMultimap<DatanodeStorageInfo, BlockTargetPair> repls = getAllPendingReplications();
     assertEquals(1, repls.size());

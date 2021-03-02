@@ -217,14 +217,14 @@ public final class FSImageFormatPBINode {
       }
     }
 
-    private final FSDirectory dir;
+    private final FSVolatileNamespace dir;
     private final FSNamesystem fsn;
     private final FSImageFormatProtobuf.Loader parent;
     private final List<INodeFile> ucFiles;
 
     Loader(FSNamesystem fsn, final FSImageFormatProtobuf.Loader parent) {
       this.fsn = fsn;
-      this.dir = fsn.dir;
+      this.dir = fsn.fsVolatileNamespace;
       this.parent = parent;
       this.ucFiles = new ArrayList<INodeFile>();
     }
@@ -253,7 +253,7 @@ public final class FSImageFormatPBINode {
 
     void loadINodeSection(InputStream in) throws IOException {
       INodeSection s = INodeSection.parseDelimitedFrom(in);
-      fsn.dir.resetLastInodeId(s.getLastInodeId());
+      fsn.fsVolatileNamespace.resetLastInodeId(s.getLastInodeId());
       LOG.info("Loading " + s.getNumInodes() + " INodes.");
       for (int i = 0; i < s.getNumInodes(); ++i) {
         INodeSection.INode p = INodeSection.INode.parseDelimitedFrom(in);
@@ -293,7 +293,7 @@ public final class FSImageFormatPBINode {
     }
 
     private void addToParent(INodeDirectory parent, INode child) {
-      if (parent == dir.rootDir && FSDirectory.isReservedName(child)) {
+      if (parent == dir.rootDir && FSVolatileNamespace.isReservedName(child)) {
         throw new HadoopIllegalArgumentException("File name \""
             + child.getLocalName() + "\" is reserved. Please "
             + " change the name of the existing file or directory to another "
@@ -568,10 +568,10 @@ public final class FSImageFormatPBINode {
     }
 
     void serializeINodeSection(OutputStream out) throws IOException {
-      INodeMap inodesMap = fsn.dir.getINodeMap();
+      INodeMap inodesMap = fsn.fsVolatileNamespace.getINodeMap();
 
       INodeSection.Builder b = INodeSection.newBuilder()
-          .setLastInodeId(fsn.dir.getLastInodeId()).setNumInodes(inodesMap.size());
+          .setLastInodeId(fsn.fsVolatileNamespace.getLastInodeId()).setNumInodes(inodesMap.size());
       INodeSection s = b.build();
       s.writeDelimitedTo(out);
 

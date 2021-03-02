@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.zip.Checksum;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
@@ -236,8 +235,8 @@ public class BackupImage extends FSImage {
       lastAppliedTxId = logLoader.getLastAppliedTxId();
 
       FSImage.updateCountForQuota(
-          getNamesystem().dir.getBlockStoragePolicySuite(),
-          getNamesystem().dir.rootDir, quotaInitThreads);
+          getNamesystem().fsVolatileNamespace.getBlockStoragePolicySuite(),
+          getNamesystem().fsVolatileNamespace.rootDir, quotaInitThreads);
     } finally {
       backupInputStream.clear();
     }

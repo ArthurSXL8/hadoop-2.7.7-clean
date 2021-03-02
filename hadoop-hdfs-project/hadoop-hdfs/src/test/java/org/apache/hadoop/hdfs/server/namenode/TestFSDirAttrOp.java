@@ -38,7 +38,7 @@ public class TestFSDirAttrOp {
   private boolean unprotectedSetTimes(long atime, long atime0, long precision,
       long mtime, boolean force) throws QuotaExceededException,
       UnresolvedLinkException {
-    FSDirectory fsd = Mockito.mock(FSDirectory.class);
+    FSVolatileNamespace fsd = Mockito.mock(FSVolatileNamespace.class);
     FSNamesystem fsn = Mockito.mock(FSNamesystem.class);
     INodesInPath iip = Mockito.mock(INodesInPath.class);
     INode inode = Mockito.mock(INode.class);

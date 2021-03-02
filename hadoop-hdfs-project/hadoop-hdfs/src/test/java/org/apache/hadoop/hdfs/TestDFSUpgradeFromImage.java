@@ -37,7 +37,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.inotify.Event;
-import org.apache.hadoop.hdfs.inotify.EventBatch;
+import org.apache.hadoop.hdfs.inotify.EventBatchInOneTransaction;
 import org.apache.hadoop.hdfs.protocol.DirectoryListing;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.hdfs.protocol.HdfsFileStatus;
@@ -51,7 +51,6 @@ import org.apache.hadoop.util.StringUtils;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import static org.apache.hadoop.hdfs.inotify.Event.CreateEvent;
 import static org.junit.Assert.*;
 
 /**
@@ -662,7 +661,7 @@ public class TestDFSUpgradeFromImage {
     DFSInotifyEventInputStream ieis =
         cluster.getFileSystem().getInotifyEventStream(0);
 
-    EventBatch batch;
+    EventBatchInOneTransaction batch;
     Event.CreateEvent ce;
     Event.RenameEvent re;
 

@@ -966,7 +966,7 @@ public class TestDecommission {
 
     // make sure the two datanodes remain in decomm in progress state
     BlockManagerTestUtil.recheckDecommissionState(dm);
-    assertTrackedAndPending(dm.getDecomManager(), 2, 0);
+    assertTrackedAndPending(dm.getDecommissionManager(), 2, 0);
   }
   
   /**
@@ -1125,7 +1125,7 @@ public class TestDecommission {
     final FileSystem fs = cluster.getFileSystem();
     final DatanodeManager datanodeManager =
         cluster.getNamesystem().getBlockManager().getDatanodeManager();
-    final DecommissionManager decomManager = datanodeManager.getDecomManager();
+    final DecommissionManager decomManager = datanodeManager.getDecommissionManager();
 
     // Write a 3 block file, so each node has one block. Should scan 3 nodes.
     DFSTestUtil.createFile(fs, new Path("/file1"), 64, (short) 3, 0xBAD1DEA);
@@ -1157,7 +1157,7 @@ public class TestDecommission {
     final FileSystem fs = cluster.getFileSystem();
     final DatanodeManager datanodeManager =
         cluster.getNamesystem().getBlockManager().getDatanodeManager();
-    final DecommissionManager decomManager = datanodeManager.getDecomManager();
+    final DecommissionManager decomManager = datanodeManager.getDecommissionManager();
 
     // Write a 3 block file, so each node has one block. Should scan 1 node 
     // each time.
@@ -1204,7 +1204,7 @@ public class TestDecommission {
     final FileSystem fs = cluster.getFileSystem();
     final DatanodeManager datanodeManager =
         cluster.getNamesystem().getBlockManager().getDatanodeManager();
-    final DecommissionManager decomManager = datanodeManager.getDecomManager();
+    final DecommissionManager decomManager = datanodeManager.getDecommissionManager();
 
     // Keep a file open to prevent decom from progressing
     HdfsDataOutputStream open1 =

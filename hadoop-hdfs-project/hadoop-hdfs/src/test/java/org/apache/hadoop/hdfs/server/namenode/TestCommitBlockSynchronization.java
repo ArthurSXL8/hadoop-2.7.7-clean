@@ -61,7 +61,7 @@ public class TestCommitBlockSynchronization {
       parent.addChild(file);
       file.setParent(parent);
     }
-    namesystem.dir.getINodeMap().put(file);
+    namesystem.fsVolatileNamespace.getINodeMap().put(file);
 
     FSNamesystem namesystemSpy = spy(namesystem);
     BlockNeighborInfoUnderConstruction blockInfo = new BlockNeighborInfoUnderConstruction(

@@ -259,7 +259,7 @@ public class TestFileTruncate {
    * remaining snapshots are still readable.
    */
   void testSnapshotWithAppendTruncate(int ... deleteOrder) throws IOException {
-    FSDirectory fsDir = cluster.getNamesystem().getFSDirectory();
+    FSVolatileNamespace fsDir = cluster.getNamesystem().getFSDirectory();
     Path parent = new Path("/test");
     fs.mkdirs(parent);
     fs.setQuota(parent, 100, 1000);

@@ -87,7 +87,7 @@ import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.hdfs.protocol.LocatedBlocks;
 import org.apache.hadoop.hdfs.protocolPB.ClientDatanodeProtocolTranslatorPB;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.NameNode;
 import org.apache.hadoop.hdfs.web.SWebHdfsFileSystem;
 import org.apache.hadoop.hdfs.web.WebHdfsFileSystem;
@@ -252,8 +252,8 @@ public class DFSUtil {
       // ".." is allowed in path starting with /.reserved/.inodes
       if (element.equals("..")) {
         if (components.length > 4
-            && components[1].equals(FSDirectory.DOT_RESERVED_STRING)
-            && components[2].equals(FSDirectory.DOT_INODES_STRING)) {
+            && components[1].equals(FSVolatileNamespace.DOT_RESERVED_STRING)
+            && components[2].equals(FSVolatileNamespace.DOT_INODES_STRING)) {
           continue;
         }
         return false;

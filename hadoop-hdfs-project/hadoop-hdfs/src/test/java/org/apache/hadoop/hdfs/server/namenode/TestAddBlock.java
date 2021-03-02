@@ -83,7 +83,7 @@ public class TestAddBlock {
     
     // restart NameNode
     cluster.restartNameNode(true);
-    FSDirectory fsdir = cluster.getNamesystem().getFSDirectory();
+    FSVolatileNamespace fsdir = cluster.getNamesystem().getFSDirectory();
     
     // check file1
     INodeFile file1Node = fsdir.getINode4Write(file1.toString()).asFile();
@@ -138,7 +138,7 @@ public class TestAddBlock {
       
       // restart NN
       cluster.restartNameNode(true);
-      FSDirectory fsdir = cluster.getNamesystem().getFSDirectory();
+      FSVolatileNamespace fsdir = cluster.getNamesystem().getFSDirectory();
       
       INodeFile fileNode = fsdir.getINode4Write(file1.toString()).asFile();
       BlockNeighborInfo[] fileBlocks = fileNode.getBlockNeighborInfos();

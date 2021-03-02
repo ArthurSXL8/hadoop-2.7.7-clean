@@ -118,7 +118,7 @@ public class TestFSImage {
       assertTrue(fs.exists(file2));
 
       // check internals of file2
-      INodeFile file2Node = fsn.dir.getINode4Write(file2.toString()).asFile();
+      INodeFile file2Node = fsn.fsVolatileNamespace.getINode4Write(file2.toString()).asFile();
       assertEquals("hello".length(), file2Node.computeFileSize());
       assertTrue(file2Node.isUnderConstruction());
       BlockNeighborInfo[] blks = file2Node.getBlockNeighborInfos();

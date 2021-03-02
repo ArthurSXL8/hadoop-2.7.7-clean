@@ -169,8 +169,8 @@ public class TestPendingReplication {
       BlockManager blkManager = fsn.getBlockManager();
 
       PendingReplicationBlocks pendingReplications =
-          blkManager.pendingReplications;
-      UnderReplicatedBlocks neededReplications = blkManager.neededReplications;
+          blkManager.pendingReplicationBlocks;
+      UnderReplicatedBlocks neededReplications = blkManager.underReplicatedBlocks;
       BlocksMap blocksMap = blkManager.blocksMap;
 
       //
@@ -273,11 +273,11 @@ public class TestPendingReplication {
       hdfs.setReplication(filePath, (short) DATANODE_COUNT);
       BlockManagerTestUtil.computeAllPendingWork(blkManager);
 
-      assertEquals(1, blkManager.pendingReplications.size());
+      assertEquals(1, blkManager.pendingReplicationBlocks.size());
       INodeFile fileNode = fsn.getFSDirectory().getINode4Write(file).asFile();
       Block[] blocks = fileNode.getBlockNeighborInfos();
       assertEquals(DATANODE_COUNT - 1,
-          blkManager.pendingReplications.getNumReplicas(blocks[0]));
+          blkManager.pendingReplicationBlocks.getNumReplicas(blocks[0]));
 
       LocatedBlock locatedBlock = hdfs.getClient().getLocatedBlocks(file, 0)
           .get(0);
@@ -301,7 +301,7 @@ public class TestPendingReplication {
       // IBRs are async, make sure the NN processes all of them.
       cluster.getNamesystem().getBlockManager().flushBlockOps();
       assertEquals(DATANODE_COUNT - 3,
-          blkManager.pendingReplications.getNumReplicas(blocks[0]));
+          blkManager.pendingReplicationBlocks.getNumReplicas(blocks[0]));
 
       // let the same datanodes report again
       for (int i = 0; i < DATANODE_COUNT && reportDnNum < 2; i++) {
@@ -319,7 +319,7 @@ public class TestPendingReplication {
 
       cluster.getNamesystem().getBlockManager().flushBlockOps();
       assertEquals(DATANODE_COUNT - 3,
-          blkManager.pendingReplications.getNumReplicas(blocks[0]));
+          blkManager.pendingReplicationBlocks.getNumReplicas(blocks[0]));
 
       // re-enable heartbeat for the datanode that has data
       for (int i = 0; i < DATANODE_COUNT; i++) {
@@ -329,7 +329,7 @@ public class TestPendingReplication {
       }
 
       Thread.sleep(5000);
-      assertEquals(0, blkManager.pendingReplications.size());
+      assertEquals(0, blkManager.pendingReplicationBlocks.size());
     } finally {
       if (cluster != null) {
         cluster.shutdown();
@@ -383,7 +383,7 @@ public class TestPendingReplication {
       BlockManagerTestUtil.computeAllPendingWork(bm);
       BlockManagerTestUtil.updateState(bm);
       assertEquals(bm.getPendingReplicationBlocksCount(), 1L);
-      assertEquals(bm.pendingReplications.getNumReplicas(block.getBlock()
+      assertEquals(bm.pendingReplicationBlocks.getNumReplicas(block.getBlock()
           .getLocalBlock()), 2);
       
       // 4. delete the file

@@ -120,15 +120,15 @@ public class BlockStoragePolicySuite {
   }
 
   public BlockStoragePolicy[] getAllPolicies() {
-    List<BlockStoragePolicy> list = Lists.newArrayList();
+    List<BlockStoragePolicy> blockStoragePolicies = Lists.newArrayList();
     if (policies != null) {
       for (BlockStoragePolicy policy : policies) {
         if (policy != null) {
-          list.add(policy);
+          blockStoragePolicies.add(policy);
         }
       }
     }
-    return list.toArray(new BlockStoragePolicy[list.size()]);
+    return blockStoragePolicies.toArray(new BlockStoragePolicy[blockStoragePolicies.size()]);
   }
 
   public static String buildXAttrName() {

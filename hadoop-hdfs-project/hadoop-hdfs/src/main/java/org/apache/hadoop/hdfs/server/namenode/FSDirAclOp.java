@@ -33,7 +33,7 @@ import java.util.List;
 
 class FSDirAclOp {
   static HdfsFileStatus modifyAclEntries(
-      FSDirectory fsd, final String srcArg, List<AclEntry> aclSpec)
+          FSVolatileNamespace fsd, final String srcArg, List<AclEntry> aclSpec)
       throws IOException {
     String src = srcArg;
     checkAclsConfigFlag(fsd);
@@ -44,7 +44,7 @@ class FSDirAclOp {
       iip = fsd.resolvePathForWrite(pc, src);
       src = iip.getPath();
       fsd.checkOwner(pc, iip);
-      INode inode = FSDirectory.resolveLastINode(iip);
+      INode inode = FSVolatileNamespace.resolveLastINode(iip);
       int snapshotId = iip.getLatestSnapshotId();
       List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
       List<AclEntry> newAcl = AclTransformation.mergeAclEntries(
@@ -58,7 +58,7 @@ class FSDirAclOp {
   }
 
   static HdfsFileStatus removeAclEntries(
-      FSDirectory fsd, final String srcArg, List<AclEntry> aclSpec)
+          FSVolatileNamespace fsd, final String srcArg, List<AclEntry> aclSpec)
       throws IOException {
     String src = srcArg;
     checkAclsConfigFlag(fsd);
@@ -69,7 +69,7 @@ class FSDirAclOp {
       iip = fsd.resolvePathForWrite(pc, src);
       src = iip.getPath();
       fsd.checkOwner(pc, iip);
-      INode inode = FSDirectory.resolveLastINode(iip);
+      INode inode = FSVolatileNamespace.resolveLastINode(iip);
       int snapshotId = iip.getLatestSnapshotId();
       List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
       List<AclEntry> newAcl = AclTransformation.filterAclEntriesByAclSpec(
@@ -82,7 +82,7 @@ class FSDirAclOp {
     return fsd.getAuditFileInfo(iip);
   }
 
-  static HdfsFileStatus removeDefaultAcl(FSDirectory fsd, final String srcArg)
+  static HdfsFileStatus removeDefaultAcl(FSVolatileNamespace fsd, final String srcArg)
       throws IOException {
     String src = srcArg;
     checkAclsConfigFlag(fsd);
@@ -93,7 +93,7 @@ class FSDirAclOp {
       iip = fsd.resolvePathForWrite(pc, src);
       src = iip.getPath();
       fsd.checkOwner(pc, iip);
-      INode inode = FSDirectory.resolveLastINode(iip);
+      INode inode = FSVolatileNamespace.resolveLastINode(iip);
       int snapshotId = iip.getLatestSnapshotId();
       List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
       List<AclEntry> newAcl = AclTransformation.filterDefaultAclEntries(
@@ -106,7 +106,7 @@ class FSDirAclOp {
     return fsd.getAuditFileInfo(iip);
   }
 
-  static HdfsFileStatus removeAcl(FSDirectory fsd, final String srcArg)
+  static HdfsFileStatus removeAcl(FSVolatileNamespace fsd, final String srcArg)
       throws IOException {
     String src = srcArg;
     checkAclsConfigFlag(fsd);
@@ -126,7 +126,7 @@ class FSDirAclOp {
   }
 
   static HdfsFileStatus setAcl(
-      FSDirectory fsd, final String srcArg, List<AclEntry> aclSpec)
+          FSVolatileNamespace fsd, final String srcArg, List<AclEntry> aclSpec)
       throws IOException {
     String src = srcArg;
     checkAclsConfigFlag(fsd);
@@ -146,7 +146,7 @@ class FSDirAclOp {
   }
 
   static AclStatus getAclStatus(
-      FSDirectory fsd, String src) throws IOException {
+          FSVolatileNamespace fsd, String src) throws IOException {
     checkAclsConfigFlag(fsd);
     FSPermissionChecker pc = fsd.getPermissionChecker();
     fsd.readLock();
@@ -161,7 +161,7 @@ class FSDirAclOp {
       if (fsd.isPermissionEnabled()) {
         fsd.checkTraverse(pc, iip);
       }
-      INode inode = FSDirectory.resolveLastINode(iip);
+      INode inode = FSVolatileNamespace.resolveLastINode(iip);
       int snapshotId = iip.getPathSnapshotId();
       List<AclEntry> acl = AclStorage.readINodeAcl(fsd.getAttributes(src,
               inode.getLocalNameBytes(), inode, snapshotId));
@@ -177,11 +177,11 @@ class FSDirAclOp {
   }
 
   static List<AclEntry> unprotectedSetAcl(
-      FSDirectory fsd, String src, List<AclEntry> aclSpec, boolean fromEdits)
+          FSVolatileNamespace fsd, String src, List<AclEntry> aclSpec, boolean fromEdits)
       throws IOException {
     assert fsd.hasWriteLock();
     final INodesInPath iip = fsd.getINodesInPath4Write(
-        FSDirectory.normalizePath(src), true);
+        FSVolatileNamespace.normalizePath(src), true);
 
     // ACL removal is logged to edits as OP_SET_ACL with an empty list.
     if (aclSpec.isEmpty()) {
@@ -189,7 +189,7 @@ class FSDirAclOp {
       return AclFeature.EMPTY_ENTRY_LIST;
     }
 
-    INode inode = FSDirectory.resolveLastINode(iip);
+    INode inode = FSVolatileNamespace.resolveLastINode(iip);
     int snapshotId = iip.getLatestSnapshotId();
     List<AclEntry> newAcl = aclSpec;
     if (!fromEdits) {
@@ -200,7 +200,7 @@ class FSDirAclOp {
     return newAcl;
   }
 
-  private static void checkAclsConfigFlag(FSDirectory fsd) throws AclException {
+  private static void checkAclsConfigFlag(FSVolatileNamespace fsd) throws AclException {
     if (!fsd.isAclsEnabled()) {
       throw new AclException(String.format(
           "The ACL operation has been rejected.  "
@@ -209,10 +209,10 @@ class FSDirAclOp {
     }
   }
 
-  private static void unprotectedRemoveAcl(FSDirectory fsd, INodesInPath iip)
+  private static void unprotectedRemoveAcl(FSVolatileNamespace fsd, INodesInPath iip)
       throws IOException {
     assert fsd.hasWriteLock();
-    INode inode = FSDirectory.resolveLastINode(iip);
+    INode inode = FSVolatileNamespace.resolveLastINode(iip);
     int snapshotId = iip.getLatestSnapshotId();
     AclFeature f = inode.getAclFeature();
     if (f == null) {

@@ -410,7 +410,7 @@ public final class CacheManager {
    * @return CacheDirectiveStats describing the needed stats for this path
    */
   private CacheDirectiveStats computeNeeded(String path, short replication) {
-    FSDirectory fsDir = namesystem.getFSDirectory();
+    FSVolatileNamespace fsDir = namesystem.getFSDirectory();
     INode node;
     long requestedBytes = 0;
     long requestedFiles = 0;

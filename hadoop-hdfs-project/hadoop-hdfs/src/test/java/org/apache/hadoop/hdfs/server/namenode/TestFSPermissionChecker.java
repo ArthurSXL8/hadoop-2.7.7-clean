@@ -71,7 +71,7 @@ public class TestFSPermissionChecker {
   private static final UserGroupInformation CLARK =
     UserGroupInformation.createUserForTesting("clark", new String[] { "execs" });
 
-  private FSDirectory dir;
+  private FSVolatileNamespace dir;
   private INodeDirectory inodeRoot;
 
   @Before
@@ -86,7 +86,7 @@ public class TestFSPermissionChecker {
         return new PermissionStatus(SUPERUSER, SUPERGROUP, perm);
       }
     }).when(fsn).createFsOwnerPermissions(any(FsPermission.class));
-    dir = new FSDirectory(fsn, conf);
+    dir = new FSVolatileNamespace(fsn, conf);
     inodeRoot = dir.getRoot();
   }
 

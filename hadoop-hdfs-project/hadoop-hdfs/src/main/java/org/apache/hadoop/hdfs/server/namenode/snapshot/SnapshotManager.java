@@ -35,7 +35,7 @@ import org.apache.hadoop.hdfs.protocol.SnapshotException;
 import org.apache.hadoop.hdfs.protocol.SnapshotInfo;
 import org.apache.hadoop.hdfs.protocol.SnapshottableDirectoryStatus;
 import org.apache.hadoop.hdfs.protocol.SnapshotDiffReport.DiffReportEntry;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.FSImageFormat;
 import org.apache.hadoop.hdfs.server.namenode.FSNamesystem;
 import org.apache.hadoop.hdfs.server.namenode.INode;
@@ -55,12 +55,12 @@ import com.google.common.base.Preconditions;
  * 
  * 1. Lock the {@link FSNamesystem} lock in {@link FSNamesystem} before calling
  * into {@link SnapshotManager} methods.<br>
- * 2. Lock the {@link FSDirectory} lock for the {@link SnapshotManager} methods
+ * 2. Lock the {@link FSVolatileNamespace} lock for the {@link SnapshotManager} methods
  * if necessary.
  */
 public class SnapshotManager implements SnapshotStatsMXBean {
   private boolean allowNestedSnapshots = false;
-  private final FSDirectory fsdir;
+  private final FSVolatileNamespace fsdir;
   private static final int SNAPSHOT_ID_BIT_WIDTH = 24;
 
   private final AtomicInteger numSnapshots = new AtomicInteger();
@@ -71,7 +71,7 @@ public class SnapshotManager implements SnapshotStatsMXBean {
   private final Map<Long, INodeDirectory> snapshottables =
       new HashMap<Long, INodeDirectory>();
 
-  public SnapshotManager(final FSDirectory fsdir) {
+  public SnapshotManager(final FSVolatileNamespace fsdir) {
     this.fsdir = fsdir;
   }
 

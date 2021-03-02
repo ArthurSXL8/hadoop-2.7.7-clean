@@ -208,9 +208,9 @@ public class TestAuditLogger {
     final MiniDFSCluster cluster = new MiniDFSCluster.Builder(conf).build();
     try {
       cluster.waitClusterUp();
-      final FSDirectory dir = cluster.getNamesystem().getFSDirectory();
+      final FSVolatileNamespace dir = cluster.getNamesystem().getFSDirectory();
 
-      final FSDirectory mockedDir = Mockito.spy(dir);
+      final FSVolatileNamespace mockedDir = Mockito.spy(dir);
       AccessControlException ex = new AccessControlException();
       doThrow(ex).when(mockedDir).getPermissionChecker();
       cluster.getNamesystem().setFSDirectory(mockedDir);

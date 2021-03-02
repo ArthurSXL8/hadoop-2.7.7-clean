@@ -158,7 +158,7 @@ public class TestFSImageWithSnapshot {
     fsn.getFSDirectory().writeLock();
     try {
       loader.load(imageFile, false);
-      FSImage.updateCountForQuota(fsn.getBlockManager().getStoragePolicySuite(),
+      FSImage.updateCountForQuota(fsn.getBlockManager().getBlockStoragePolicySuite(),
           INodeDirectory.valueOf(fsn.getFSDirectory().getINode("/"), "/"), 4);
     } finally {
       fsn.getFSDirectory().writeUnlock();
@@ -193,7 +193,7 @@ public class TestFSImageWithSnapshot {
     fsn = cluster.getNamesystem();
     hdfs = cluster.getFileSystem();
     
-    INodeDirectory rootNode = fsn.dir.getINode4Write(root.toString())
+    INodeDirectory rootNode = fsn.fsVolatileNamespace.getINode4Write(root.toString())
         .asDirectory();
     assertTrue("The children list of root should be empty", 
         rootNode.getChildrenList(Snapshot.CURRENT_STATE_ID).isEmpty());

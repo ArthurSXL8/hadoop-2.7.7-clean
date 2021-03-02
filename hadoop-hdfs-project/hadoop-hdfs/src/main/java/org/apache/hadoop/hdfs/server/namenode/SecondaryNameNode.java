@@ -246,7 +246,7 @@ public class SecondaryNameNode implements Runnable,
     namesystem = new FSNamesystem(conf, checkpointImage, true);
 
     // Disable quota checks
-    namesystem.dir.disableQuotaChecks();
+    namesystem.fsVolatileNamespace.disableQuotaChecks();
 
     // Initialize other scheduling parameters from the configuration
     checkpointConf = new CheckpointConf(conf);

@@ -44,17 +44,17 @@ import java.io.IOException;
 import java.util.Arrays;
 
 class FSDirStatAndListingOp {
-  static DirectoryListing getListingInt(FSDirectory fsd, final String srcArg,
-      byte[] startAfter, boolean needLocation) throws IOException {
+  static DirectoryListing getListingInt(FSVolatileNamespace fsd, final String srcArg,
+                                        byte[] startAfter, boolean needLocation) throws IOException {
     FSPermissionChecker pc = fsd.getPermissionChecker();
     final String startAfterString = DFSUtil.bytes2String(startAfter);
     final INodesInPath iip = fsd.resolvePath(pc, srcArg);
     final String src = iip.getPath();
 
     // Get file name when startAfter is an INodePath
-    if (FSDirectory.isReservedName(startAfterString)) {
+    if (FSVolatileNamespace.isReservedName(startAfterString)) {
       try {
-        String tmp = FSDirectory.resolvePath(startAfterString, fsd);
+        String tmp = FSVolatileNamespace.resolvePath(startAfterString, fsd);
         byte[][] regularPath = INode.getPathComponents(tmp);
         startAfter = regularPath[regularPath.length - 1];
       } catch (IOException e) {
@@ -87,7 +87,7 @@ class FSDirStatAndListingOp {
    *         or null if file not found
    */
   static HdfsFileStatus getFileInfo(
-      FSDirectory fsd, String srcArg, boolean resolveLink)
+          FSVolatileNamespace fsd, String srcArg, boolean resolveLink)
       throws IOException {
     String src = srcArg;
     if (!DFSUtil.isValidName(src)) {
@@ -99,16 +99,16 @@ class FSDirStatAndListingOp {
       src = iip.getPath();
       fsd.checkPermission(pc, iip, false, null, null, null, null, false);
     } else {
-      src = FSDirectory.resolvePath(srcArg, fsd);
+      src = FSVolatileNamespace.resolvePath(srcArg, fsd);
     }
-    return getFileInfo(fsd, src, FSDirectory.isReservedRawName(srcArg),
+    return getFileInfo(fsd, src, FSVolatileNamespace.isReservedRawName(srcArg),
         resolveLink);
   }
 
   /**
    * Returns true if the file is closed
    */
-  static boolean isFileClosed(FSDirectory fsd, String src) throws IOException {
+  static boolean isFileClosed(FSVolatileNamespace fsd, String src) throws IOException {
     FSPermissionChecker pc = fsd.getPermissionChecker();
     final INodesInPath iip = fsd.resolvePath(pc, src);
     src = iip.getPath();
@@ -119,7 +119,7 @@ class FSDirStatAndListingOp {
   }
 
   static ContentSummary getContentSummary(
-      FSDirectory fsd, String src) throws IOException {
+          FSVolatileNamespace fsd, String src) throws IOException {
     FSPermissionChecker pc = fsd.getPermissionChecker();
     final INodesInPath iip = fsd.resolvePath(pc, src);
     if (fsd.isPermissionEnabled()) {
@@ -150,11 +150,11 @@ class FSDirStatAndListingOp {
    * @param needLocation if block locations are returned
    * @return a partial listing starting after startAfter
    */
-  private static DirectoryListing getListing(FSDirectory fsd, INodesInPath iip,
-      String src, byte[] startAfter, boolean needLocation, boolean isSuperUser)
+  private static DirectoryListing getListing(FSVolatileNamespace fsd, INodesInPath iip,
+                                             String src, byte[] startAfter, boolean needLocation, boolean isSuperUser)
       throws IOException {
-    String srcs = FSDirectory.normalizePath(src);
-    final boolean isRawPath = FSDirectory.isReservedRawName(src);
+    String srcs = FSVolatileNamespace.normalizePath(src);
+    final boolean isRawPath = FSVolatileNamespace.isReservedRawName(src);
 
     fsd.readLock();
     try {
@@ -230,14 +230,14 @@ class FSDirStatAndListingOp {
    * Get a listing of all the snapshots of a snapshottable directory
    */
   private static DirectoryListing getSnapshotsListing(
-      FSDirectory fsd, String src, byte[] startAfter)
+          FSVolatileNamespace fsd, String src, byte[] startAfter)
       throws IOException {
     Preconditions.checkState(fsd.hasReadLock());
     Preconditions.checkArgument(
         src.endsWith(HdfsConstants.SEPARATOR_DOT_SNAPSHOT_DIR),
         "%s does not end with %s", src, HdfsConstants.SEPARATOR_DOT_SNAPSHOT_DIR);
 
-    final String dirPath = FSDirectory.normalizePath(src.substring(0,
+    final String dirPath = FSVolatileNamespace.normalizePath(src.substring(0,
         src.length() - HdfsConstants.DOT_SNAPSHOT_DIR.length()));
 
     final INode node = fsd.getINode(dirPath);
@@ -276,8 +276,8 @@ class FSDirStatAndListingOp {
    *         or null if file not found
    */
   static HdfsFileStatus getFileInfo(
-      FSDirectory fsd, String path, INodesInPath src, boolean isRawPath,
-      boolean includeStoragePolicy)
+          FSVolatileNamespace fsd, String path, INodesInPath src, boolean isRawPath,
+          boolean includeStoragePolicy)
       throws IOException {
     fsd.readLock();
     try {
@@ -300,19 +300,19 @@ class FSDirStatAndListingOp {
   }
 
   static HdfsFileStatus getFileInfo(
-      FSDirectory fsd, String src, boolean resolveLink, boolean isRawPath)
+          FSVolatileNamespace fsd, String src, boolean resolveLink, boolean isRawPath)
       throws IOException {
     fsd.readLock();
     try {
       HdfsFileStatus status = null;
       final INodesInPath iip = fsd.getINodesInPath(src, resolveLink);
-      if (FSDirectory.isExactReservedName(iip.getPathComponents())) {
+      if (FSVolatileNamespace.isExactReservedName(iip.getPathComponents())) {
         status = new HdfsFileStatus(0, true, 0, 0, 0, 0, new FsPermission((short) 01770),
             null, null, null, HdfsFileStatus.EMPTY_NAME, -1L, 0, null,
             BlockStoragePolicySuite.ID_UNSPECIFIED);
       } else if (iip.isDotSnapshotDir()) {
         if (fsd.getINode4DotSnapshot(iip) != null) {
-          status = FSDirectory.DOT_SNAPSHOT_DIR_STATUS;
+          status = FSVolatileNamespace.DOT_SNAPSHOT_DIR_STATUS;
         }
       } else {
         status = getFileInfo(fsd, src, iip, isRawPath, true);
@@ -336,9 +336,9 @@ class FSDirStatAndListingOp {
    * @throws java.io.IOException if any error occurs
    */
   private static HdfsFileStatus createFileStatus(
-      FSDirectory fsd, byte[] path, INodeAttributes nodeAttrs,
-      boolean needLocation, byte storagePolicy, int snapshot, boolean isRawPath,
-      INodesInPath iip)
+          FSVolatileNamespace fsd, byte[] path, INodeAttributes nodeAttrs,
+          boolean needLocation, byte storagePolicy, int snapshot, boolean isRawPath,
+          INodesInPath iip)
       throws IOException {
     if (needLocation) {
       return createLocatedFileStatus(fsd, path, nodeAttrs, storagePolicy,
@@ -354,9 +354,9 @@ class FSDirStatAndListingOp {
    * @param iip The INodesInPath containing the INodeFile and its ancestors
    */
   static HdfsFileStatus createFileStatusForEditLog(
-      FSDirectory fsd, String fullPath, byte[] path,
-      byte storagePolicy, int snapshot, boolean isRawPath,
-      INodesInPath iip) throws IOException {
+          FSVolatileNamespace fsd, String fullPath, byte[] path,
+          byte storagePolicy, int snapshot, boolean isRawPath,
+          INodesInPath iip) throws IOException {
     INodeAttributes nodeAttrs = getINodeAttributes(
         fsd, fullPath, path, iip.getLastINode(), snapshot);
     return createFileStatus(fsd, path, nodeAttrs, storagePolicy,
@@ -368,9 +368,9 @@ class FSDirStatAndListingOp {
    * @param iip the INodesInPath containing the target INode and its ancestors
    */
   static HdfsFileStatus createFileStatus(
-      FSDirectory fsd, byte[] path,
-      INodeAttributes nodeAttrs, byte storagePolicy, int snapshot,
-      boolean isRawPath, INodesInPath iip) throws IOException {
+          FSVolatileNamespace fsd, byte[] path,
+          INodeAttributes nodeAttrs, byte storagePolicy, int snapshot,
+          boolean isRawPath, INodesInPath iip) throws IOException {
     long size = 0;     // length is zero for directories
     short replication = 0;
     long blocksize = 0;
@@ -413,7 +413,7 @@ class FSDirStatAndListingOp {
   }
 
   private static INodeAttributes getINodeAttributes(
-      FSDirectory fsd, String fullPath, byte[] path, INode node, int snapshot) {
+          FSVolatileNamespace fsd, String fullPath, byte[] path, INode node, int snapshot) {
     return fsd.getAttributes(fullPath, path, node, snapshot);
   }
 
@@ -422,9 +422,9 @@ class FSDirStatAndListingOp {
    * @param iip the INodesInPath containing the target INode and its ancestors
    */
   private static HdfsLocatedFileStatus createLocatedFileStatus(
-      FSDirectory fsd, byte[] path, INodeAttributes nodeAttrs,
-      byte storagePolicy, int snapshot,
-      boolean isRawPath, INodesInPath iip) throws IOException {
+          FSVolatileNamespace fsd, byte[] path, INodeAttributes nodeAttrs,
+          byte storagePolicy, int snapshot,
+          boolean isRawPath, INodesInPath iip) throws IOException {
     assert fsd.hasReadLock();
     long size = 0; // length is zero for directories
     short replication = 0;
@@ -498,8 +498,8 @@ class FSDirStatAndListingOp {
     return perm;
   }
 
-  private static ContentSummary getContentSummaryInt(FSDirectory fsd,
-      INodesInPath iip) throws IOException {
+  private static ContentSummary getContentSummaryInt(FSVolatileNamespace fsd,
+                                                     INodesInPath iip) throws IOException {
     fsd.readLock();
     try {
       INode targetNode = iip.getLastINode();

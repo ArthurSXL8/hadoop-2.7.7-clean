@@ -601,7 +601,6 @@ public class NameNode implements NameNodeStatusMXBean {
   }
 
   protected void loadNamesystem(Configuration conf) throws IOException {
-    // TODO-ZH
     this.namesystem = FSNamesystem.loadFromDisk(conf);
   }
 

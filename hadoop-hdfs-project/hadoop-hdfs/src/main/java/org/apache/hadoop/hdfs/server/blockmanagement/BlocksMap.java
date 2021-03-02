@@ -98,7 +98,7 @@ class BlocksMap {
 
   BlockSet getBlockSet(Block block) {
     BlockNeighborInfo info = blockAndNeighborSet.get(block);
-    return (info != null) ? info.getBlockCollection() : null;
+    return (info != null) ? info.getBlockSet() : null;
   }
 
   /**
@@ -193,7 +193,7 @@ class BlocksMap {
     boolean removed = node.removeBlock(blockNeighborInfo);
 
     if (blockNeighborInfo.getDatanode(0) == null     // no datanodes left
-              && blockNeighborInfo.getBlockCollection() == null) {  // does not belong to a file
+              && blockNeighborInfo.getBlockSet() == null) {  // does not belong to a file
       blockAndNeighborSet.remove(b);  // remove block from the map
     }
     return removed;

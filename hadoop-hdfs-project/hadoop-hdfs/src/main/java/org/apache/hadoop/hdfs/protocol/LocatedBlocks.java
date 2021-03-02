@@ -32,7 +32,7 @@ import org.apache.hadoop.fs.FileEncryptionInfo;
 @InterfaceStability.Evolving
 public class LocatedBlocks {
   private final long fileLength;
-  private final List<LocatedBlock> blocks; // array of blocks with prioritized locations
+  private final List<LocatedBlock> locatedBlockList; // array of blocks with prioritized locations
   private final boolean underConstruction;
   private final LocatedBlock lastLocatedBlock;
   private final boolean isLastBlockComplete;
@@ -40,29 +40,29 @@ public class LocatedBlocks {
 
   public LocatedBlocks() {
     fileLength = 0;
-    blocks = null;
+    locatedBlockList = null;
     underConstruction = false;
     lastLocatedBlock = null;
     isLastBlockComplete = false;
     fileEncryptionInfo = null;
   }
 
-  public LocatedBlocks(long flength, boolean isUnderConstuction,
-    List<LocatedBlock> blks, LocatedBlock lastBlock,
-    boolean isLastBlockCompleted, FileEncryptionInfo feInfo) {
-    fileLength = flength;
-    blocks = blks;
+  public LocatedBlocks(long fileLength, boolean isUnderConstuction,
+    List<LocatedBlock> locatedBlockList, LocatedBlock lastBlock,
+    boolean isLastBlockCompleted, FileEncryptionInfo fileEncryptionInfo) {
+    this.fileLength = fileLength;
+    this.locatedBlockList = locatedBlockList;
     underConstruction = isUnderConstuction;
     this.lastLocatedBlock = lastBlock;
     this.isLastBlockComplete = isLastBlockCompleted;
-    this.fileEncryptionInfo = feInfo;
+    this.fileEncryptionInfo = fileEncryptionInfo;
   }
   
   /**
    * Get located blocks.
    */
   public List<LocatedBlock> getLocatedBlocks() {
-    return blocks;
+    return locatedBlockList;
   }
   
   /** Get the last located block. */
@@ -79,14 +79,14 @@ public class LocatedBlocks {
    * Get located block.
    */
   public LocatedBlock get(int index) {
-    return blocks.get(index);
+    return locatedBlockList.get(index);
   }
   
   /**
    * Get number of located blocks.
    */
   public int locatedBlockCount() {
-    return blocks == null ? 0 : blocks.size();
+    return locatedBlockList == null ? 0 : locatedBlockList.size();
   }
 
   /**
@@ -139,23 +139,23 @@ public class LocatedBlocks {
           return 1;
         }
       };
-    return Collections.binarySearch(blocks, key, comp);
+    return Collections.binarySearch(locatedBlockList, key, comp);
   }
   
   public void insertRange(int blockIdx, List<LocatedBlock> newBlocks) {
     int oldIdx = blockIdx;
     int insStart = 0, insEnd = 0;
-    for(int newIdx = 0; newIdx < newBlocks.size() && oldIdx < blocks.size(); 
+    for(int newIdx = 0; newIdx < newBlocks.size() && oldIdx < locatedBlockList.size();
                                                         newIdx++) {
       long newOff = newBlocks.get(newIdx).getStartOffset();
-      long oldOff = blocks.get(oldIdx).getStartOffset();
+      long oldOff = locatedBlockList.get(oldIdx).getStartOffset();
       if(newOff < oldOff) {
         insEnd++;
       } else if(newOff == oldOff) {
         // replace old cached block by the new one
-        blocks.set(oldIdx, newBlocks.get(newIdx));
+        locatedBlockList.set(oldIdx, newBlocks.get(newIdx));
         if(insStart < insEnd) { // insert new blocks
-          blocks.addAll(oldIdx, newBlocks.subList(insStart, insEnd));
+          locatedBlockList.addAll(oldIdx, newBlocks.subList(insStart, insEnd));
           oldIdx += insEnd - insStart;
         }
         insStart = insEnd = newIdx+1;
@@ -166,7 +166,7 @@ public class LocatedBlocks {
     }
     insEnd = newBlocks.size();
     if(insStart < insEnd) { // insert new blocks
-      blocks.addAll(oldIdx, newBlocks.subList(insStart, insEnd));
+      locatedBlockList.addAll(oldIdx, newBlocks.subList(insStart, insEnd));
     }
   }
   
@@ -180,7 +180,7 @@ public class LocatedBlocks {
     b.append("{")
      .append("\n  fileLength=").append(fileLength)
      .append("\n  underConstruction=").append(underConstruction)
-     .append("\n  blocks=").append(blocks)
+     .append("\n  blocks=").append(locatedBlockList)
      .append("\n  lastLocatedBlock=").append(lastLocatedBlock)
      .append("\n  isLastBlockComplete=").append(isLastBlockComplete)
      .append("}");

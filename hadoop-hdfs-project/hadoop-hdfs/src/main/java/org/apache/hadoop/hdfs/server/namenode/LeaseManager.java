@@ -89,7 +89,7 @@ public class LeaseManager {
   //
   private final SortedMap<String, Lease> sortedLeasesByPath = new TreeMap<String, Lease>();
 
-  private Daemon lmthread;
+  private Daemon monitorDaemon;
   private volatile boolean shouldRunMonitor;
 
   LeaseManager(FSNamesystem fsnamesystem) {this.fsnamesystem = fsnamesystem;}
@@ -447,7 +447,7 @@ public class LeaseManager {
     for (String p : sortedLeasesByPath.keySet()) {
       // verify that path exists in namespace
       try {
-        INodeFile node = INodeFile.valueOf(fsnamesystem.dir.getINode(p), p);
+        INodeFile node = INodeFile.valueOf(fsnamesystem.fsVolatileNamespace.getINode(p), p);
         if (node.isUnderConstruction()) {
           inodes.put(p, node);
         } else {
@@ -548,23 +548,23 @@ public class LeaseManager {
   }
 
   void startMonitor() {
-    Preconditions.checkState(lmthread == null,
+    Preconditions.checkState(monitorDaemon == null,
         "Lease Monitor already running");
     shouldRunMonitor = true;
-    lmthread = new Daemon(new Monitor());
-    lmthread.start();
+    monitorDaemon = new Daemon(new Monitor());
+    monitorDaemon.start();
   }
   
   void stopMonitor() {
-    if (lmthread != null) {
+    if (monitorDaemon != null) {
       shouldRunMonitor = false;
       try {
-        lmthread.interrupt();
-        lmthread.join(3000);
+        monitorDaemon.interrupt();
+        monitorDaemon.join(3000);
       } catch (InterruptedException ie) {
         LOG.warn("Encountered exception ", ie);
       }
-      lmthread = null;
+      monitorDaemon = null;
     }
   }
 
@@ -574,8 +574,8 @@ public class LeaseManager {
    */
   @VisibleForTesting
   void triggerMonitorCheckNow() {
-    Preconditions.checkState(lmthread != null,
+    Preconditions.checkState(monitorDaemon != null,
         "Lease monitor is not running");
-    lmthread.interrupt();
+    monitorDaemon.interrupt();
   }
 }

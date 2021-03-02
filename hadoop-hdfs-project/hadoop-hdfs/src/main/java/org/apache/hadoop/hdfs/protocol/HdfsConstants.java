@@ -25,10 +25,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
-import org.apache.hadoop.hdfs.server.datanode.DataNode;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.datanode.DataNodeLayoutVersion;
-import org.apache.hadoop.hdfs.server.namenode.NameNode;
 import org.apache.hadoop.hdfs.server.namenode.NameNodeLayoutVersion;
 import org.apache.hadoop.util.StringUtils;
 
@@ -136,7 +134,7 @@ public class HdfsConstants {
    */
   public static final String[] RESERVED_PATH_COMPONENTS = new String[] {
     HdfsConstants.DOT_SNAPSHOT_DIR,
-    FSDirectory.DOT_RESERVED_STRING
+    FSVolatileNamespace.DOT_RESERVED_STRING
   };
 
   /**

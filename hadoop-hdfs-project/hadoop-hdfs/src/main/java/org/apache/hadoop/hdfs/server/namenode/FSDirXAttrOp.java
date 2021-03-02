@@ -59,14 +59,14 @@ class FSDirXAttrOp {
    * @throws IOException
    */
   static HdfsFileStatus setXAttr(
-      FSDirectory fsd, String src, XAttr xAttr, EnumSet<XAttrSetFlag> flag,
-      boolean logRetryCache)
+          FSVolatileNamespace fsd, String src, XAttr xAttr, EnumSet<XAttrSetFlag> flag,
+          boolean logRetryCache)
       throws IOException {
     checkXAttrsConfigFlag(fsd);
     checkXAttrSize(fsd, xAttr);
     FSPermissionChecker pc = fsd.getPermissionChecker();
     XAttrPermissionFilter.checkPermissionForApi(
-        pc, xAttr, FSDirectory.isReservedRawName(src));
+        pc, xAttr, FSVolatileNamespace.isReservedRawName(src));
     List<XAttr> xAttrs = Lists.newArrayListWithCapacity(1);
     xAttrs.add(xAttr);
     INodesInPath iip;
@@ -83,13 +83,13 @@ class FSDirXAttrOp {
     return fsd.getAuditFileInfo(iip);
   }
 
-  static List<XAttr> getXAttrs(FSDirectory fsd, final String srcArg,
+  static List<XAttr> getXAttrs(FSVolatileNamespace fsd, final String srcArg,
                                List<XAttr> xAttrs)
       throws IOException {
     String src = srcArg;
     checkXAttrsConfigFlag(fsd);
     FSPermissionChecker pc = fsd.getPermissionChecker();
-    final boolean isRawPath = FSDirectory.isReservedRawName(src);
+    final boolean isRawPath = FSVolatileNamespace.isReservedRawName(src);
     boolean getAll = xAttrs == null || xAttrs.isEmpty();
     if (!getAll) {
       XAttrPermissionFilter.checkPermissionForApi(pc, xAttrs, isRawPath);
@@ -128,10 +128,10 @@ class FSDirXAttrOp {
   }
 
   static List<XAttr> listXAttrs(
-      FSDirectory fsd, String src) throws IOException {
+          FSVolatileNamespace fsd, String src) throws IOException {
     FSDirXAttrOp.checkXAttrsConfigFlag(fsd);
     final FSPermissionChecker pc = fsd.getPermissionChecker();
-    final boolean isRawPath = FSDirectory.isReservedRawName(src);
+    final boolean isRawPath = FSVolatileNamespace.isReservedRawName(src);
     final INodesInPath iip = fsd.resolvePath(pc, src);
     if (fsd.isPermissionEnabled()) {
       fsd.checkPathAccess(pc, iip, FsAction.READ);
@@ -151,12 +151,12 @@ class FSDirXAttrOp {
    * @throws IOException
    */
   static HdfsFileStatus removeXAttr(
-      FSDirectory fsd, String src, XAttr xAttr, boolean logRetryCache)
+          FSVolatileNamespace fsd, String src, XAttr xAttr, boolean logRetryCache)
       throws IOException {
     FSDirXAttrOp.checkXAttrsConfigFlag(fsd);
     FSPermissionChecker pc = fsd.getPermissionChecker();
     XAttrPermissionFilter.checkPermissionForApi(
-        pc, xAttr, FSDirectory.isReservedRawName(src));
+        pc, xAttr, FSVolatileNamespace.isReservedRawName(src));
 
     List<XAttr> xAttrs = Lists.newArrayListWithCapacity(1);
     xAttrs.add(xAttr);
@@ -181,12 +181,12 @@ class FSDirXAttrOp {
   }
 
   static List<XAttr> unprotectedRemoveXAttrs(
-      FSDirectory fsd, final String src, final List<XAttr> toRemove)
+          FSVolatileNamespace fsd, final String src, final List<XAttr> toRemove)
       throws IOException {
     assert fsd.hasWriteLock();
     INodesInPath iip = fsd.getINodesInPath4Write(
-        FSDirectory.normalizePath(src), true);
-    INode inode = FSDirectory.resolveLastINode(iip);
+        FSVolatileNamespace.normalizePath(src), true);
+    INode inode = FSVolatileNamespace.resolveLastINode(iip);
     int snapshotId = iip.getLatestSnapshotId();
     List<XAttr> existingXAttrs = XAttrStorage.readINodeXAttrs(inode);
     List<XAttr> removedXAttrs = Lists.newArrayListWithCapacity(toRemove.size());
@@ -251,13 +251,13 @@ class FSDirXAttrOp {
   }
 
   static INode unprotectedSetXAttrs(
-      FSDirectory fsd, final String src, final List<XAttr> xAttrs,
-      final EnumSet<XAttrSetFlag> flag)
+          FSVolatileNamespace fsd, final String src, final List<XAttr> xAttrs,
+          final EnumSet<XAttrSetFlag> flag)
       throws IOException {
     assert fsd.hasWriteLock();
-    INodesInPath iip = fsd.getINodesInPath4Write(FSDirectory.normalizePath(src),
+    INodesInPath iip = fsd.getINodesInPath4Write(FSVolatileNamespace.normalizePath(src),
         true);
-    INode inode = FSDirectory.resolveLastINode(iip);
+    INode inode = FSVolatileNamespace.resolveLastINode(iip);
     int snapshotId = iip.getLatestSnapshotId();
     List<XAttr> existingXAttrs = XAttrStorage.readINodeXAttrs(inode);
     List<XAttr> newXAttrs = setINodeXAttrs(fsd, existingXAttrs, xAttrs, flag);
@@ -291,8 +291,8 @@ class FSDirXAttrOp {
   }
 
   static List<XAttr> setINodeXAttrs(
-      FSDirectory fsd, final List<XAttr> existingXAttrs,
-      final List<XAttr> toSet, final EnumSet<XAttrSetFlag> flag)
+          FSVolatileNamespace fsd, final List<XAttr> existingXAttrs,
+          final List<XAttr> toSet, final EnumSet<XAttrSetFlag> flag)
       throws IOException {
     // Check for duplicate XAttrs in toSet
     // We need to use a custom comparator, so using a HashSet is not suitable
@@ -360,7 +360,7 @@ class FSDirXAttrOp {
     return xAttrs;
   }
 
-  static List<XAttr> getXAttrs(FSDirectory fsd, INode inode, int snapshotId)
+  static List<XAttr> getXAttrs(FSVolatileNamespace fsd, INode inode, int snapshotId)
       throws IOException {
     fsd.readLock();
     try {
@@ -387,8 +387,8 @@ class FSDirXAttrOp {
   }
 
   private static void checkXAttrChangeAccess(
-      FSDirectory fsd, INodesInPath iip, XAttr xAttr,
-      FSPermissionChecker pc)
+          FSVolatileNamespace fsd, INodesInPath iip, XAttr xAttr,
+          FSPermissionChecker pc)
       throws AccessControlException, FileNotFoundException {
     if (fsd.isPermissionEnabled() && xAttr.getNameSpace() == XAttr.NameSpace
         .USER) {
@@ -409,7 +409,7 @@ class FSDirXAttrOp {
    * Verifies that the combined size of the name and value of an xattr is within
    * the configured limit. Setting a limit of zero disables this check.
    */
-  private static void checkXAttrSize(FSDirectory fsd, XAttr xAttr) {
+  private static void checkXAttrSize(FSVolatileNamespace fsd, XAttr xAttr) {
     if (fsd.getXattrMaxSize() == 0) {
       return;
     }
@@ -425,7 +425,7 @@ class FSDirXAttrOp {
     }
   }
 
-  private static void checkXAttrsConfigFlag(FSDirectory fsd) throws
+  private static void checkXAttrsConfigFlag(FSVolatileNamespace fsd) throws
                                                              IOException {
     if (!fsd.isXattrsEnabled()) {
       throw new IOException(String.format(
@@ -435,12 +435,12 @@ class FSDirXAttrOp {
     }
   }
 
-  private static List<XAttr> getXAttrs(FSDirectory fsd, INodesInPath iip)
+  private static List<XAttr> getXAttrs(FSVolatileNamespace fsd, INodesInPath iip)
       throws IOException {
     fsd.readLock();
     try {
       String src = iip.getPath();
-      INode inode = FSDirectory.resolveLastINode(iip);
+      INode inode = FSVolatileNamespace.resolveLastINode(iip);
       int snapshotId = iip.getPathSnapshotId();
       return XAttrStorage.readINodeXAttrs(fsd.getAttributes(src,
               inode.getLocalNameBytes(), inode, snapshotId));

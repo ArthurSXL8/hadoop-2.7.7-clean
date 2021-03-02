@@ -63,7 +63,7 @@ public class DatanodeManager {
 
   private final Namesystem namesystem;
   private final BlockManager blockManager;
-  private final DecommissionManager decomManager;
+  private final DecommissionManager decommissionManager;
   private final HeartbeatManager heartbeatManager;
   private final FSClusterStats fsClusterStats;
 
@@ -180,7 +180,7 @@ public class DatanodeManager {
     this.blockManager = blockManager;
     
     this.heartbeatManager = new HeartbeatManager(namesystem, blockManager, conf);
-    this.decomManager = new DecommissionManager(namesystem, blockManager,
+    this.decommissionManager = new DecommissionManager(namesystem, blockManager,
         heartbeatManager);
     this.fsClusterStats = newFSClusterStats();
 
@@ -309,13 +309,13 @@ public class DatanodeManager {
   
   void activate(final Configuration conf) {
     // 启动管理下线DataNode服务
-    decomManager.activate(conf);
+    decommissionManager.activate(conf);
     // TODO-ZH 管理心跳
     heartbeatManager.activate(conf);
   }
 
   void close() {
-    decomManager.close();
+    decommissionManager.close();
     heartbeatManager.close();
   }
 
@@ -330,8 +330,8 @@ public class DatanodeManager {
   }
 
   @VisibleForTesting
-  public DecommissionManager getDecomManager() {
-    return decomManager;
+  public DecommissionManager getDecommissionManager() {
+    return decommissionManager;
   }
 
   HostFileManager getHostFileManager() {
@@ -832,7 +832,7 @@ public class DatanodeManager {
   void startDecommissioningIfExcluded(DatanodeDescriptor nodeReg) {
     // If the registered node is in exclude list, then decommission it
     if (getHostFileManager().isExcluded(nodeReg)) {
-      decomManager.startDecommission(nodeReg);
+      decommissionManager.startDecommission(nodeReg);
     }
   }
 
@@ -1044,9 +1044,9 @@ public class DatanodeManager {
         node.setDisallowed(true); // case 2.
       } else {
         if (hostFileManager.isExcluded(node)) {
-          decomManager.startDecommission(node); // case 3.
+          decommissionManager.startDecommission(node); // case 3.
         } else {
-          decomManager.stopDecommission(node); // case 4.
+          decommissionManager.stopDecommission(node); // case 4.
         }
       }
     }

@@ -21,7 +21,7 @@ package org.apache.hadoop.hdfs;
 import com.google.common.collect.Iterators;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
-import org.apache.hadoop.hdfs.inotify.EventBatch;
+import org.apache.hadoop.hdfs.inotify.EventBatchInOneTransaction;
 import org.apache.hadoop.hdfs.inotify.EventBatchList;
 import org.apache.hadoop.hdfs.inotify.MissingEventsException;
 import org.apache.hadoop.hdfs.protocol.ClientProtocol;
@@ -53,7 +53,7 @@ public class DFSInotifyEventInputStream {
   private final Sampler<?> traceSampler;
 
   private final ClientProtocol namenode;
-  private Iterator<EventBatch> it;
+  private Iterator<EventBatchInOneTransaction> it;
   private long lastReadTxid;
   /**
    * The most recent txid the NameNode told us it has sync'ed -- helps us
@@ -97,7 +97,7 @@ public class DFSInotifyEventInputStream {
    * safe to continue reading from the stream after this exception is thrown
    * The next available batch of events will be returned.
    */
-  public EventBatch poll() throws IOException, MissingEventsException {
+  public EventBatchInOneTransaction poll() throws IOException, MissingEventsException {
     TraceScope scope =
         Trace.startSpan("inotifyPoll", traceSampler);
     try {
@@ -178,10 +178,10 @@ public class DFSInotifyEventInputStream {
    * see {@link DFSInotifyEventInputStream#poll()}
    * @throws InterruptedException if the calling thread is interrupted
    */
-  public EventBatch poll(long time, TimeUnit tu) throws IOException,
+  public EventBatchInOneTransaction poll(long time, TimeUnit tu) throws IOException,
       InterruptedException, MissingEventsException {
     TraceScope scope = Trace.startSpan("inotifyPollWithTimeout", traceSampler);
-    EventBatch next = null;
+    EventBatchInOneTransaction next = null;
     try {
       long initialTime = Time.monotonicNow();
       long totalWait = TimeUnit.MILLISECONDS.convert(time, tu);
@@ -215,10 +215,10 @@ public class DFSInotifyEventInputStream {
    * {@link DFSInotifyEventInputStream#poll()}
    * @throws InterruptedException if the calling thread is interrupted
    */
-  public EventBatch take() throws IOException, InterruptedException,
+  public EventBatchInOneTransaction take() throws IOException, InterruptedException,
       MissingEventsException {
     TraceScope scope = Trace.startSpan("inotifyTake", traceSampler);
-    EventBatch next = null;
+    EventBatchInOneTransaction next = null;
     try {
       int nextWaitMin = INITIAL_WAIT_MS;
       while ((next = poll()) == null) {

@@ -37,12 +37,12 @@ class FSDirSymlinkOp {
       FSNamesystem fsn, String target, final String linkArg,
       PermissionStatus dirPerms, boolean createParent, boolean logRetryCache)
       throws IOException {
-    FSDirectory fsd = fsn.getFSDirectory();
+    FSVolatileNamespace fsd = fsn.getFSDirectory();
     String link = linkArg;
     if (!DFSUtil.isValidName(link)) {
       throw new InvalidPathException("Invalid link name: " + link);
     }
-    if (FSDirectory.isReservedName(target) || target.isEmpty()) {
+    if (FSVolatileNamespace.isReservedName(target) || target.isEmpty()) {
       throw new InvalidPathException("Invalid target name: " + target);
     }
 
@@ -80,9 +80,9 @@ class FSDirSymlinkOp {
     return fsd.getAuditFileInfo(iip);
   }
 
-  static INodeSymlink unprotectedAddSymlink(FSDirectory fsd, INodesInPath iip,
-      byte[] localName, long id, String target, long mtime, long atime,
-      PermissionStatus perm)
+  static INodeSymlink unprotectedAddSymlink(FSVolatileNamespace fsd, INodesInPath iip,
+                                            byte[] localName, long id, String target, long mtime, long atime,
+                                            PermissionStatus perm)
       throws UnresolvedLinkException, QuotaExceededException {
     assert fsd.hasWriteLock();
     final INodeSymlink symlink = new INodeSymlink(id, null, perm, mtime, atime,
@@ -94,9 +94,9 @@ class FSDirSymlinkOp {
   /**
    * Add the given symbolic link to the fs. Record it in the edits log.
    */
-  private static INodeSymlink addSymlink(FSDirectory fsd, String path,
-      INodesInPath iip, String target, PermissionStatus dirPerms,
-      boolean createParent, boolean logRetryCache) throws IOException {
+  private static INodeSymlink addSymlink(FSVolatileNamespace fsd, String path,
+                                         INodesInPath iip, String target, PermissionStatus dirPerms,
+                                         boolean createParent, boolean logRetryCache) throws IOException {
     final long mtime = now();
     final byte[] localName = iip.getLastLocalName();
     if (createParent) {

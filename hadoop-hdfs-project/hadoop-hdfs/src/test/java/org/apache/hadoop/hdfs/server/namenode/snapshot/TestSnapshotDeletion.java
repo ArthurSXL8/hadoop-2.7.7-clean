@@ -42,7 +42,7 @@ import org.apache.hadoop.hdfs.protocol.HdfsConstants.SafeModeAction;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockNeighborInfo;
 import org.apache.hadoop.hdfs.protocol.SnapshotDiffReport;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockManager;
-import org.apache.hadoop.hdfs.server.namenode.FSDirectory;
+import org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace;
 import org.apache.hadoop.hdfs.server.namenode.FSNamesystem;
 import org.apache.hadoop.hdfs.server.namenode.INode;
 import org.apache.hadoop.hdfs.server.namenode.INodeDirectory;
@@ -84,7 +84,7 @@ public class TestSnapshotDeletion {
   protected Configuration conf;
   protected MiniDFSCluster cluster;
   protected FSNamesystem fsn;
-  protected FSDirectory fsdir;
+  protected FSVolatileNamespace fsdir;
   protected BlockManager blockmanager;
   protected DistributedFileSystem hdfs;
   
@@ -196,7 +196,7 @@ public class TestSnapshotDeletion {
     hdfs.delete(dir, true);
   }
   
-  private static INodeDirectory getDir(final FSDirectory fsdir, final Path dir)
+  private static INodeDirectory getDir(final FSVolatileNamespace fsdir, final Path dir)
       throws IOException {
     final String dirStr = dir.toString();
     return INodeDirectory.valueOf(fsdir.getINode(dirStr), dirStr);

@@ -9203,7 +9203,7 @@ order written.</p>]]>
     abstract="false"
     static="false" final="false" visibility="public"
     deprecated="not deprecated">
-    <constructor name="EncryptionZoneManager" type="org.apache.hadoop.hdfs.server.namenode.FSDirectory, org.apache.hadoop.conf.Configuration"
+    <constructor name="EncryptionZoneManager" type="org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace, org.apache.hadoop.conf.Configuration"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
       <doc>
@@ -9434,7 +9434,7 @@ order written.</p>]]>
       deprecated="not deprecated">
       <param name="file" type="org.apache.hadoop.hdfs.server.namenode.INodeFile"/>
     </method>
-    <method name="getFSDirectoryInLoading" return="org.apache.hadoop.hdfs.server.namenode.FSDirectory"
+    <method name="getFSDirectoryInLoading" return="org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace"
       abstract="false" native="false" synchronized="false"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
@@ -12772,7 +12772,7 @@ order written.</p>]]>
     static="false" final="false" visibility="public"
     deprecated="not deprecated">
     <implements name="org.apache.hadoop.hdfs.server.namenode.snapshot.SnapshotStatsMXBean"/>
-    <constructor name="SnapshotManager" type="org.apache.hadoop.hdfs.server.namenode.FSDirectory"
+    <constructor name="SnapshotManager" type="org.apache.hadoop.hdfs.server.namenode.FSVolatileNamespace"
       static="false" final="false" visibility="public"
       deprecated="not deprecated">
     </constructor>

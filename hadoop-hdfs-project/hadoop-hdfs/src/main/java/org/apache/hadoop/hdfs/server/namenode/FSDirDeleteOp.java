@@ -39,8 +39,8 @@ class FSDirDeleteOp {
    * @return the number of files that have been removed
    */
   static long delete(
-      FSDirectory fsd, INodesInPath iip, BlocksMapUpdateInfo collectedBlocks,
-      List<INode> removedINodes, long mtime) throws IOException {
+          FSVolatileNamespace fsd, INodesInPath iip, BlocksMapUpdateInfo collectedBlocks,
+          List<INode> removedINodes, long mtime) throws IOException {
     if (NameNode.stateChangeLog.isDebugEnabled()) {
       NameNode.stateChangeLog.debug("DIR* FSDirectory.delete: " + iip.getPath());
     }
@@ -75,7 +75,7 @@ class FSDirDeleteOp {
   static BlocksMapUpdateInfo delete(
       FSNamesystem fsn, String src, boolean recursive, boolean logRetryCache)
       throws IOException {
-    FSDirectory fsd = fsn.getFSDirectory();
+    FSVolatileNamespace fsd = fsn.getFSDirectory();
     FSPermissionChecker pc = fsd.getPermissionChecker();
 
     final INodesInPath iip = fsd.resolvePathForWrite(pc, src, false);
@@ -101,7 +101,7 @@ class FSDirDeleteOp {
    * @param src a string representation of a path to an inode
    * @param mtime the time the inode is removed
    */
-  static void deleteForEditLog(FSDirectory fsd, String src, long mtime)
+  static void deleteForEditLog(FSVolatileNamespace fsd, String src, long mtime)
       throws IOException {
     assert fsd.hasWriteLock();
     FSNamesystem fsn = fsd.getFSNamesystem();
@@ -109,7 +109,7 @@ class FSDirDeleteOp {
     List<INode> removedINodes = new ChunkedArrayList<>();
 
     final INodesInPath iip = fsd.getINodesInPath4Write(
-        FSDirectory.normalizePath(src), false);
+        FSVolatileNamespace.normalizePath(src), false);
     if (!deleteAllowed(iip, src)) {
       return;
     }
@@ -142,7 +142,7 @@ class FSDirDeleteOp {
       NameNode.stateChangeLog.debug("DIR* NameSystem.delete: " + src);
     }
 
-    FSDirectory fsd = fsn.getFSDirectory();
+    FSVolatileNamespace fsd = fsn.getFSDirectory();
     BlocksMapUpdateInfo collectedBlocks = new BlocksMapUpdateInfo();
     List<INode> removedINodes = new ChunkedArrayList<>();
 
@@ -197,8 +197,8 @@ class FSDirDeleteOp {
    * @return the number of inodes deleted; 0 if no inodes are deleted.
    */
   private static long unprotectedDelete(
-      FSDirectory fsd, INodesInPath iip, BlocksMapUpdateInfo collectedBlocks,
-      List<INode> removedINodes, long mtime) {
+          FSVolatileNamespace fsd, INodesInPath iip, BlocksMapUpdateInfo collectedBlocks,
+          List<INode> removedINodes, long mtime) {
     assert fsd.hasWriteLock();
 
     // check if target node exists
