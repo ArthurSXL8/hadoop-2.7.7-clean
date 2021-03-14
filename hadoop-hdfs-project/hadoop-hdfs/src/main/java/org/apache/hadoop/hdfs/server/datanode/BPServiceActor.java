@@ -209,17 +209,17 @@ class BPServiceActor implements Runnable {
 
     // First phase of the handshake with NN - get the namespace
     // info.
-    NamespaceInfo nsInfo = retrieveNamespaceInfo();
+    NamespaceInfo namespaceInfo = retrieveNamespaceInfo();
     
     // Verify that this matches the other NN in this HA pair.
     // This also initializes our block pool in the DN if we are
     // the first NN connection for this BP.
     // TODO-ZH 校验NamespaceInfo信息
-    bpos.verifyAndSetNamespaceInfo(nsInfo);
+    bpos.verifyAndSetNamespaceInfo(namespaceInfo);
     
     // Second phase of the handshake with the NN.
     // TODO-ZH 进行注册
-    register(nsInfo);
+    register(namespaceInfo);
   }
 
 

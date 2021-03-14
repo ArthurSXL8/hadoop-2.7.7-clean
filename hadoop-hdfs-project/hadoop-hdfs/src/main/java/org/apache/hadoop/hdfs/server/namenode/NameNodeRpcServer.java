@@ -1371,9 +1371,9 @@ class NameNodeRpcServer implements NamenodeProtocols {
           +"from "+nodeReg+" "+receivedAndDeletedBlocks.length
           +" blocks.");
     }
-    final BlockManager bm = namesystem.getBlockManager();
+    final BlockManager blockManager = namesystem.getBlockManager();
     for (final StorageReceivedDeletedBlocks r : receivedAndDeletedBlocks) {
-      bm.enqueueBlockOp(new Runnable() {
+      blockManager.enqueueBlockOp(new Runnable() {
         @Override
         public void run() {
           try {

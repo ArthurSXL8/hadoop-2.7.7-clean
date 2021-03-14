@@ -74,7 +74,6 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.JvmPauseMonitor;
 import org.apache.hadoop.util.ServicePlugin;
 import org.apache.hadoop.util.StringUtils;
-import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -601,7 +600,7 @@ public class NameNode implements NameNodeStatusMXBean {
   }
 
   protected void loadNamesystem(Configuration conf) throws IOException {
-    this.namesystem = FSNamesystem.loadFromDisk(conf);
+    this.namesystem = FSNamesystem.loadFSImage(conf);
   }
 
   NamenodeRegistration getRegistration() {
@@ -1029,7 +1028,7 @@ public class NameNode implements NameNodeStatusMXBean {
     
     FSImage fsImage = new FSImage(conf, nameDirsToFormat, editDirsToFormat);
     try {
-      FSNamesystem fsn = new FSNamesystem(conf, fsImage);
+      FSNamesystem namesystem = new FSNamesystem(conf, fsImage);
       fsImage.getEditLog().initJournalsForWrite();
 
       // Abort NameNode format if reformat is disabled and if
@@ -1051,7 +1050,7 @@ public class NameNode implements NameNodeStatusMXBean {
         return true; // aborted
       }
 
-      fsImage.format(fsn, clusterId);
+      fsImage.format(namesystem, clusterId);
     } catch (IOException ioe) {
       LOG.warn("Encountered exception during format: ", ioe);
       fsImage.close();
@@ -1132,11 +1131,11 @@ public class NameNode implements NameNodeStatusMXBean {
     NNStorage existingStorage = null;
     FSImage sharedEditsImage = null;
     try {
-      FSNamesystem fsns =
-          FSNamesystem.loadFromDisk(getConfigurationWithoutSharedEdits(conf));
+      FSNamesystem namesystem =
+          FSNamesystem.loadFSImage(getConfigurationWithoutSharedEdits(conf));
       
-      existingStorage = fsns.getFSImage().getStorage();
-      NamespaceInfo nsInfo = existingStorage.getNamespaceInfo();
+      existingStorage = namesystem.getFSImage().getStorage();
+      NamespaceInfo namespaceInfo = existingStorage.getNamespaceInfo();
       
       List<URI> sharedEditsDirs = FSNamesystem.getSharedEditsDirs(conf);
       
@@ -1153,16 +1152,16 @@ public class NameNode implements NameNodeStatusMXBean {
       // Call Storage.format instead of FSImage.format here, since we don't
       // actually want to save a checkpoint - just prime the dirs with
       // the existing namespace info
-      newSharedStorage.format(nsInfo);
-      sharedEditsImage.getEditLog().formatNonFileJournals(nsInfo);
+      newSharedStorage.format(namespaceInfo);
+      sharedEditsImage.getEditLog().formatNonFileJournals(namespaceInfo);
 
       // Need to make sure the edit log segments are in good shape to initialize
       // the shared edits dir.
-      fsns.getFSImage().getEditLog().close();
-      fsns.getFSImage().getEditLog().initJournalsForWrite();
-      fsns.getFSImage().getEditLog().recoverUnclosedStreams();
+      namesystem.getFSImage().getEditLog().close();
+      namesystem.getFSImage().getEditLog().initJournalsForWrite();
+      namesystem.getFSImage().getEditLog().recoverUnclosedStreams();
 
-      copyEditLogSegmentsToSharedDir(fsns, sharedEditsDirs, newSharedStorage,
+      copyEditLogSegmentsToSharedDir(namesystem, sharedEditsDirs, newSharedStorage,
           conf);
     } catch (IOException ioe) {
       LOG.error("Could not initialize shared edits dir", ioe);
@@ -1258,7 +1257,7 @@ public class NameNode implements NameNodeStatusMXBean {
     String namenodeId = HAUtil.getNameNodeId(conf, nsId);
     initializeGenericKeys(conf, nsId, namenodeId);
 
-    FSNamesystem nsys = new FSNamesystem(conf, new FSImage(conf));
+    FSNamesystem namesystem = new FSNamesystem(conf, new FSImage(conf));
     System.err.print(
         "\"rollBack\" will remove the current state of the file system,\n"
         + "returning you to the state prior to initiating your recent.\n"
@@ -1271,7 +1270,7 @@ public class NameNode implements NameNodeStatusMXBean {
         return true;
       }
     }
-    nsys.getFSImage().doRollback(nsys);
+    namesystem.getFSImage().doRollback(namesystem);
     return false;
   }
 
@@ -1440,10 +1439,10 @@ public class NameNode implements NameNodeStatusMXBean {
     MetaRecoveryContext.LOG.info("starting recovery...");
     UserGroupInformation.setConfiguration(conf);
     NameNode.initMetrics(conf, startOpt.toNodeRole());
-    FSNamesystem fsn = null;
+    FSNamesystem namesystem = null;
     try {
-      fsn = FSNamesystem.loadFromDisk(conf);
-      fsn.getFSImage().saveNamespace(fsn);
+      namesystem = FSNamesystem.loadFSImage(conf);
+      namesystem.getFSImage().saveNamespace(namesystem);
       MetaRecoveryContext.LOG.info("RECOVERY COMPLETE");
     } catch (IOException e) {
       MetaRecoveryContext.LOG.info("RECOVERY FAILED: caught exception", e);
@@ -1452,8 +1451,8 @@ public class NameNode implements NameNodeStatusMXBean {
       MetaRecoveryContext.LOG.info("RECOVERY FAILED: caught exception", e);
       throw e;
     } finally {
-      if (fsn != null)
-        fsn.close();
+      if (namesystem != null)
+        namesystem.close();
     }
   }
 
@@ -1470,9 +1469,9 @@ public class NameNode implements NameNodeStatusMXBean {
     final String namenodeId = HAUtil.getNameNodeId(conf, nsId);
     NameNode.initializeGenericKeys(conf, nsId, namenodeId);
     final FSImage fsImage = new FSImage(conf);
-    final FSNamesystem fs = new FSNamesystem(conf, fsImage, false);
+    final FSNamesystem namesystem = new FSNamesystem(conf, fsImage, false);
     return fsImage.recoverTransitionRead(
-      StartupOption.METADATAVERSION, fs, null);
+      StartupOption.METADATAVERSION, namesystem, null);
   }
 
   public static NameNode createNameNode(String argv[], Configuration conf)

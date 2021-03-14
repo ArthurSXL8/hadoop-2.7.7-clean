@@ -40,7 +40,7 @@ public class DatanodeRegistration extends DatanodeID
   private final StorageInfo storageInfo;
   private ExportedBlockKeys exportedKeys;
   private final String softwareVersion;
-  private NamespaceInfo nsInfo;
+  private NamespaceInfo namespaceInfo;
 
   @VisibleForTesting
   public DatanodeRegistration(String uuid, DatanodeRegistration dnr) {
@@ -80,11 +80,11 @@ public class DatanodeRegistration extends DatanodeID
   }
 
   public void setNamespaceInfo(NamespaceInfo nsInfo) {
-    this.nsInfo = nsInfo;
+    this.namespaceInfo = nsInfo;
   }
 
   public NamespaceInfo getNamespaceInfo() {
-    return nsInfo;
+    return namespaceInfo;
   }
   
   @Override // NodeRegistration

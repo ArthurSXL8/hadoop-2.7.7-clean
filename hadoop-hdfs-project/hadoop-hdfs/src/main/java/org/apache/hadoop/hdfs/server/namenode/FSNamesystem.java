@@ -434,9 +434,9 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
   volatile Daemon smmthread = null;  // SafeModeMonitor thread
   
-  Daemon nnrmthread = null; // NamenodeResourceMonitor thread
+  Daemon namenodeResourceMonitorDaemon = null; // NamenodeResourceMonitor thread
 
-  Daemon nnEditLogRoller = null; // NameNodeEditLogRoller thread
+  Daemon namenodeEditLogRollerDaemon = null; // NameNodeEditLogRoller thread
 
   // A daemon to periodically clean up corrupt lazyPersist files
   // from the name space.
@@ -669,7 +669,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
    * @return an FSNamesystem which contains the loaded namespace
    * @throws IOException if loading fails
    */
-  static FSNamesystem loadFromDisk(Configuration conf) throws IOException {
+  static FSNamesystem loadFSImage(Configuration conf) throws IOException {
 
     checkConfiguration(conf);
     FSImage fsImage = new FSImage(conf,
@@ -707,7 +707,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
    * Create an FSNamesystem associated with the specified image.
    * 
    * Note that this does not load any data off of disk -- if you would
-   * like that behavior, use {@link #loadFromDisk(Configuration)}
+   * like that behavior, use {@link #loadFSImage(Configuration)}
    *
    * @param conf configuration
    * @param fsImage The FSImage to associate with
@@ -1184,12 +1184,12 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       startSecretManagerIfNecessary();
 
       //ResourceMonitor required only at ActiveNN. See HDFS-2914
-      this.nnrmthread = new Daemon(new NameNodeResourceMonitor());
-      nnrmthread.start();
+      this.namenodeResourceMonitorDaemon = new Daemon(new NameNodeResourceMonitor());
+      namenodeResourceMonitorDaemon.start();
 
-      nnEditLogRoller = new Daemon(new NameNodeEditLogRoller(
+      namenodeEditLogRollerDaemon = new Daemon(new NameNodeEditLogRoller(
           editLogRollerThreshold, editLogRollerInterval));
-      nnEditLogRoller.start();
+      namenodeEditLogRollerDaemon.start();
 
       if (lazyPersistFileScrubIntervalSec > 0) {
         lazyPersistFileScrubber = new Daemon(new LazyPersistFileScrubber(
@@ -1242,13 +1242,13 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     try {
       stopSecretManager();
       leaseManager.stopMonitor();
-      if (nnrmthread != null) {
-        ((NameNodeResourceMonitor) nnrmthread.getRunnable()).stopMonitor();
-        nnrmthread.interrupt();
+      if (namenodeResourceMonitorDaemon != null) {
+        ((NameNodeResourceMonitor) namenodeResourceMonitorDaemon.getRunnable()).stopMonitor();
+        namenodeResourceMonitorDaemon.interrupt();
       }
-      if (nnEditLogRoller != null) {
-        ((NameNodeEditLogRoller)nnEditLogRoller.getRunnable()).stop();
-        nnEditLogRoller.interrupt();
+      if (namenodeEditLogRollerDaemon != null) {
+        ((NameNodeEditLogRoller) namenodeEditLogRollerDaemon.getRunnable()).stop();
+        namenodeEditLogRollerDaemon.interrupt();
       }
       if (lazyPersistFileScrubber != null) {
         ((LazyPersistFileScrubber) lazyPersistFileScrubber.getRunnable()).stop();

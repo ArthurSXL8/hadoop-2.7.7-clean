@@ -123,7 +123,7 @@ public class TestSaveNamespace {
     Configuration conf = getConf();
     NameNode.initMetrics(conf, NamenodeRole.NAMENODE);
     DFSTestUtil.formatNameNode(conf);
-    FSNamesystem fsn = FSNamesystem.loadFromDisk(conf);
+    FSNamesystem fsn = FSNamesystem.loadFSImage(conf);
 
     // Replace the FSImage with a spy
     FSImage originalImage = fsn.getFSImage();
@@ -207,7 +207,7 @@ public class TestSaveNamespace {
 
       // Start a new namesystem, which should be able to recover
       // the namespace from the previous incarnation.
-      fsn = FSNamesystem.loadFromDisk(conf);
+      fsn = FSNamesystem.loadFSImage(conf);
 
       // Make sure the image loaded including our edits.
       checkEditExists(fsn, 1);
@@ -232,7 +232,7 @@ public class TestSaveNamespace {
 
     NameNode.initMetrics(conf, NamenodeRole.NAMENODE);
     DFSTestUtil.formatNameNode(conf);
-    FSNamesystem fsn = FSNamesystem.loadFromDisk(conf);
+    FSNamesystem fsn = FSNamesystem.loadFSImage(conf);
 
     // Replace the FSImage with a spy
     FSImage originalImage = fsn.getFSImage();
@@ -287,7 +287,7 @@ public class TestSaveNamespace {
       // Start a new namesystem, which should be able to recover
       // the namespace from the previous incarnation.
       LOG.info("Loading new FSmage from disk.");
-      fsn = FSNamesystem.loadFromDisk(conf);
+      fsn = FSNamesystem.loadFSImage(conf);
 
       // Make sure the image loaded including our edit.
       LOG.info("Checking reloaded image.");
@@ -366,7 +366,7 @@ public class TestSaveNamespace {
     Configuration conf = getConf();
     NameNode.initMetrics(conf, NamenodeRole.NAMENODE);
     DFSTestUtil.formatNameNode(conf);
-    FSNamesystem fsn = FSNamesystem.loadFromDisk(conf);
+    FSNamesystem fsn = FSNamesystem.loadFSImage(conf);
 
     // Replace the FSImage with a spy
     final FSImage originalImage = fsn.getFSImage();
@@ -414,7 +414,7 @@ public class TestSaveNamespace {
 
       // Start a new namesystem, which should be able to recover
       // the namespace from the previous incarnation.
-      fsn = FSNamesystem.loadFromDisk(conf);
+      fsn = FSNamesystem.loadFSImage(conf);
 
       // Make sure the image loaded including our edits.
       checkEditExists(fsn, 1);
@@ -430,7 +430,7 @@ public class TestSaveNamespace {
     Configuration conf = getConf();
     NameNode.initMetrics(conf, NamenodeRole.NAMENODE);
     DFSTestUtil.formatNameNode(conf);
-    FSNamesystem fsn = FSNamesystem.loadFromDisk(conf);
+    FSNamesystem fsn = FSNamesystem.loadFSImage(conf);
 
     try {
       doAnEdit(fsn, 1);
@@ -449,7 +449,7 @@ public class TestSaveNamespace {
 
       // Start a new namesystem, which should be able to recover
       // the namespace from the previous incarnation.
-      fsn = FSNamesystem.loadFromDisk(conf);
+      fsn = FSNamesystem.loadFSImage(conf);
 
       // Make sure the image loaded including our edits.
       checkEditExists(fsn, 1);
@@ -466,7 +466,7 @@ public class TestSaveNamespace {
     Configuration conf = getConf();
     NameNode.initMetrics(conf, NamenodeRole.NAMENODE);
     DFSTestUtil.formatNameNode(conf);
-    FSNamesystem fsn = FSNamesystem.loadFromDisk(conf);
+    FSNamesystem fsn = FSNamesystem.loadFSImage(conf);
 
     try {
       // We have a BEGIN_LOG_SEGMENT txn to start
@@ -488,7 +488,7 @@ public class TestSaveNamespace {
       assertEquals(5, fsn.getEditLog().getLastWrittenTxId());
       fsn = null;
       
-      fsn = FSNamesystem.loadFromDisk(conf);
+      fsn = FSNamesystem.loadFSImage(conf);
       // 1 more txn to start new segment on restart
       assertEquals(6, fsn.getEditLog().getLastWrittenTxId());
       
@@ -532,7 +532,7 @@ public class TestSaveNamespace {
     Configuration conf = getConf();
     NameNode.initMetrics(conf, NamenodeRole.NAMENODE);
     DFSTestUtil.formatNameNode(conf);
-    FSNamesystem fsn = FSNamesystem.loadFromDisk(conf);
+    FSNamesystem fsn = FSNamesystem.loadFSImage(conf);
 
     // Replace the FSImage with a spy
     final FSImage image = fsn.getFSImage();

@@ -277,17 +277,6 @@ public class DataNode extends ReconfigurableBase
   static{
     HdfsConfiguration.init();
   }
-
-  public static final String DN_CLIENTTRACE_FORMAT =
-        "src: %s" +      // src IP
-        ", dest: %s" +   // dst IP
-        ", bytes: %s" +  // byte count
-        ", op: %s" +     // operation
-        ", cliID: %s" +  // DFSClient id
-        ", offset: %s" + // offset
-        ", srvID: %s" +  // DatanodeRegistration
-        ", blockid: %s" + // block id
-        ", duration: %s";  // duration time
         
   static final Log ClientTraceLog =
     LogFactory.getLog(DataNode.class.getName() + ".clienttrace");
@@ -319,7 +308,7 @@ public class DataNode extends ReconfigurableBase
   final AtomicInteger xmitsInProgress = new AtomicInteger();
   Daemon dataXceiverServerDaemon = null;
   DataXceiverServer dataXceiverServer = null;
-  Daemon localDataXceiverServer = null;
+  Daemon domainPeerDataXceiverServerDaemon = null;
   ShortCircuitRegistry shortCircuitRegistry = null;
   ThreadGroup threadGroup = null;
   private DNConf dnConf;
@@ -521,9 +510,9 @@ public class DataNode extends ReconfigurableBase
   @VisibleForTesting
   static class ChangedVolumes {
     /** The storage locations of the newly added volumes. */
-    List<StorageLocation> newLocations = Lists.newArrayList();
+    List<StorageLocation> addedStorageLocations = Lists.newArrayList();
     /** The storage locations of the volumes that are removed. */
-    List<StorageLocation> deactivateLocations = Lists.newArrayList();
+    List<StorageLocation> removedStorageLocations = Lists.newArrayList();
     /** The unchanged locations that existed in the old configuration. */
     List<StorageLocation> unchangedLocations = Lists.newArrayList();
   }
@@ -547,13 +536,13 @@ public class DataNode extends ReconfigurableBase
     }
 
     ChangedVolumes results = new ChangedVolumes();
-    results.newLocations.addAll(locations);
+    results.addedStorageLocations.addAll(locations);
 
     for (Iterator<Storage.StorageDirectory> it = dataStorage.dirIterator();
          it.hasNext(); ) {
       Storage.StorageDirectory dir = it.next();
       boolean found = false;
-      for (Iterator<StorageLocation> sl = results.newLocations.iterator();
+      for (Iterator<StorageLocation> sl = results.addedStorageLocations.iterator();
            sl.hasNext(); ) {
         StorageLocation location = sl.next();
         if (location.getFile().getCanonicalPath().equals(
@@ -566,7 +555,7 @@ public class DataNode extends ReconfigurableBase
       }
 
       if (!found) {
-        results.deactivateLocations.add(
+        results.removedStorageLocations.add(
             StorageLocation.parse(dir.getRoot().toString()));
       }
     }
@@ -593,13 +582,13 @@ public class DataNode extends ReconfigurableBase
     }
 
     try {
-      if (numOldDataDirs + changedVolumes.newLocations.size() -
-          changedVolumes.deactivateLocations.size() <= 0) {
+      if (numOldDataDirs + changedVolumes.addedStorageLocations.size() -
+          changedVolumes.removedStorageLocations.size() <= 0) {
         throw new IOException("Attempt to remove all volumes.");
       }
-      if (!changedVolumes.newLocations.isEmpty()) {
+      if (!changedVolumes.addedStorageLocations.isEmpty()) {
         LOG.info("Adding new volumes: " +
-            Joiner.on(",").join(changedVolumes.newLocations));
+            Joiner.on(",").join(changedVolumes.addedStorageLocations));
 
         // Add volumes for each Namespace
         final List<NamespaceInfo> nsInfos = Lists.newArrayList();
@@ -607,9 +596,9 @@ public class DataNode extends ReconfigurableBase
           nsInfos.add(bpos.getNamespaceInfo());
         }
         ExecutorService service = Executors.newFixedThreadPool(
-            changedVolumes.newLocations.size());
+            changedVolumes.addedStorageLocations.size());
         List<Future<IOException>> exceptions = Lists.newArrayList();
-        for (final StorageLocation location : changedVolumes.newLocations) {
+        for (final StorageLocation location : changedVolumes.addedStorageLocations) {
           exceptions.add(service.submit(new Callable<IOException>() {
             @Override
             public IOException call() {
@@ -623,8 +612,8 @@ public class DataNode extends ReconfigurableBase
           }));
         }
 
-        for (int i = 0; i < changedVolumes.newLocations.size(); i++) {
-          StorageLocation volume = changedVolumes.newLocations.get(i);
+        for (int i = 0; i < changedVolumes.addedStorageLocations.size(); i++) {
+          StorageLocation volume = changedVolumes.addedStorageLocations.get(i);
           Future<IOException> ioExceptionFuture = exceptions.get(i);
           try {
             IOException ioe = ioExceptionFuture.get();
@@ -647,7 +636,7 @@ public class DataNode extends ReconfigurableBase
       }
 
       try {
-        removeVolumes(changedVolumes.deactivateLocations);
+        removeVolumes(changedVolumes.removedStorageLocations);
       } catch (IOException e) {
         errorMessageBuilder.append(e.getMessage());
         LOG.error("Failed to remove volume: " + e.getMessage(), e);
@@ -960,7 +949,7 @@ public class DataNode extends ReconfigurableBase
       DomainPeerServer domainPeerServer =
                 getDomainPeerServer(conf, streamingAddress.getPort());
       if (domainPeerServer != null) {
-        this.localDataXceiverServer = new Daemon(threadGroup,
+        this.domainPeerDataXceiverServerDaemon = new Daemon(threadGroup,
             new DataXceiverServer(domainPeerServer, conf, this));
         LOG.info("Listening on UNIX domain socket: " +
             domainPeerServer.getBindPath());
@@ -988,7 +977,7 @@ public class DataNode extends ReconfigurableBase
     if (DomainSocket.getLoadingFailureReason() != null) {
       throw new RuntimeException("Although a UNIX domain socket " +
           "path is configured as " + domainSocketPath + ", we cannot " +
-          "start a localDataXceiverServer because " +
+          "start a domainPeerDataXceiverServerDaemon because " +
           DomainSocket.getLoadingFailureReason());
     }
     DomainPeerServer domainPeerServer =
@@ -1754,9 +1743,9 @@ public class DataNode extends ReconfigurableBase
     // Record the time of initial notification
     long timeNotified = Time.monotonicNow();
 
-    if (localDataXceiverServer != null) {
-      ((DataXceiverServer) this.localDataXceiverServer.getRunnable()).kill();
-      this.localDataXceiverServer.interrupt();
+    if (domainPeerDataXceiverServerDaemon != null) {
+      ((DataXceiverServer) this.domainPeerDataXceiverServerDaemon.getRunnable()).kill();
+      this.domainPeerDataXceiverServerDaemon.interrupt();
     }
 
     // Terminate directory scanner and block scanner
@@ -1816,10 +1805,10 @@ public class DataNode extends ReconfigurableBase
       } catch (InterruptedException ie) {
       }
     }
-    if (this.localDataXceiverServer != null) {
-      // wait for localDataXceiverServer to terminate
+    if (this.domainPeerDataXceiverServerDaemon != null) {
+      // wait for domainPeerDataXceiverServerDaemon to terminate
       try {
-        this.localDataXceiverServer.join();
+        this.domainPeerDataXceiverServerDaemon.join();
       } catch (InterruptedException ie) {
       }
     }
@@ -2302,8 +2291,8 @@ public class DataNode extends ReconfigurableBase
 
     // start dataXceiveServer
     dataXceiverServerDaemon.start();
-    if (localDataXceiverServer != null) {
-      localDataXceiverServer.start();
+    if (domainPeerDataXceiverServerDaemon != null) {
+      domainPeerDataXceiverServerDaemon.start();
     }
     ipcServer.start();
     startPlugins(conf);

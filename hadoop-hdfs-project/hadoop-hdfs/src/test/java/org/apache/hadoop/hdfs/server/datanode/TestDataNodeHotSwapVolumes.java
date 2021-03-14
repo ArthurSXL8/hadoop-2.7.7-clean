@@ -225,14 +225,14 @@ public class TestDataNodeHotSwapVolumes {
 
     DataNode.ChangedVolumes changedVolumes =
         dn.parseChangedVolumes(newPaths);
-    List<StorageLocation> newVolumes = changedVolumes.newLocations;
+    List<StorageLocation> newVolumes = changedVolumes.addedStorageLocations;
     assertEquals(2, newVolumes.size());
     assertEquals(new File("/foo/path1").getAbsolutePath(),
       newVolumes.get(0).getFile().getAbsolutePath());
     assertEquals(new File("/foo/path2").getAbsolutePath(),
       newVolumes.get(1).getFile().getAbsolutePath());
 
-    List<StorageLocation> removedVolumes = changedVolumes.deactivateLocations;
+    List<StorageLocation> removedVolumes = changedVolumes.removedStorageLocations;
     assertEquals(1, removedVolumes.size());
     assertEquals(oldLocations.get(1).getFile(),
         removedVolumes.get(0).getFile());
