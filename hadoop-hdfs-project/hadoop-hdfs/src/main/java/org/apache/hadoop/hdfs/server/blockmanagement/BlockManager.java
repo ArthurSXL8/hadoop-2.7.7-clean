@@ -2397,8 +2397,8 @@ public class BlockManager {
     }
 
     // Now check for completion of blocks and safe block count
-    ReplicaCount num = getReplicaCount(storedBlock);
-    int numLiveReplicas = num.liveReplicas();
+    ReplicaCount replicaCount = getReplicaCount(storedBlock);
+    int numLiveReplicas = replicaCount.liveReplicas();
     int numCurrentReplica = numLiveReplicas
       + pendingReplicationBlocks.getNumReplicas(storedBlock);
 
@@ -2428,7 +2428,7 @@ public class BlockManager {
     short fileReplication = bc.getBlockReplication();
     if (!isNeededReplication(storedBlock, fileReplication, numCurrentReplica)) {
       underReplicatedBlocks.remove(storedBlock, numCurrentReplica,
-          num.decommissionedAndDecommissioning(), fileReplication);
+          replicaCount.decommissionedAndDecommissioning(), fileReplication);
     } else {
       updateNeededReplications(storedBlock, curReplicaDelta, 0);
     }
@@ -2438,7 +2438,7 @@ public class BlockManager {
     // If the file replication has reached desired value
     // we can remove any corrupt replicas the block may have
     int corruptReplicasCount = corruptReplicasMap.numCorruptReplicas(storedBlock);
-    int numCorruptNodes = num.corruptReplicas();
+    int numCorruptNodes = replicaCount.corruptReplicas();
     if (numCorruptNodes != corruptReplicasCount) {
       LOG.warn("Inconsistent number of corrupt replicas for " +
           storedBlock + "blockMap has " + numCorruptNodes + 
