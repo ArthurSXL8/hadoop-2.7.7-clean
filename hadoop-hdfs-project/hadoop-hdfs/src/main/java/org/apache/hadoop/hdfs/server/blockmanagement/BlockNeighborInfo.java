@@ -90,11 +90,11 @@ public class BlockNeighborInfo extends Block
   }
 
   public DatanodeDescriptor getDatanode(int index) {
-    DatanodeStorageInfo storage = getStorageInfo(index);
+    DatanodeStorageInfo storage = getStorageInfoFromTriplets(index);
     return storage == null ? null : storage.getDatanodeDescriptor();
   }
 
-  DatanodeStorageInfo getStorageInfo(int index) {
+  DatanodeStorageInfo getStorageInfoFromTriplets(int index) {
     assert this.triplets != null : "BlockInfo is not initialized";
     assert index >= 0 && index*3 < triplets.length : "Index is out of bound";
     return (DatanodeStorageInfo)triplets[index*3];
@@ -111,18 +111,10 @@ public class BlockNeighborInfo extends Block
   }
 
   BlockNeighborInfo getNext(int index) {
-    assert this.triplets != null : "BlockInfo is not initialized";
-    assert index >= 0 && index * 3 + 2 < triplets.length : "Index is out of bound";
-    BlockNeighborInfo info = (BlockNeighborInfo)triplets[index * 3 + 2];
-    assert info == null || info.getClass().getName().startsWith(
-        BlockNeighborInfo.class.getName()) :
-        "BlockInfo is expected at " + index * 3;
-    return info;
+    return (BlockNeighborInfo)triplets[index * 3 + 2];
   }
 
   private void setStorageInfo(int index, DatanodeStorageInfo storage) {
-    assert this.triplets != null : "BlockInfo is not initialized";
-    assert index >= 0 && index * 3 < triplets.length : "Index is out of bound";
     triplets[index * 3] = storage;
   }
 
@@ -135,8 +127,6 @@ public class BlockNeighborInfo extends Block
    * @return current previous block on the list of blocks
    */
   private BlockNeighborInfo setPrevious(int index, BlockNeighborInfo to) {
-    assert this.triplets != null : "BlockInfo is not initialized";
-    assert index >= 0 && index*3+1 < triplets.length : "Index is out of bound";
     BlockNeighborInfo info = (BlockNeighborInfo)triplets[index * 3 + 1];
     triplets[index * 3 + 1] = to;
     return info;
@@ -151,16 +141,12 @@ public class BlockNeighborInfo extends Block
    *    * @return current next block on the list of blocks
    */
   private BlockNeighborInfo setNext(int index, BlockNeighborInfo next) {
-    assert this.triplets != null : "BlockInfo is not initialized";
-    assert index >= 0 && index*3+2 < triplets.length : "Index is out of bound";
     BlockNeighborInfo blockNeighborInfo = (BlockNeighborInfo)triplets[index * 3 + 2];
     triplets[index * 3 + 2] = next;
     return blockNeighborInfo;
   }
 
   public int getCapacity() {
-    assert this.triplets != null : "BlockInfo is not initialized";
-    assert triplets.length % 3 == 0 : "Malformed BlockInfo";
     return triplets.length / 3;
   }
 
@@ -169,7 +155,6 @@ public class BlockNeighborInfo extends Block
    * @return first free triplet index.
    */
   private int ensureCapacity(int num) {
-    assert this.triplets != null : "BlockInfo is not initialized";
     int last = numNodes();
     if(triplets.length >= (last+num)*3)
       return last;
@@ -185,8 +170,6 @@ public class BlockNeighborInfo extends Block
    * Count the number of data-nodes the block belongs to.
    */
   public int numNodes() {
-    assert this.triplets != null : "BlockInfo is not initialized";
-    assert triplets.length % 3 == 0 : "Malformed BlockInfo";
     for(int idx = getCapacity()-1; idx >= 0; idx--) {
       if(getDatanode(idx) != null)
         return idx+1;
@@ -218,7 +201,7 @@ public class BlockNeighborInfo extends Block
     // find the last not null node
     int lastNode = numNodes()-1; 
     // replace current node triplet by the lastNode one 
-    setStorageInfo(dnIndex, getStorageInfo(lastNode));
+    setStorageInfo(dnIndex, getStorageInfoFromTriplets(lastNode));
     setNext(dnIndex, getNext(lastNode)); 
     setPrevious(dnIndex, getPrevious(lastNode)); 
     // set the last triplet to null
@@ -253,7 +236,7 @@ public class BlockNeighborInfo extends Block
   DatanodeStorageInfo findStorageInfo(DatanodeDescriptor dn) {
     int len = getCapacity();
     for(int idx = 0; idx < len; idx++) {
-      DatanodeStorageInfo cur = getStorageInfo(idx);
+      DatanodeStorageInfo cur = getStorageInfoFromTriplets(idx);
       if(cur == null)
         break;
       if(cur.getDatanodeDescriptor() == dn)
@@ -266,14 +249,14 @@ public class BlockNeighborInfo extends Block
    * Find specified DatanodeStorageInfo.
    * @return index or -1 if not found.
    */
-  int findStorageInfo(DatanodeStorageInfo storageInfo) {
+  int findStorageInfo(DatanodeStorageInfo target) {
     int len = getCapacity();
-    for(int idx = 0; idx < len; idx++) {
-      DatanodeStorageInfo cur = getStorageInfo(idx);
-      if (cur == storageInfo) {
-        return idx;
+    for(int i = 0; i < len; i++) {
+      DatanodeStorageInfo datanodeStorageInfo = getStorageInfoFromTriplets(i);
+      if (datanodeStorageInfo == target) {
+        return i;
       }
-      if (cur == null) {
+      if (datanodeStorageInfo == null) {
         break;
       }
     }

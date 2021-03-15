@@ -1078,15 +1078,15 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     this.haContext = haContext;
     try {
       /*****************************************************************************************************
-       *TODO-ZH starzy https://www.cnblogs.com/starzy
-       * 注释： 进行资源检查，通过core-site.xml hdfs-site.xml文件获取元数据存储目录
+       *
+       * 进行资源检查，通过core-site.xml hdfs-site.xml文件获取元数据存储目录
        *        （1）NameNode 的两个目录：存储fsImage目录、存储editLog目录。但是一般情况下这两个目录使用同一个目录
        *
        */
       nnResourceChecker = new NameNodeResourceChecker(conf);
       // TODO-ZH 检查是否有足够粗盘存储元数据
       checkAvailableResources();
-      assert safeMode != null && !isPopulatingReplQueues();
+      assert safeMode != null && !isPopulatingReplicationQueues();
       StartupProgress prog = NameNode.getStartupProgress();
       prog.beginPhase(Phase.SAFEMODE);
       prog.setTotal(Phase.SAFEMODE, STEP_AWAITING_REPORTED_BLOCKS,
@@ -3107,18 +3107,15 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     Node clientNode = null;
     String clientMachine = null;
 
-    NameNode.stateChangeLog.debug("BLOCK* getAdditionalBlock: {}  inodeId {}" +
-        " for {}", src, fileId, clientName);
-
     checkOperation(OperationCategory.READ);
-    FSPermissionChecker pc = getPermissionChecker();
+    FSPermissionChecker fsPermissionChecker = getPermissionChecker();
     readLock();
     try {
       checkOperation(OperationCategory.READ);
-      INodesInPath iip = fsVolatileNamespace.resolvePath(pc, src, fileId);
-      src = iip.getPath();
+      INodesInPath iNodesInPath = fsVolatileNamespace.resolvePath(fsPermissionChecker, src, fileId);
+      src = iNodesInPath.getPath();
       FileState fileState = analyzeFileState(
-          iip, fileId, clientName, previous, onRetryBlock);
+          iNodesInPath, fileId, clientName, previous, onRetryBlock);
       if (onRetryBlock[0] != null && onRetryBlock[0].getLocations().length > 0) {
         // This is a retry. No need to generate new locations.
         // Use the last block if it has locations.
@@ -5248,7 +5245,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     private synchronized void leave() {
       // if not done yet, initialize replication queues.
       // In the standby, do not populate repl queues
-      if (!isPopulatingReplQueues() && shouldPopulateReplQueues()) {
+      if (!isPopulatingReplicationQueues() && shouldPopulateReplQueues()) {
         initializeReplQueues();
       }
       long timeInSafemode = now() - startTime;
@@ -5355,7 +5352,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
         // TODO-ZH 进入安全模式
         enter();
         // check if we are ready to initialize replication queues
-        if (canInitializeReplQueues() && !isPopulatingReplQueues()
+        if (canInitializeReplQueues() && !isPopulatingReplicationQueues()
             && !haEnabled) {
           initializeReplQueues();
         }
@@ -5382,7 +5379,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       }
 
       // check if we are ready to initialize replication queues
-      if (canInitializeReplQueues() && !isPopulatingReplQueues() && !haEnabled) {
+      if (canInitializeReplQueues() && !isPopulatingReplicationQueues() && !haEnabled) {
         initializeReplQueues();
       }
     }
@@ -5694,7 +5691,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
    * @return true when node is HAState.Active and not in the very first safemode
    */
   @Override
-  public boolean isPopulatingReplQueues() {
+  public boolean isPopulatingReplicationQueues() {
     if (!shouldPopulateReplQueues()) {
       return false;
     }
@@ -6598,7 +6595,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     readLock();
     try {
       checkOperation(OperationCategory.READ);
-      if (!isPopulatingReplQueues()) {
+      if (!isPopulatingReplicationQueues()) {
         throw new IOException("Cannot run listCorruptFileBlocks because " +
                               "replication queues have not been initialized.");
       }

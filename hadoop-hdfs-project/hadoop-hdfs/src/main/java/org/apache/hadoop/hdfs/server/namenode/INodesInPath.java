@@ -239,34 +239,31 @@ public class INodesInPath {
    * @param inode the new inode
    * @return a new INodesInPath instance
    */
-  public static INodesInPath replace(INodesInPath iip, int pos, INode inode) {
-    Preconditions.checkArgument(iip.length() > 0 && pos > 0 // no for root
-        && pos < iip.length());
-    if (iip.getINode(pos) == null) {
-      Preconditions.checkState(iip.getINode(pos - 1) != null);
+  public static INodesInPath replace(INodesInPath iNodesInPath, int pos, INode inode) {
+    Preconditions.checkArgument(iNodesInPath.length() > 0 && pos > 0 // no for root
+        && pos < iNodesInPath.length());
+    if (iNodesInPath.getINode(pos) == null) {
+      Preconditions.checkState(iNodesInPath.getINode(pos - 1) != null);
     }
-    INode[] inodes = new INode[iip.inodes.length];
-    System.arraycopy(iip.inodes, 0, inodes, 0, inodes.length);
+    INode[] inodes = new INode[iNodesInPath.inodes.length];
+    System.arraycopy(iNodesInPath.inodes, 0, inodes, 0, inodes.length);
     inodes[pos] = inode;
-    return new INodesInPath(inodes, iip.path, iip.isSnapshot, iip.snapshotId);
+    return new INodesInPath(inodes, iNodesInPath.path, iNodesInPath.isSnapshot, iNodesInPath.snapshotId);
   }
 
   /**
    * Extend a given INodesInPath with a child INode. The child INode will be
    * appended to the end of the new INodesInPath.
    */
-  public static INodesInPath append(INodesInPath iip, INode child,
+  public static INodesInPath append(INodesInPath iNodesInPath, INode child,
       byte[] childName) {
-    Preconditions.checkArgument(iip.length() > 0);
-    Preconditions.checkArgument(iip.getLastINode() != null && iip
-        .getLastINode().isDirectory());
-    INode[] inodes = new INode[iip.length() + 1];
-    System.arraycopy(iip.inodes, 0, inodes, 0, inodes.length - 1);
+    INode[] inodes = new INode[iNodesInPath.length() + 1];
+    System.arraycopy(iNodesInPath.inodes, 0, inodes, 0, inodes.length - 1);
     inodes[inodes.length - 1] = child;
-    byte[][] path = new byte[iip.path.length + 1][];
-    System.arraycopy(iip.path, 0, path, 0, path.length - 1);
+    byte[][] path = new byte[iNodesInPath.path.length + 1][];
+    System.arraycopy(iNodesInPath.path, 0, path, 0, path.length - 1);
     path[path.length - 1] = childName;
-    return new INodesInPath(inodes, path, iip.isSnapshot, iip.snapshotId);
+    return new INodesInPath(inodes, path, iNodesInPath.isSnapshot, iNodesInPath.snapshotId);
   }
 
   private final byte[][] path;

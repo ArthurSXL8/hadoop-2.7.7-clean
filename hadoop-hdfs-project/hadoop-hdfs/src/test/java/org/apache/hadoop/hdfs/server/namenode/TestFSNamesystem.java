@@ -132,15 +132,15 @@ public class TestFSNamesystem {
     fsn.enterSafeMode(false);
     assertTrue("FSNamesystem didn't enter safemode", fsn.isInSafeMode());
     assertTrue("Replication queues were being populated during very first "
-        + "safemode", !fsn.isPopulatingReplQueues());
+        + "safemode", !fsn.isPopulatingReplicationQueues());
     fsn.leaveSafeMode();
     assertTrue("FSNamesystem didn't leave safemode", !fsn.isInSafeMode());
     assertTrue("Replication queues weren't being populated even after leaving "
-      + "safemode", fsn.isPopulatingReplQueues());
+      + "safemode", fsn.isPopulatingReplicationQueues());
     fsn.enterSafeMode(false);
     assertTrue("FSNamesystem didn't enter safemode", fsn.isInSafeMode());
     assertTrue("Replication queues weren't being populated after entering "
-      + "safemode 2nd time", fsn.isPopulatingReplQueues());
+      + "safemode 2nd time", fsn.isPopulatingReplicationQueues());
   }
 
   @Test

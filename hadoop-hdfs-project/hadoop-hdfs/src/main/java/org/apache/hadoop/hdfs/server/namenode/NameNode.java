@@ -654,17 +654,13 @@ public class NameNode implements NameNodeStatusMXBean {
     StartupProgressMetrics.register(startupProgress);
 
     if (NamenodeRole.NAMENODE == role) {
-      // TODO-ZH 启动HttpServer开启端口50070，通过浏览器访问此端口可以查看Hadoop运行情况
       startHttpServer(conf);
     }
 
-    this.spanReceiverHost =
-      SpanReceiverHost.get(conf, DFSConfigKeys.DFS_SERVER_HTRACE_PREFIX);
-
-    // TODO-ZH 加载元数据
+    // 加载 FSImage
     loadNamesystem(conf);
 
-    // TODO-ZH 创建Hadoop RPC Server
+    // 创建Hadoop RPC Server
     rpcServer = createRpcServer(conf);
     if (clientNamenodeAddress == null) {
       // This is expected for MiniDFSCluster. Set it now using 
@@ -683,8 +679,8 @@ public class NameNode implements NameNodeStatusMXBean {
     pauseMonitor.start();
     metrics.getJvmMetrics().setPauseMonitor(pauseMonitor);
     /*****************************************************************************************************
-     *TODO-ZH starzy https://www.cnblogs.com/starzy
-     * 注释： 启动一些公共服务。NameNode RPC 服务就是在里面启动的
+     *
+     *  启动一些公共服务。NameNode RPC 服务就是在里面启动的
      *        （1）进行资源检查，检查磁盘是否有足够空间存储元数据
      *        （2）进入安全模式检查，检查是否可以退出安全模式
      */

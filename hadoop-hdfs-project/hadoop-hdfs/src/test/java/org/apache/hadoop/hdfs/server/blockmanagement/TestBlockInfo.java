@@ -56,7 +56,7 @@ public class TestBlockInfo {
     boolean added = blockInfo.addStorage(storage);
 
     Assert.assertTrue(added);
-    Assert.assertEquals(storage, blockInfo.getStorageInfo(0));
+    Assert.assertEquals(storage, blockInfo.getStorageInfoFromTriplets(0));
   }
 
 
@@ -79,7 +79,7 @@ public class TestBlockInfo {
     boolean added =
         storage2.addBlock(blockInfos[NUM_BLOCKS / 2]) == AddBlockResult.ADDED;
     Assert.assertThat(added, is(false));
-    Assert.assertThat(blockInfos[NUM_BLOCKS/2].getStorageInfo(0), is(storage2));
+    Assert.assertThat(blockInfos[NUM_BLOCKS/2].getStorageInfoFromTriplets(0), is(storage2));
   }
 
   @Test

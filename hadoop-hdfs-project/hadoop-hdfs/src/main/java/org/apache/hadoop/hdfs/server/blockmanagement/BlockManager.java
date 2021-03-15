@@ -1019,7 +1019,7 @@ public class BlockManager {
    * datanode and log the operation
    */
   void addToInvalidates(final Block block, final DatanodeInfo datanode) {
-    if (!namesystem.isPopulatingReplQueues()) {
+    if (!namesystem.isPopulatingReplicationQueues()) {
       return;
     }
     invalidateBlocks.add(block, datanode, true);
@@ -1030,7 +1030,7 @@ public class BlockManager {
    * datanodes.
    */
   private void addToInvalidates(Block b) {
-    if (!namesystem.isPopulatingReplQueues()) {
+    if (!namesystem.isPopulatingReplicationQueues()) {
       return;
     }
     StringBuilder datanodes = new StringBuilder();
@@ -1050,7 +1050,7 @@ public class BlockManager {
    * is wiped.
    */
   void removeFromInvalidates(final DatanodeInfo datanode) {
-    if (!namesystem.isPopulatingReplQueues()) {
+    if (!namesystem.isPopulatingReplicationQueues()) {
       return;
     }
     invalidateBlocks.remove(datanode);
@@ -1149,7 +1149,7 @@ public class BlockManager {
         || corruptedDuringWrite) {
       // the block is over-replicated so invalidate the replicas immediately
       invalidateBlock(b, node);
-    } else if (namesystem.isPopulatingReplQueues()) {
+    } else if (namesystem.isPopulatingReplicationQueues()) {
       // add the block to neededReplication
       updateNeededReplications(b.stored, -1, 0);
     }
@@ -1696,40 +1696,40 @@ public class BlockManager {
    * @return true if all known storages of the given DN have finished reporting.
    * @throws IOException
    */
-  public boolean processReport(final DatanodeID nodeID,
-      final DatanodeStorage storage,
+  public boolean processReport(final DatanodeID datanodeID,
+      final DatanodeStorage datanodeStorage,
       final BlockListAsLongs newReport,
       BlockReportContext context) throws IOException {
     namesystem.writeLock();
     final long startTime = Time.monotonicNow(); //after acquiring write lock
     final long endTime;
-    DatanodeDescriptor node;
+    DatanodeDescriptor datanodeDescriptor;
     Collection<Block> invalidatedBlocks = null;
     String strBlockReportId =
         context != null ? Long.toHexString(context.getReportId()) : "";
 
     try {
-      node = datanodeManager.getDatanode(nodeID);
-      if (node == null || !node.isRegistered()) {
+      datanodeDescriptor = datanodeManager.getDatanode(datanodeID);
+      if (datanodeDescriptor == null || !datanodeDescriptor.isRegistered()) {
         throw new IOException(
-            "ProcessReport from dead or unregistered node: " + nodeID);
+            "ProcessReport from dead or unregistered node: " + datanodeID);
       }
 
       // To minimize startup time, we discard any second (or later) block reports
       // that we receive while still in startup phase.
-      DatanodeStorageInfo storageInfo = node.getStorageInfo(storage.getStorageID());
+      DatanodeStorageInfo storageInfo = datanodeDescriptor.getStorageInfo(datanodeStorage.getStorageID());
 
       if (storageInfo == null) {
         // We handle this for backwards compatibility.
-        storageInfo = node.updateStorage(storage);
+        storageInfo = datanodeDescriptor.updateStorage(datanodeStorage);
       }
       if (namesystem.isInStartupSafeMode()
           && storageInfo.getBlockReportCount() > 0) {
         blockLog.info("BLOCK* processReport 0x{}: "
                 + "discarded non-initial block report from {}"
                 + " because namenode still in startup phase",
-            strBlockReportId, nodeID);
-        return !node.hasStaleStorages();
+            strBlockReportId, datanodeID);
+        return !datanodeDescriptor.hasStaleStorages();
       }
 
       if (storageInfo.getBlockReportCount() == 0) {
@@ -1740,7 +1740,7 @@ public class BlockManager {
         invalidatedBlocks = processReport(storageInfo, newReport, context);
       }
       
-      storageInfo.receivedBlockReport();
+      storageInfo.setReceivedBlockReportStatus();
     } finally {
       endTime = Time.monotonicNow();
       namesystem.writeUnlock();
@@ -1750,7 +1750,7 @@ public class BlockManager {
       for (Block b : invalidatedBlocks) {
         blockLog.info("BLOCK* processReport 0x{}: {} on node {} size {} " +
             "does not belong to any file", strBlockReportId,
-            b, node, b.getNumBytes());
+            b, datanodeDescriptor, b.getNumBytes());
       }
     }
 
@@ -1761,10 +1761,10 @@ public class BlockManager {
     }
     blockLog.info("BLOCK* processReport 0x{}: from storage {} node {}, " +
         "blocks: {}, hasStaleStorage: {}, processing time: {} msecs",
-        strBlockReportId, storage.getStorageID(), nodeID,
-        newReport.getNumberOfBlocks(), node.hasStaleStorages(),
+        strBlockReportId, datanodeStorage.getStorageID(), datanodeID,
+        newReport.getNumberOfBlocks(), datanodeDescriptor.hasStaleStorages(),
         (endTime - startTime));
-    return !node.hasStaleStorages();
+    return !datanodeDescriptor.hasStaleStorages();
   }
 
   /**
@@ -1993,10 +1993,10 @@ public class BlockManager {
       newReport = BlockListAsLongs.EMPTY;
     }
     // scan the report and process newly reported blocks
-    for (BlockReportReplica iblk : newReport) {
-      ReplicaState iState = iblk.getState();
+    for (BlockReportReplica blockReportReplica : newReport) {
+      ReplicaState replicaState = blockReportReplica.getState();
       BlockNeighborInfo storedBlock = processReportedBlock(storageInfo,
-          iblk, iState, toAdd, toInvalidate, toCorrupt, toUC);
+          blockReportReplica, replicaState, toAdd, toInvalidate, toCorrupt, toUC);
 
       // move block to the head of the list
       if (storedBlock != null &&
@@ -2055,12 +2055,6 @@ public class BlockManager {
     
     DatanodeDescriptor datanodeDescriptor = storageInfo.getDatanodeDescriptor();
 
-    if(LOG.isDebugEnabled()) {
-      LOG.debug("Reported block " + block
-          + " on " + datanodeDescriptor + " size " + block.getNumBytes()
-          + " replicaState = " + reportedState);
-    }
-  
     if (shouldPostponeBlocksFromFuture &&
         namesystem.isGenStampInFuture(block)) {
       queueReportedBlock(storageInfo, block, reportedState,
@@ -2076,12 +2070,7 @@ public class BlockManager {
       toInvalidate.add(new Block(block));
       return null;
     }
-    BlockUCState ucState = blockNeighborInfo.getBlockUCState();
-    
-    // Block is on the NN
-    if(LOG.isDebugEnabled()) {
-      LOG.debug("In memory blockUCState = " + ucState);
-    }
+    BlockUCState blockUCState = blockNeighborInfo.getBlockUCState();
 
     // Ignore replicas already scheduled to be removed from the DN
     if(invalidateBlocks.contains(datanodeDescriptor, block)) {
@@ -2093,9 +2082,9 @@ public class BlockManager {
       return blockNeighborInfo;
     }
 
-    CorruptedBlockInfo c = checkReplicaCorrupt(
-        block, reportedState, blockNeighborInfo, ucState, datanodeDescriptor);
-    if (c != null) {
+    CorruptedBlockInfo corruptedBlockInfo = checkReplicaCorrupt(
+        block, reportedState, blockNeighborInfo, blockUCState, datanodeDescriptor);
+    if (corruptedBlockInfo != null) {
       if (shouldPostponeBlocksFromFuture) {
         // If the block is an out-of-date generation stamp or state,
         // but we're the standby, we shouldn't treat it as corrupt,
@@ -2106,12 +2095,12 @@ public class BlockManager {
         queueReportedBlock(storageInfo, blockNeighborInfo, reportedState,
             QUEUE_REASON_CORRUPT_STATE);
       } else {
-        toCorrupt.add(c);
+        toCorrupt.add(corruptedBlockInfo);
       }
       return blockNeighborInfo;
     }
 
-    if (isBlockUnderConstruction(blockNeighborInfo, ucState, reportedState)) {
+    if (isBlockUnderConstruction(blockNeighborInfo, blockUCState, reportedState)) {
       toUC.add(new StatefulBlockInfo(
           (BlockNeighborInfoUnderConstruction) blockNeighborInfo,
           new Block(block), reportedState));
@@ -2330,7 +2319,7 @@ public class BlockManager {
   throws IOException {
     assert (storedBlock != null && namesystem.hasWriteLock());
     if (!namesystem.isInStartupSafeMode() 
-        || namesystem.isPopulatingReplQueues()) {
+        || namesystem.isPopulatingReplicationQueues()) {
       addStoredBlock(storedBlock, storageInfo, null, false);
       return;
     }
@@ -2362,7 +2351,6 @@ public class BlockManager {
                                DatanodeDescriptor delNodeHint,
                                boolean logEveryBlock)
   throws IOException {
-    assert block != null && namesystem.hasWriteLock();
     BlockNeighborInfo storedBlock;
     DatanodeDescriptor node = storageInfo.getDatanodeDescriptor();
     if (block instanceof BlockNeighborInfoUnderConstruction) {
@@ -2432,7 +2420,7 @@ public class BlockManager {
     }
 
     // do not try to handle over/under-replicated blocks during first safe mode
-    if (!namesystem.isPopulatingReplQueues()) {
+    if (!namesystem.isPopulatingReplicationQueues()) {
       return storedBlock;
     }
 
@@ -3124,7 +3112,7 @@ public class BlockManager {
    */
   void processOverReplicatedBlocksOnReCommission(
       final DatanodeDescriptor srcNode) {
-    if (!namesystem.isPopulatingReplQueues()) {
+    if (!namesystem.isPopulatingReplicationQueues()) {
       return;
     }
     final Iterator<? extends Block> it = srcNode.getBlockIterator();
@@ -3225,7 +3213,7 @@ public class BlockManager {
       final int curReplicasDelta, int expectedReplicasDelta) {
     namesystem.writeLock();
     try {
-      if (!namesystem.isPopulatingReplQueues()) {
+      if (!namesystem.isPopulatingReplicationQueues()) {
         return;
       }
       ReplicaCount repl = getReplicaCount(block);
@@ -3459,7 +3447,7 @@ public class BlockManager {
       while (namesystem.isRunning()) {
         try {
           // Process replication work only when active NN is out of safe mode.
-          if (namesystem.isPopulatingReplQueues()) {
+          if (namesystem.isPopulatingReplicationQueues()) {
             computeDatanodeWork();
             processPendingReplications();
             rescanPostponedMisreplicatedBlocks();

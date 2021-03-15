@@ -51,7 +51,7 @@ class BlocksMap {
 
     @Override
     public DatanodeStorageInfo next() {
-      return blockNeighborInfo.getStorageInfo(nextIdx++);
+      return blockNeighborInfo.getStorageInfoFromTriplets(nextIdx++);
     }
 
     @Override

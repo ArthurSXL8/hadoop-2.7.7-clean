@@ -265,7 +265,7 @@ public class NameNodeAdapter {
    * @return Replication queue initialization status
    */
   public static boolean safeModeInitializedReplQueues(NameNode nn) {
-    return nn.getNamesystem().isPopulatingReplQueues();
+    return nn.getNamesystem().isPopulatingReplicationQueues();
   }
   
   public static File getInProgressEditsFile(StorageDirectory sd, long startTxId) {

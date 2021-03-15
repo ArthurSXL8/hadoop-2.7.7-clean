@@ -310,7 +310,7 @@ public class DatanodeManager {
   void activate(final Configuration conf) {
     // 启动管理下线DataNode服务
     decommissionManager.activate(conf);
-    // TODO-ZH 管理心跳
+    // 管理心跳
     heartbeatManager.activate(conf);
   }
 
@@ -1186,7 +1186,7 @@ public class DatanodeManager {
     if (!hasClusterEverBeenMultiRack && networktopology.getNumOfRacks() > 1) {
       String message = "DN " + node + " joining cluster has expanded a formerly " +
           "single-rack cluster to be multi-rack. ";
-      if (namesystem.isPopulatingReplQueues()) {
+      if (namesystem.isPopulatingReplicationQueues()) {
         message += "Re-checking all blocks for replication, since they should " +
             "now be replicated cross-rack";
         LOG.info(message);
@@ -1196,7 +1196,7 @@ public class DatanodeManager {
         LOG.debug(message);
       }
       hasClusterEverBeenMultiRack = true;
-      if (namesystem.isPopulatingReplQueues()) {
+      if (namesystem.isPopulatingReplicationQueues()) {
         blockManager.processMisReplicatedBlocks();
       }
     }

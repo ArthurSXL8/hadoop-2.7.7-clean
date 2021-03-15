@@ -40,20 +40,20 @@ public class DatanodeStorageInfo {
     return toDatanodeInfos(Arrays.asList(storages));
   }
   static DatanodeInfo[] toDatanodeInfos(List<DatanodeStorageInfo> storages) {
-    final DatanodeInfo[] datanodes = new DatanodeInfo[storages.size()];
+    final DatanodeInfo[] datanodeInfos = new DatanodeInfo[storages.size()];
     for(int i = 0; i < storages.size(); i++) {
-      datanodes[i] = storages.get(i).getDatanodeDescriptor();
+      datanodeInfos[i] = storages.get(i).getDatanodeDescriptor();
     }
-    return datanodes;
+    return datanodeInfos;
   }
 
   static DatanodeDescriptor[] toDatanodeDescriptors(
       DatanodeStorageInfo[] storages) {
-    DatanodeDescriptor[] datanodes = new DatanodeDescriptor[storages.length];
+    DatanodeDescriptor[] datanodeDescriptors = new DatanodeDescriptor[storages.length];
     for (int i = 0; i < storages.length; ++i) {
-      datanodes[i] = storages[i].getDatanodeDescriptor();
+      datanodeDescriptors[i] = storages[i].getDatanodeDescriptor();
     }
-    return datanodes;
+    return datanodeDescriptors;
   }
 
   public static String[] toStorageIDs(DatanodeStorageInfo[] storages) {
@@ -164,7 +164,7 @@ public class DatanodeStorageInfo {
     heartbeatedSinceFailover = true;
   }
 
-  void receivedBlockReport() {
+  void setReceivedBlockReportStatus() {
     if (heartbeatedSinceFailover) {
       blockContentsStale = false;
     }
@@ -219,17 +219,17 @@ public class DatanodeStorageInfo {
     return blockPoolUsed;
   }
 
-  public AddBlockResult addBlock(BlockNeighborInfo b) {
+  public AddBlockResult addBlock(BlockNeighborInfo blockNeighborInfo) {
     // First check whether the block belongs to a different storage
     // on the same DN.
     AddBlockResult result = AddBlockResult.ADDED;
     DatanodeStorageInfo otherStorage =
-        b.findStorageInfo(getDatanodeDescriptor());
+        blockNeighborInfo.findStorageInfo(getDatanodeDescriptor());
 
     if (otherStorage != null) {
       if (otherStorage != this) {
         // The block belongs to a different storage. Remove it first.
-        otherStorage.removeBlock(b);
+        otherStorage.removeBlock(blockNeighborInfo);
         result = AddBlockResult.REPLACED;
       } else {
         // The block is already associated with this storage.
@@ -238,8 +238,8 @@ public class DatanodeStorageInfo {
     }
 
     // add to the head of the data-node list
-    b.addStorage(this);
-    blockList = b.listInsert(blockList, this);
+    blockNeighborInfo.addStorage(this);
+    blockList = blockNeighborInfo.listInsert(blockList, this);
     numBlocks++;
     return result;
   }
