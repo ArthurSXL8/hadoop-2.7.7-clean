@@ -244,7 +244,7 @@ public class TestBalancerWithNodeGroup {
       
       LocatedBlocks lbs = client.getBlockLocations(filePath.toUri().getPath(), 0,
           length);
-      Set<ExtendedBlock> before = getBlocksOnRack(lbs.getLocatedBlocks(), RACK0);
+      Set<ExtendedBlock> before = getBlocksOnRack(lbs.getLocatedBlockList(), RACK0);
 
       long newCapacity = CAPACITY;
       String newRack = RACK1;
@@ -259,7 +259,7 @@ public class TestBalancerWithNodeGroup {
       runBalancerCanFinish(conf, totalUsedSpace, totalCapacity);
       
       lbs = client.getBlockLocations(filePath.toUri().getPath(), 0, length);
-      Set<ExtendedBlock> after = getBlocksOnRack(lbs.getLocatedBlocks(), RACK0);
+      Set<ExtendedBlock> after = getBlocksOnRack(lbs.getLocatedBlockList(), RACK0);
       assertEquals(before, after);
       
     } finally {

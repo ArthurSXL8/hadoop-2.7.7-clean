@@ -457,7 +457,7 @@ public class NamenodeFsck implements DataEncryptionKeyFactory {
     try {
       blocks = fsn.getBlockLocations(
           fsn.getPermissionChecker(), path, 0, fileLen, false, false)
-          .blocks;
+          .getLocatedBlocks();
     } catch (FileNotFoundException fnfe) {
       blocks = null;
     } finally {
@@ -501,7 +501,7 @@ public class NamenodeFsck implements DataEncryptionKeyFactory {
     int misReplicatedPerFile = 0;
     StringBuilder report = new StringBuilder();
     int i = 0;
-    for (LocatedBlock lBlk : blocks.getLocatedBlocks()) {
+    for (LocatedBlock lBlk : blocks.getLocatedBlockList()) {
       ExtendedBlock block = lBlk.getBlock();
       boolean isCorrupt = lBlk.isCorrupt();
       String blkName = block.toString();
@@ -655,7 +655,7 @@ public class NamenodeFsck implements DataEncryptionKeyFactory {
       // create chains
       int chain = 0;
       boolean copyError = false;
-      for (LocatedBlock lBlk : blocks.getLocatedBlocks()) {
+      for (LocatedBlock lBlk : blocks.getLocatedBlockList()) {
         LocatedBlock lblock = lBlk;
         DatanodeInfo[] locs = lblock.getLocations();
         if (locs == null || locs.length == 0) {

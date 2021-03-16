@@ -104,8 +104,8 @@ public class TestDataNodeRollingUpgrade {
     LocatedBlocks blocks = nn.getRpcServer().getBlockLocations(path.toString(),
         0, Long.MAX_VALUE);
     assertEquals("The test helper functions assume that each file has a single block",
-                 1, blocks.getLocatedBlocks().size());
-    ExtendedBlock block = blocks.getLocatedBlocks().get(0).getBlock();
+                 1, blocks.getLocatedBlockList().size());
+    ExtendedBlock block = blocks.getLocatedBlockList().get(0).getBlock();
     BlockLocalPathInfo bInfo = dn0.getFSDataset().getBlockLocalPathInfo(block);
     File blockFile = new File(bInfo.getBlockPath());
     assertEquals(exists, blockFile.exists());

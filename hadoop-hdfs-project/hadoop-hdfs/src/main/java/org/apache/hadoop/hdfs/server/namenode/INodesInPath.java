@@ -52,7 +52,7 @@ public class INodesInPath {
         Arrays.equals(HdfsConstants.DOT_SNAPSHOT_DIR_BYTES, pathComponent);
   }
 
-  static INodesInPath fromINode(INode inode) {
+  public static INodesInPath fromINode(INode inode) {
     int depth = 0, index;
     INode tmp = inode;
     while (tmp != null) {
@@ -439,7 +439,7 @@ public class INodesInPath {
     return this.isSnapshot;
   }
 
-  boolean isDotSnapshotDir() {
+  public boolean isDotSnapshotDir() {
     return isDotSnapshotDir(getLastLocalName());
   }
 

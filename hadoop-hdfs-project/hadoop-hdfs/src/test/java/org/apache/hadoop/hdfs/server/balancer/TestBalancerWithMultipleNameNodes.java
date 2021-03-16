@@ -108,7 +108,7 @@ public class TestBalancerWithMultipleNameNodes {
       createFile(s, n, fileLen);
 
       final List<LocatedBlock> locatedBlocks = s.clients[n].getBlockLocations(
-          FILE_NAME, 0, fileLen).getLocatedBlocks();
+          FILE_NAME, 0, fileLen).getLocatedBlockList();
 
       final int numOfBlocks = locatedBlocks.size();
       blocks[n] = new ExtendedBlock[numOfBlocks];

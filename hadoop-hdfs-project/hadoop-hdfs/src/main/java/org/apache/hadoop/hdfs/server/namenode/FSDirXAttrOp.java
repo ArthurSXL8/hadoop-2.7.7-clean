@@ -30,6 +30,7 @@ import org.apache.hadoop.hdfs.XAttrHelper;
 import org.apache.hadoop.hdfs.protocol.HdfsFileStatus;
 import org.apache.hadoop.hdfs.protocol.proto.HdfsProtos;
 import org.apache.hadoop.hdfs.protocolPB.PBHelper;
+import org.apache.hadoop.hdfs.server.namenode.namesystem.FSPermissionChecker;
 import org.apache.hadoop.security.AccessControlException;
 
 import java.io.FileNotFoundException;

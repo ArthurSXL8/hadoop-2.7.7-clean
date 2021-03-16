@@ -320,7 +320,7 @@ public class TestStorageMover {
       }
       final List<StorageType> types = policy.chooseStorageTypes(
           status.getReplication());
-      for(LocatedBlock lb : fileStatus.getBlockLocations().getLocatedBlocks()) {
+      for(LocatedBlock lb : fileStatus.getBlockLocations().getLocatedBlockList()) {
         final Mover.StorageTypeDiff diff = new Mover.StorageTypeDiff(types,
             lb.getStorageTypes());
         Assert.assertTrue(fileStatus.getFullName(parent.toString())
@@ -345,7 +345,7 @@ public class TestStorageMover {
     private Replication getOrVerifyReplication(Path file, Replication expected)
         throws IOException {
       final List<LocatedBlock> lbs = dfs.getClient().getLocatedBlocks(
-          file.toString(), 0).getLocatedBlocks();
+          file.toString(), 0).getLocatedBlockList();
       Assert.assertEquals(1, lbs.size());
 
       LocatedBlock lb = lbs.get(0);
@@ -585,7 +585,7 @@ public class TestStorageMover {
       LocatedBlocks lbs = test.dfs.getClient().getLocatedBlocks(
           barFile.toString(), BLOCK_SIZE);
       LOG.info("Locations: " + lbs);
-      List<LocatedBlock> blks = lbs.getLocatedBlocks();
+      List<LocatedBlock> blks = lbs.getLocatedBlockList();
       Assert.assertEquals(1, blks.size());
       Assert.assertEquals(1, blks.get(0).getLocations().length);
 
@@ -598,7 +598,7 @@ public class TestStorageMover {
       lbs = test.dfs.getClient().getLocatedBlocks(
           barFile.toString(), BLOCK_SIZE);
       LOG.info("Locations: " + lbs);
-      blks = lbs.getLocatedBlocks();
+      blks = lbs.getLocatedBlockList();
       Assert.assertEquals(1, blks.size());
       Assert.assertEquals(1, blks.get(0).getLocations().length);
 

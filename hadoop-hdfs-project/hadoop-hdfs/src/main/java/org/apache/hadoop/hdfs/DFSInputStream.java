@@ -312,8 +312,8 @@ implements ByteBufferReadable, CanSetDropBehind, CanSetReadahead,
     }
 
     if (locatedBlocks != null) {
-      Iterator<LocatedBlock> oldIter = locatedBlocks.getLocatedBlocks().iterator();
-      Iterator<LocatedBlock> newIter = newInfo.getLocatedBlocks().iterator();
+      Iterator<LocatedBlock> oldIter = locatedBlocks.getLocatedBlockList().iterator();
+      Iterator<LocatedBlock> newIter = newInfo.getLocatedBlockList().iterator();
       while (oldIter.hasNext() && newIter.hasNext()) {
         if (! oldIter.next().getBlock().equals(newIter.next().getBlock())) {
           throw new IOException("Blocklist for " + src + " has changed!");
@@ -522,7 +522,7 @@ implements ByteBufferReadable, CanSetDropBehind, CanSetReadahead,
         if (newBlocks == null || newBlocks.locatedBlockCount() == 0) {
           throw new EOFException("Could not find target position " + offset);
         }
-        locatedBlocks.insertRange(targetBlockIdx, newBlocks.getLocatedBlocks());
+        locatedBlocks.insertRange(targetBlockIdx, newBlocks.getLocatedBlockList());
       }
       return locatedBlocks.get(targetBlockIdx);
     }

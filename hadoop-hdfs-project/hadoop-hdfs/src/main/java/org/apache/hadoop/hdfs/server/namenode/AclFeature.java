@@ -45,7 +45,7 @@ public class AclFeature implements INode.Feature, ReferenceCounter {
   /**
    * Get the number of entries present
    */
-  int getEntriesSize() {
+  public int getEntriesSize() {
     return entries.length;
   }
 
@@ -55,7 +55,7 @@ public class AclFeature implements INode.Feature, ReferenceCounter {
    * @return integer representation of AclEntry
    * @throws IndexOutOfBoundsException if pos out of bound
    */
-  int getEntryAt(int pos) {
+  public int getEntryAt(int pos) {
     Preconditions.checkPositionIndex(pos, entries.length,
         "Invalid position for AclEntry");
     return entries[pos];

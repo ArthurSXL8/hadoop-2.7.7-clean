@@ -311,7 +311,7 @@ class HeartbeatManager implements DatanodeStatistics {
       int numOfStaleStorages = 0;
       synchronized(this) {
         /*****************************************************************************************************
-         *TODO-ZH starzy https://www.cnblogs.com/starzy
+         *
          * 注释： 遍历DataNode集合
          * 在DataNode启动时将DataNode信息已经添加到datanodes集合，
          * DataNode心跳过程中也会更新集合中DataNode节点信息
@@ -321,7 +321,7 @@ class HeartbeatManager implements DatanodeStatistics {
           if (shouldAbortHeartbeatCheck(0)) {
             return;
           }
-          // TODO-ZH 判定DataNode是否Dead
+          // 判定DataNode是否Dead
           if (dead == null && dm.isDatanodeDead(d)) {
             stats.incrExpiredHeartbeats();
             dead = d;

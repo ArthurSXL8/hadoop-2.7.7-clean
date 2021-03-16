@@ -227,7 +227,7 @@ public abstract class INodeWithAdditionalFields extends INode
   }
 
   @Override
-  final long getModificationTime(int snapshotId) {
+  public final long getModificationTime(int snapshotId) {
     if (snapshotId != Snapshot.CURRENT_STATE_ID) {
       return getSnapshotINode(snapshotId).getModificationTime();
     }
@@ -256,7 +256,7 @@ public abstract class INodeWithAdditionalFields extends INode
   }
 
   @Override
-  final long getAccessTime(int snapshotId) {
+  public final long getAccessTime(int snapshotId) {
     if (snapshotId != Snapshot.CURRENT_STATE_ID) {
       return getSnapshotINode(snapshotId).getAccessTime();
     }

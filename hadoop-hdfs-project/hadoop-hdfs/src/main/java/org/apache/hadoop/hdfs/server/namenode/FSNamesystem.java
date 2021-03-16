@@ -234,6 +234,10 @@ import org.apache.hadoop.hdfs.server.namenode.ha.HAContext;
 import org.apache.hadoop.hdfs.server.namenode.ha.StandbyCheckpointer;
 import org.apache.hadoop.hdfs.server.namenode.metrics.FSNamesystemMBean;
 import org.apache.hadoop.hdfs.server.namenode.metrics.NameNodeMetrics;
+import org.apache.hadoop.hdfs.server.namenode.namesystem.FSDirStatAndListingOp;
+import org.apache.hadoop.hdfs.server.namenode.namesystem.FSPermissionChecker;
+import org.apache.hadoop.hdfs.server.namenode.namesystem.FileState;
+import org.apache.hadoop.hdfs.server.namenode.namesystem.GetBlockLocationsResult;
 import org.apache.hadoop.hdfs.server.namenode.snapshot.Snapshot;
 import org.apache.hadoop.hdfs.server.namenode.snapshot.SnapshotManager;
 import org.apache.hadoop.hdfs.server.namenode.startupprogress.Phase;
@@ -432,7 +436,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
   final LeaseManager leaseManager = new LeaseManager(this); 
 
-  volatile Daemon smmthread = null;  // SafeModeMonitor thread
+  volatile Daemon safeModeMonitorDaemon = null;  // SafeModeMonitor thread
   
   Daemon namenodeResourceMonitorDaemon = null; // NamenodeResourceMonitor thread
 
@@ -492,7 +496,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
    * modify both block and name system state.  Even on standby, fsLock is 
    * used when block state changes need to be blocked.
    */
-  private final ReentrantLock cpLock;
+  private final ReentrantLock checkpointLock;
 
   /**
    * Used when this NN is in standby state to read from the shared edit log.
@@ -730,7 +734,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     }
     fsLock = new FSNamesystemLock(conf, detailedLockHoldTimeMetrics);
     cond = fsLock.newWriteLockCondition();
-    cpLock = new ReentrantLock();
+    checkpointLock = new ReentrantLock();
 
     this.fsImage = fsImage;
     try {
@@ -1551,18 +1555,18 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   }
 
   /** Lock the checkpoint lock */
-  public void cpLock() {
-    this.cpLock.lock();
+  public void checkpointLock() {
+    this.checkpointLock.lock();
   }
 
   /** Lock the checkpoint lock interrupibly */
   public void cpLockInterruptibly() throws InterruptedException {
-    this.cpLock.lockInterruptibly();
+    this.checkpointLock.lockInterruptibly();
   }
 
   /** Unlock the checkpoint lock */
-  public void cpUnlock() {
-    this.cpLock.unlock();
+  public void checkpointUnlock() {
+    this.checkpointLock.unlock();
   }
     
 
@@ -1593,7 +1597,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     fsRunning = false;
     try {
       stopCommonServices();
-      if (smmthread != null) smmthread.interrupt();
+      if (safeModeMonitorDaemon != null) safeModeMonitorDaemon.interrupt();
     } finally {
       // using finally to ensure we also wait for lease daemon
       try {
@@ -1727,19 +1731,6 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     logAuditEvent(true, operationName, src, null, auditStat);
   }
 
-  static class GetBlockLocationsResult {
-    final boolean updateAccessTime;
-    final LocatedBlocks blocks;
-    boolean updateAccessTime() {
-      return updateAccessTime;
-    }
-    private GetBlockLocationsResult(
-        boolean updateAccessTime, LocatedBlocks blocks) {
-      this.updateAccessTime = updateAccessTime;
-      this.blocks = blocks;
-    }
-  }
-
   /**
    * Get block locations within the specified range.
    * @see ClientProtocol#getBlockLocations(String, long, long)
@@ -1807,10 +1798,10 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       }
     }
 
-    LocatedBlocks blocks = getBlockLocationsResult.blocks;
+    LocatedBlocks blocks = getBlockLocationsResult.getLocatedBlocks();
     if (blocks != null) {
       blockManager.getDatanodeManager().sortLocatedBlocks(
-          clientMachine, blocks.getLocatedBlocks());
+          clientMachine, blocks.getLocatedBlockList());
 
       // lastBlock is not part of getLocatedBlocks(), might need to sort it too
       LocatedBlock lastBlock = blocks.getLastLocatedBlock();
@@ -1839,11 +1830,11 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       throw new HadoopIllegalArgumentException(
           "Negative length is not supported. File: " + src);
     }
-    final GetBlockLocationsResult ret = getBlockLocationsInt(
+    final GetBlockLocationsResult getBlockLocationsResult = getBlockLocationsInt(
         pc, src, offset, length, needBlockToken);
 
     if (checkSafeMode && isInSafeMode()) {
-      for (LocatedBlock b : ret.blocks.getLocatedBlocks()) {
+      for (LocatedBlock b : getBlockLocationsResult.getLocatedBlocks().getLocatedBlockList()) {
         // if safemode & no block locations yet then throw safemodeException
         if ((b.getLocations() == null) || (b.getLocations().length == 0)) {
           SafeModeException se = new SafeModeException(
@@ -1857,7 +1848,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
         }
       }
     }
-    return ret;
+    return getBlockLocationsResult;
   }
 
   private GetBlockLocationsResult getBlockLocationsInt(
@@ -1893,7 +1884,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
         isUnderConstruction, offset, length, needBlockToken, iNodesInPath.isSnapshot(), fileEncryptionInfo);
 
     // Set caching information for the located blocks.
-    for (LocatedBlock locatedBlock : locatedBlocks.getLocatedBlocks()) {
+    for (LocatedBlock locatedBlock : locatedBlocks.getLocatedBlockList()) {
       cacheManager.setCachedLocations(locatedBlock);
     }
 
@@ -2898,19 +2889,6 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     }
   }
 
-  private enum RecoverLeaseOp {
-    CREATE_FILE,
-    APPEND_FILE,
-    TRUNCATE_FILE,
-    RECOVER_LEASE;
-    
-    private String getExceptionMessage(String src, String holder,
-        String clientMachine, String reason) {
-      return "Failed to " + this + " " + src + " for " + holder +
-          " on " + clientMachine + " because " + reason;
-    }
-  }
-
   boolean recoverLeaseInternal(RecoverLeaseOp op, INodesInPath iip,
       String src, String holder, String clientMachine, boolean force)
       throws IOException {
@@ -3230,18 +3208,6 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
           + clientMachine);
     }
     return clientNode;
-  }
-
-  static class FileState {
-    public final INodeFile inode;
-    public final String path;
-    public final INodesInPath iip;
-
-    public FileState(INodeFile inode, String fullPath, INodesInPath iip) {
-      this.inode = inode;
-      this.path = fullPath;
-      this.iip = iip;
-    }
   }
 
   private FileState analyzeFileState(
@@ -5000,7 +4966,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     checkOperation(OperationCategory.UNCHECKED);
     checkSuperuserPrivilege();
 
-    cpLock();  // Block if a checkpointing is in progress on standby.
+    checkpointLock();  // Block if a checkpointing is in progress on standby.
     readLock();
     try {
       checkOperation(OperationCategory.UNCHECKED);
@@ -5012,7 +4978,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       getFSImage().saveNamespace(this);
     } finally {
       readUnlock("saveNamespace");
-      cpUnlock();
+      checkpointUnlock();
     }
     LOG.info("New namespace image has been created");
   }
@@ -5027,7 +4993,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       StandbyException {
     checkSuperuserPrivilege();
     checkOperation(OperationCategory.UNCHECKED);
-    cpLock();  // Block if a checkpointing is in progress on standby.
+    checkpointLock();  // Block if a checkpointing is in progress on standby.
     writeLock();
     try {
       checkOperation(OperationCategory.UNCHECKED);
@@ -5042,7 +5008,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       return val;
     } finally {
       writeUnlock("restoreFailedStorage");
-      cpUnlock();
+      checkpointUnlock();
     }
   }
 
@@ -5053,14 +5019,14 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   void finalizeUpgrade() throws IOException {
     checkSuperuserPrivilege();
     checkOperation(OperationCategory.UNCHECKED);
-    cpLock();  // Block if a checkpointing is in progress on standby.
+    checkpointLock();  // Block if a checkpointing is in progress on standby.
     writeLock();
     try {
       checkOperation(OperationCategory.UNCHECKED);
       getFSImage().finalizeUpgrade(this.isHaEnabled() && inActiveState());
     } finally {
       writeUnlock("finalizeUpgrade");
-      cpUnlock();
+      checkpointUnlock();
     }
   }
 
@@ -5348,7 +5314,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       // if smmthread is already running, the block threshold must have been 
       // reached before, there is no need to enter the safe mode again
       // TODO-ZH 是否进入安全模式
-      if (smmthread == null && needEnter()) {
+      if (safeModeMonitorDaemon == null && needEnter()) {
         // TODO-ZH 进入安全模式
         enter();
         // check if we are ready to initialize replication queues
@@ -5372,9 +5338,9 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       // start monitor
       reached = monotonicNow();
       reachedTimestamp = now();
-      if (smmthread == null) {
-        smmthread = new Daemon(new SafeModeMonitor());
-        smmthread.start();
+      if (safeModeMonitorDaemon == null) {
+        safeModeMonitorDaemon = new Daemon(new SafeModeMonitor());
+        safeModeMonitorDaemon.start();
         reportStatus("STATE* Safe mode extension entered.", true);
       }
 
@@ -5580,17 +5546,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
         return;
       }
       assert haEnabled;
-      
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Adjusting block totals from " +
-            blockSafe + "/" + blockTotal + " to " +
-            (blockSafe + deltaSafe) + "/" + (blockTotal + deltaTotal));
-      }
-      assert blockSafe + deltaSafe >= 0 : "Can't reduce blockSafe " +
-        blockSafe + " by " + deltaSafe + ": would be negative";
-      assert blockTotal + deltaTotal >= 0 : "Can't reduce blockTotal " +
-        blockTotal + " by " + deltaTotal + ": would be negative";
-      
+
       blockSafe += deltaSafe;
       setBlockTotal(blockTotal + deltaTotal);
     }
@@ -5604,7 +5560,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   class SafeModeMonitor implements Runnable {
     /** interval in msec for checking safe mode: {@value} */
     private static final long recheckInterval = 1000;
-      
+
     /**
      */
     @Override
@@ -5618,7 +5574,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
           if (safeMode.canLeave()) {
             // Leave safe mode.
             safeMode.leave();
-            smmthread = null;
+            safeModeMonitorDaemon = null;
             break;
           }
         } finally {
@@ -5766,7 +5722,6 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
    * For safe mode only complete blocks are counted.
    */
   /*****************************************************************************************************
-   *TODO-ZH starzy https://www.cnblogs.com/starzy
    * 注释： 在HDFS集群里面block的状态分为两种类型：
    *        （1）complete 类型：正常可用的block
    *        （2）underconstuction 类型：处于正在构建的block
@@ -7338,8 +7293,8 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   }
   
   @VisibleForTesting
-  public ReentrantLock getCpLockForTests() {
-    return cpLock;
+  public ReentrantLock getCheckpointLockForTests() {
+    return checkpointLock;
   }
 
   @VisibleForTesting

@@ -987,7 +987,7 @@ public class TestFileCreation {
       LocatedBlocks locations = dfs.dfs.getNamenode().getBlockLocations(
           f, 0, Long.MAX_VALUE);
       assertEquals(1, locations.locatedBlockCount());
-      LocatedBlock locatedblock = locations.getLocatedBlocks().get(0);
+      LocatedBlock locatedblock = locations.getLocatedBlockList().get(0);
       int successcount = 0;
       for(DatanodeInfo datanodeinfo: locatedblock.getLocations()) {
         DataNode datanode = cluster.getDataNode(datanodeinfo.getIpcPort());
@@ -1305,7 +1305,7 @@ public class TestFileCreation {
   
   private void assertBlocks(BlockManager bm, LocatedBlocks lbs, 
       boolean exist) {
-    for (LocatedBlock locatedBlock : lbs.getLocatedBlocks()) {
+    for (LocatedBlock locatedBlock : lbs.getLocatedBlockList()) {
       if (exist) {
         assertTrue(bm.getStoredBlock(locatedBlock.getBlock().
             getLocalBlock()) != null);

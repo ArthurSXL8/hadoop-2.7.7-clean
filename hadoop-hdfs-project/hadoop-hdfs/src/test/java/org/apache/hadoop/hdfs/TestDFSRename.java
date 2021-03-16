@@ -156,10 +156,10 @@ public class TestDFSRename {
           cluster.getNameNode(), dst, 0, fileLen);
       BlockManager bm = NameNodeAdapter.getNamesystem(cluster.getNameNode()).
           getBlockManager();
-      assertTrue(bm.getStoredBlock(lbs.getLocatedBlocks().get(0).getBlock().
+      assertTrue(bm.getStoredBlock(lbs.getLocatedBlockList().get(0).getBlock().
           getLocalBlock()) != null);
       dfs.rename(srcPath, dstPath, Rename.OVERWRITE);
-      assertTrue(bm.getStoredBlock(lbs.getLocatedBlocks().get(0).getBlock().
+      assertTrue(bm.getStoredBlock(lbs.getLocatedBlockList().get(0).getBlock().
           getLocalBlock()) == null);
       
       // Restart NN and check the rename successfully

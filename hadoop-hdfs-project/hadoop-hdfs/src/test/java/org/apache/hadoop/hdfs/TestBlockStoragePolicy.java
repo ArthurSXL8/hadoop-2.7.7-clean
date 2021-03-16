@@ -994,8 +994,8 @@ public class TestBlockStoragePolicy {
     List<StorageType> typeList = Lists.newArrayList();
     Collections.addAll(typeList, types);
     LocatedBlocks lbs = status.getBlockLocations();
-    Assert.assertEquals(blockNum, lbs.getLocatedBlocks().size());
-    for (LocatedBlock lb : lbs.getLocatedBlocks()) {
+    Assert.assertEquals(blockNum, lbs.getLocatedBlockList().size());
+    for (LocatedBlock lb : lbs.getLocatedBlockList()) {
       Assert.assertEquals(replicaNum, lb.getStorageTypes().length);
       for (StorageType type : lb.getStorageTypes()) {
         Assert.assertTrue(typeList.remove(type));

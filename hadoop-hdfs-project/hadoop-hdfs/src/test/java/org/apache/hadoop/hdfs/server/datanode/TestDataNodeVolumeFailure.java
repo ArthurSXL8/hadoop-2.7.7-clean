@@ -361,7 +361,7 @@ public class TestDataNodeVolumeFailure {
   private void triggerFailure(String path, long size) throws IOException {
     NamenodeProtocols nn = cluster.getNameNodeRpc();
     List<LocatedBlock> locatedBlocks =
-      nn.getBlockLocations(path, 0, size).getLocatedBlocks();
+      nn.getBlockLocations(path, 0, size).getLocatedBlockList();
     
     for (LocatedBlock lb : locatedBlocks) {
       DatanodeInfo dinfo = lb.getLocations()[1];
@@ -458,7 +458,7 @@ public class TestDataNodeVolumeFailure {
     
     NamenodeProtocols nn = cluster.getNameNodeRpc();
     List<LocatedBlock> locatedBlocks = 
-      nn.getBlockLocations(path, 0, size).getLocatedBlocks();
+      nn.getBlockLocations(path, 0, size).getLocatedBlockList();
     //System.out.println("Number of blocks: " + locatedBlocks.size()); 
         
     for(LocatedBlock lb : locatedBlocks) {

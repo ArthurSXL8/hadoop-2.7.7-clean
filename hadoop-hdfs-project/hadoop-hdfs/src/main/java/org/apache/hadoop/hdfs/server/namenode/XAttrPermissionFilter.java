@@ -23,6 +23,7 @@ import java.util.List;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.XAttr;
 import org.apache.hadoop.hdfs.XAttrHelper;
+import org.apache.hadoop.hdfs.server.namenode.namesystem.FSPermissionChecker;
 import org.apache.hadoop.security.AccessControlException;
 
 import com.google.common.collect.Lists;

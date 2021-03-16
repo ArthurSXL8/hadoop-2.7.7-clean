@@ -95,7 +95,7 @@ public class TestDirectoryScanner {
     DFSTestUtil.createFile(
         fs, filePath, isLazyPersist, 1024, fileLen,
         BLOCK_LENGTH, (short) 1, r.nextLong(), false);
-    return client.getLocatedBlocks(filePath.toString(), 0, fileLen).getLocatedBlocks();
+    return client.getLocatedBlocks(filePath.toString(), 0, fileLen).getLocatedBlockList();
   }
 
   /** Truncate a block file */

@@ -222,7 +222,7 @@ public class TestGetBlocks {
           CONF);
       do {
         locatedBlocks = dfsclient.getNamenode()
-            .getBlockLocations("/tmp.txt", 0, fileLen).getLocatedBlocks();
+            .getBlockLocations("/tmp.txt", 0, fileLen).getLocatedBlockList();
         assertEquals(13, locatedBlocks.size());
 
         notWritten = false;

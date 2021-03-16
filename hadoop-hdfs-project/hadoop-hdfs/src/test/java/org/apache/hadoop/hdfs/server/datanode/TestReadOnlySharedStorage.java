@@ -176,8 +176,8 @@ public class TestReadOnlySharedStorage {
   
   private LocatedBlock getLocatedBlock() throws IOException {
     LocatedBlocks locatedBlocks = client.getLocatedBlocks(PATH.toString(), 0, BLOCK_SIZE);
-    assertThat(locatedBlocks.getLocatedBlocks().size(), is(1));
-    return Iterables.getOnlyElement(locatedBlocks.getLocatedBlocks());
+    assertThat(locatedBlocks.getLocatedBlockList().size(), is(1));
+    return Iterables.getOnlyElement(locatedBlocks.getLocatedBlockList());
   }
   
   private void validateStorageState(StorageReport[] storageReports, DatanodeStorage.State state) {

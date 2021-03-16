@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hdfs.server.namenode;
+package org.apache.hadoop.hdfs.server.namenode.namesystem;
 
 import java.util.Collection;
 import java.util.Stack;
@@ -27,6 +27,7 @@ import org.apache.hadoop.fs.permission.AclEntryType;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.DFSUtil;
+import org.apache.hadoop.hdfs.server.namenode.*;
 import org.apache.hadoop.hdfs.server.namenode.INodeAttributeProvider.AccessControlEnforcer;
 import org.apache.hadoop.hdfs.util.ReadOnlyList;
 import org.apache.hadoop.security.AccessControlException;
@@ -39,8 +40,8 @@ import org.apache.hadoop.security.UserGroupInformation;
  * 
  * Some of the helper methods are gaurded by {@link FSNamesystem#readLock()}.
  */
-class FSPermissionChecker implements AccessControlEnforcer {
-  static final Log LOG = LogFactory.getLog(UserGroupInformation.class);
+public class FSPermissionChecker implements AccessControlEnforcer {
+  public static final Log LOG = LogFactory.getLog(UserGroupInformation.class);
 
   private static String constructPath(INodeAttributes[] inodes, int end) {
     byte[][] components = new byte[end+1][];
@@ -83,7 +84,7 @@ class FSPermissionChecker implements AccessControlEnforcer {
   private final INodeAttributeProvider attributeProvider;
 
 
-  FSPermissionChecker(String fsOwner, String supergroup,
+  public FSPermissionChecker(String fsOwner, String supergroup,
       UserGroupInformation callerUgi,
       INodeAttributeProvider attributeProvider) {
     this.fsOwner = fsOwner;
@@ -160,19 +161,10 @@ class FSPermissionChecker implements AccessControlEnforcer {
    * Guarded by {@link FSNamesystem#readLock()}
    * Caller of this method must hold that lock.
    */
-  void checkPermission(INodesInPath inodesInPath, boolean doCheckOwner,
+  public void checkPermission(INodesInPath inodesInPath, boolean doCheckOwner,
       FsAction ancestorAccess, FsAction parentAccess, FsAction access,
       FsAction subAccess, boolean ignoreEmptyDir)
       throws AccessControlException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("ACCESS CHECK: " + this
-          + ", doCheckOwner=" + doCheckOwner
-          + ", ancestorAccess=" + ancestorAccess
-          + ", parentAccess=" + parentAccess
-          + ", access=" + access
-          + ", subAccess=" + subAccess
-          + ", ignoreEmptyDir=" + ignoreEmptyDir);
-    }
     // check if (parentAccess != null) && file exists, then check sb
     // If resolveLink, the check is performed on the link target.
     final int snapshotId = inodesInPath.getPathSnapshotId();

@@ -113,7 +113,7 @@ public class TestReplication {
     }
 
     boolean isOnSameRack = true, isNotOnSameRack = true;
-    for (LocatedBlock blk : locations.getLocatedBlocks()) {
+    for (LocatedBlock blk : locations.getLocatedBlockList()) {
       DatanodeInfo[] datanodes = blk.getLocations();
       if (datanodes.length <= 1) break;
       if (datanodes.length == 2) {
@@ -290,7 +290,7 @@ public class TestReplication {
       LocatedBlocks blocks = namenode.getBlockLocations(filename, 0, 
                                                         Long.MAX_VALUE);
       
-      for (Iterator<LocatedBlock> iter = blocks.getLocatedBlocks().iterator();
+      for (Iterator<LocatedBlock> iter = blocks.getLocatedBlockList().iterator();
            iter.hasNext();) {
         LocatedBlock block = iter.next();
         int actual = block.getLocations().length;

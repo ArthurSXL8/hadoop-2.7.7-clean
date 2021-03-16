@@ -60,6 +60,8 @@ import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeStorageInfo;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockStoragePolicySuite;
 import org.apache.hadoop.hdfs.server.common.HdfsServerConstants.BlockUCState;
 import org.apache.hadoop.hdfs.server.namenode.INode.BlocksMapUpdateInfo;
+import org.apache.hadoop.hdfs.server.namenode.namesystem.FSDirStatAndListingOp;
+import org.apache.hadoop.hdfs.server.namenode.namesystem.FSPermissionChecker;
 import org.apache.hadoop.hdfs.util.ByteArray;
 import org.apache.hadoop.hdfs.util.EnumCounters;
 import org.apache.hadoop.security.AccessControlException;
@@ -180,27 +182,27 @@ public class FSVolatileNamespace implements Closeable {
   }
 
   // utility methods to acquire and release read lock and write lock
-  void readLock() {
+  public void readLock() {
     this.dirLock.readLock().lock();
   }
 
-  void readUnlock() {
+  public void readUnlock() {
     this.dirLock.readLock().unlock();
   }
 
-  void writeLock() {
+  public void writeLock() {
     this.dirLock.writeLock().lock();
   }
 
-  void writeUnlock() {
+  public void writeUnlock() {
     this.dirLock.writeLock().unlock();
   }
 
-  boolean hasWriteLock() {
+  public boolean hasWriteLock() {
     return this.dirLock.isWriteLockedByCurrentThread();
   }
 
-  boolean hasReadLock() {
+  public boolean hasReadLock() {
     return this.dirLock.getReadHoldCount() > 0 || hasWriteLock();
   }
 
@@ -308,7 +310,7 @@ public class FSVolatileNamespace implements Closeable {
     ezManager = new EncryptionZoneManager(this, conf);
   }
     
-  FSNamesystem getFSNamesystem() {
+  public FSNamesystem getFSNamesystem() {
     return namesystem;
   }
 
@@ -325,7 +327,7 @@ public class FSVolatileNamespace implements Closeable {
     return getBlockManager().getBlockStoragePolicySuite();
   }
 
-  boolean isPermissionEnabled() {
+  public boolean isPermissionEnabled() {
     return isPermissionEnabled;
   }
   boolean isAclsEnabled() {
@@ -346,15 +348,15 @@ public class FSVolatileNamespace implements Closeable {
   }
 
 
-  int getLsLimit() {
+  public int getLsLimit() {
     return lsLimit;
   }
 
-  int getContentCountLimit() {
+  public int getContentCountLimit() {
     return contentCountLimit;
   }
 
-  long getContentSleepMicroSec() {
+  public long getContentSleepMicroSec() {
     return contentSleepMicroSec;
   }
 
@@ -569,13 +571,13 @@ public class FSVolatileNamespace implements Closeable {
    * @throws FileNotFoundException
    * @throws AccessControlException
    */
-  INodesInPath resolvePath(FSPermissionChecker pc, String src)
+  public INodesInPath resolvePath(FSPermissionChecker pc, String src)
       throws UnresolvedLinkException, FileNotFoundException,
       AccessControlException {
     return resolvePath(pc, src, true);
   }
 
-  INodesInPath resolvePath(FSPermissionChecker pc, String src,
+  public INodesInPath resolvePath(FSPermissionChecker pc, String src,
       boolean resolveLink) throws UnresolvedLinkException,
   FileNotFoundException, AccessControlException {
     byte[][] components = INode.getPathComponents(src);
@@ -624,7 +626,7 @@ public class FSVolatileNamespace implements Closeable {
   }
 
   // this method can be removed after IIP is used more extensively
-  static String resolvePath(String src,
+  public static String resolvePath(String src,
       FSVolatileNamespace fsd) throws FileNotFoundException {
     byte[][] pathComponents = INode.getPathComponents(src);
     pathComponents = resolveComponents(pathComponents, fsd);
@@ -1067,7 +1069,7 @@ public class FSVolatileNamespace implements Closeable {
         && INodeReference.tryRemoveReference(last) > 0) ? 0 : 1;
   }
 
-  static String normalizePath(String src) {
+  public static String normalizePath(String src) {
     if (src.length() > 1 && src.endsWith("/")) {
       src = src.substring(0, src.length() - 1);
     }
@@ -1079,7 +1081,7 @@ public class FSVolatileNamespace implements Closeable {
     return yieldCount;
   }
 
-  void addYieldCount(long value) {
+  public void addYieldCount(long value) {
     yieldCount += value;
   }
 
@@ -1294,7 +1296,7 @@ public class FSVolatileNamespace implements Closeable {
     }
   }
 
-  boolean isInAnEZ(INodesInPath iip)
+  public boolean isInAnEZ(INodesInPath iip)
       throws UnresolvedLinkException, SnapshotAccessControlException {
     readLock();
     try {
@@ -1304,7 +1306,7 @@ public class FSVolatileNamespace implements Closeable {
     }
   }
 
-  String getKeyName(INodesInPath iip) {
+  public String getKeyName(INodesInPath iip) {
     readLock();
     try {
       return ezManager.getKeyName(iip);
@@ -1380,7 +1382,7 @@ public class FSVolatileNamespace implements Closeable {
    *            null then the list of inodes will be obtained again
    * @return consolidated file encryption info; null for non-encrypted files
    */
-  FileEncryptionInfo getFileEncryptionInfo(INode inode, int snapshotId,
+  public FileEncryptionInfo getFileEncryptionInfo(INode inode, int snapshotId,
       INodesInPath iip) throws IOException {
     if (!inode.isFile() || !ezManager.hasCreatedEncryptionZone()) {
       return null;
@@ -1490,7 +1492,7 @@ public class FSVolatileNamespace implements Closeable {
            isReservedName(components);
   }
 
-  static boolean isReservedRawName(String src) {
+  public static boolean isReservedRawName(String src) {
     return src.startsWith(DOT_RESERVED_PATH_PREFIX +
         Path.SEPARATOR + RAW_STRING);
   }
@@ -1606,7 +1608,7 @@ public class FSVolatileNamespace implements Closeable {
     return components;
   }
 
-  INode getINode4DotSnapshot(INodesInPath iip) throws UnresolvedLinkException {
+  public INode getINode4DotSnapshot(INodesInPath iip) throws UnresolvedLinkException {
     Preconditions.checkArgument(
         iip.isDotSnapshotDir(), "%s does not end with %s",
         iip.getPath(), HdfsConstants.SEPARATOR_DOT_SNAPSHOT_DIR);
@@ -1666,7 +1668,7 @@ public class FSVolatileNamespace implements Closeable {
    * @throws UnresolvedLinkException if symlink can't be resolved
    * @throws SnapshotAccessControlException if path is in RO snapshot
    */
-  INodesInPath getINodesInPath4Write(String src, boolean resolveLink)
+  public INodesInPath getINodesInPath4Write(String src, boolean resolveLink)
           throws UnresolvedLinkException, SnapshotAccessControlException {
     final byte[][] components = INode.getPathComponents(src);
     INodesInPath inodesInPath = INodesInPath.resolve(rootDir, components,
@@ -1678,7 +1680,7 @@ public class FSVolatileNamespace implements Closeable {
     return inodesInPath;
   }
 
-  FSPermissionChecker getPermissionChecker()
+  public FSPermissionChecker getPermissionChecker()
     throws AccessControlException {
     try {
       return getPermissionChecker(fsOwnerShortUserName, supergroup,
@@ -1689,13 +1691,13 @@ public class FSVolatileNamespace implements Closeable {
   }
 
   @VisibleForTesting
-  FSPermissionChecker getPermissionChecker(String fsOwner, String superGroup,
+  public FSPermissionChecker getPermissionChecker(String fsOwner, String superGroup,
       UserGroupInformation ugi) throws AccessControlException {
     return new FSPermissionChecker(
         fsOwner, superGroup, ugi, attributeProvider);
   }
 
-  void checkOwner(FSPermissionChecker pc, INodesInPath iip)
+  public void checkOwner(FSPermissionChecker pc, INodesInPath iip)
       throws AccessControlException, FileNotFoundException {
     if (iip.getLastINode() == null) {
       throw new FileNotFoundException(
@@ -1704,21 +1706,22 @@ public class FSVolatileNamespace implements Closeable {
     checkPermission(pc, iip, true, null, null, null, null);
   }
 
-  void checkPathAccess(FSPermissionChecker pc, INodesInPath iip,
+  public void checkPathAccess(FSPermissionChecker pc, INodesInPath iip,
       FsAction access) throws AccessControlException {
     checkPermission(pc, iip, false, null, null, access, null);
   }
-  void checkParentAccess(FSPermissionChecker pc, INodesInPath iip,
+
+  public void checkParentAccess(FSPermissionChecker pc, INodesInPath iip,
       FsAction access) throws AccessControlException {
     checkPermission(pc, iip, false, null, access, null, null);
   }
 
-  void checkAncestorAccess(FSPermissionChecker pc, INodesInPath iip,
+  public void checkAncestorAccess(FSPermissionChecker pc, INodesInPath iip,
       FsAction access) throws AccessControlException {
     checkPermission(pc, iip, false, access, null, null, null);
   }
 
-  void checkTraverse(FSPermissionChecker pc, INodesInPath iip)
+  public void checkTraverse(FSPermissionChecker pc, INodesInPath iip)
       throws AccessControlException {
     checkPermission(pc, iip, false, null, null, null, null);
   }
@@ -1728,7 +1731,7 @@ public class FSVolatileNamespace implements Closeable {
    * details of the parameters, see
    * {@link FSPermissionChecker#checkPermission}.
    */
-  void checkPermission(FSPermissionChecker pc, INodesInPath iip,
+  public void checkPermission(FSPermissionChecker pc, INodesInPath iip,
       boolean doCheckOwner, FsAction ancestorAccess, FsAction parentAccess,
       FsAction access, FsAction subAccess)
     throws AccessControlException {
@@ -1741,7 +1744,7 @@ public class FSVolatileNamespace implements Closeable {
    * details of the parameters, see
    * {@link FSPermissionChecker#checkPermission}.
    */
-  void checkPermission(FSPermissionChecker pc, INodesInPath iip,
+  public void checkPermission(FSPermissionChecker pc, INodesInPath iip,
       boolean doCheckOwner, FsAction ancestorAccess, FsAction parentAccess,
       FsAction access, FsAction subAccess, boolean ignoreEmptyDir)
       throws AccessControlException {
@@ -1756,7 +1759,7 @@ public class FSVolatileNamespace implements Closeable {
     }
   }
 
-  HdfsFileStatus getAuditFileInfo(INodesInPath iip)
+  public HdfsFileStatus getAuditFileInfo(INodesInPath iip)
       throws IOException {
     return (namesystem.isAuditEnabled() && namesystem.isExternalInvocation())
         ? FSDirStatAndListingOp.getFileInfo(this, iip.getPath(), iip, false,
@@ -1807,7 +1810,7 @@ public class FSVolatileNamespace implements Closeable {
     inodeId.setCurrentValue(newValue);
   }
 
-  INodeAttributes getAttributes(String fullPath, byte[] path,
+  public INodeAttributes getAttributes(String fullPath, byte[] path,
       INode node, int snapshot) {
     INodeAttributes nodeAttrs = node.getSnapshotINode(snapshot);
     if (attributeProvider != null) {

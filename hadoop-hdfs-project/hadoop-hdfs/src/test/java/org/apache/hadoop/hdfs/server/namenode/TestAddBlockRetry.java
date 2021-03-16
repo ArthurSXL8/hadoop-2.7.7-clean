@@ -99,7 +99,7 @@ public class TestAddBlockRetry {
     assertTrue("Penultimate block must be complete",
         checkFileProgress(src, false));
     LocatedBlocks lbs = nn.getBlockLocations(src, 0, Long.MAX_VALUE);
-    assertEquals("Must be one block", 1, lbs.getLocatedBlocks().size());
+    assertEquals("Must be one block", 1, lbs.getLocatedBlockList().size());
     LocatedBlock lb2 = lbs.get(0);
     assertEquals("Wrong replication", REPLICATION, lb2.getLocations().length);
 
@@ -110,7 +110,7 @@ public class TestAddBlockRetry {
 
     // check locations
     lbs = nn.getBlockLocations(src, 0, Long.MAX_VALUE);
-    assertEquals("Must be one block", 1, lbs.getLocatedBlocks().size());
+    assertEquals("Must be one block", 1, lbs.getLocatedBlockList().size());
     LocatedBlock lb1 = lbs.get(0);
     assertEquals("Wrong replication", REPLICATION, lb1.getLocations().length);
     assertEquals("Blocks are not equal", lb1.getBlock(), lb2.getBlock());

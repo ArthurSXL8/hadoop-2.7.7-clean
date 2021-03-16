@@ -466,7 +466,7 @@ public class INodeDirectory extends INodeWithAdditionalFields
    * @param name a child's name
    * @return the index of the next child
    */
-  static int nextChild(ReadOnlyList<INode> children, byte[] name) {
+  public static int nextChild(ReadOnlyList<INode> children, byte[] name) {
     if (name.length == 0) { // empty name
       return 0;
     }

@@ -682,7 +682,7 @@ public abstract class INode implements INodeAttributes, Diff.Element<byte[]> {
    *          current inode.
    * @return modification time.
    */
-  abstract long getModificationTime(int snapshotId);
+  public abstract long getModificationTime(int snapshotId);
 
   /** The same as getModificationTime(Snapshot.CURRENT_STATE_ID). */
   @Override
@@ -711,7 +711,7 @@ public abstract class INode implements INodeAttributes, Diff.Element<byte[]> {
    *          current inode.
    * @return access time
    */
-  abstract long getAccessTime(int snapshotId);
+  public abstract long getAccessTime(int snapshotId);
 
   /** The same as getAccessTime(Snapshot.CURRENT_STATE_ID). */
   @Override

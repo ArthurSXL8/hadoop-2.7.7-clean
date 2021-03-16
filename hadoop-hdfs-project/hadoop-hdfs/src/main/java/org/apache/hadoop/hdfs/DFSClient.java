@@ -2217,7 +2217,7 @@ public class DFSClient implements java.io.Closeable, RemotePeerFactory,
     if (null == blockLocations) {
       throw new FileNotFoundException("File does not exist: " + src);
     }
-    List<LocatedBlock> locatedblocks = blockLocations.getLocatedBlocks();
+    List<LocatedBlock> locatedblocks = blockLocations.getLocatedBlockList();
     final DataOutputBuffer md5out = new DataOutputBuffer();
     int bytesPerCRC = -1;
     DataChecksum.Type crcType = DataChecksum.Type.DEFAULT;
@@ -2236,7 +2236,7 @@ public class DFSClient implements java.io.Closeable, RemotePeerFactory,
         if (null == blockLocations) {
           throw new FileNotFoundException("File does not exist: " + src);
         }
-        locatedblocks = blockLocations.getLocatedBlocks();
+        locatedblocks = blockLocations.getLocatedBlockList();
         refetchBlocks = false;
       }
       LocatedBlock lb = locatedblocks.get(i);

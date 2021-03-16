@@ -110,7 +110,7 @@ public class TestBlockHasMultipleReplicasOnSameDN {
 
     ArrayList<Replica> blocks = new ArrayList<Replica>();
 
-    for (LocatedBlock locatedBlock : locatedBlocks.getLocatedBlocks()) {
+    for (LocatedBlock locatedBlock : locatedBlocks.getLocatedBlockList()) {
       Block localBlock = locatedBlock.getBlock().getLocalBlock();
       blocks.add(new FinalizedReplicaMeta(localBlock, null, null));
     }
@@ -130,7 +130,7 @@ public class TestBlockHasMultipleReplicasOnSameDN {
     locatedBlocks = client.getLocatedBlocks(filename, 0, BLOCK_SIZE * NUM_BLOCKS);
 
     // Make sure that each block has two replicas, one on each DataNode.
-    for (LocatedBlock locatedBlock : locatedBlocks.getLocatedBlocks()) {
+    for (LocatedBlock locatedBlock : locatedBlocks.getLocatedBlockList()) {
       DatanodeInfo[] locations = locatedBlock.getLocations();
       assertThat(locations.length, is((int) NUM_DATANODES));
       assertThat(locations[0].getDatanodeUuid(), not(locations[1].getDatanodeUuid()));

@@ -522,7 +522,7 @@ public class DFSUtil {
     if (blocks == null) {
       return new BlockLocation[0];
     }
-    return locatedBlocks2Locations(blocks.getLocatedBlocks());
+    return locatedBlocks2Locations(blocks.getLocatedBlockList());
   }
   
   /**

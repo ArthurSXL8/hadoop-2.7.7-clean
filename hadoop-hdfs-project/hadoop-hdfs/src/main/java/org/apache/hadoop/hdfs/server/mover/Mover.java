@@ -366,7 +366,7 @@ public class Mover {
       final LocatedBlocks locatedBlocks = status.getBlockLocations();
       boolean hasRemaining = false;
       final boolean lastBlkComplete = locatedBlocks.isLastBlockComplete();
-      List<LocatedBlock> lbs = locatedBlocks.getLocatedBlocks();
+      List<LocatedBlock> lbs = locatedBlocks.getLocatedBlockList();
       for(int i = 0; i < lbs.size(); i++) {
         if (i == lbs.size() - 1 && !lastBlkComplete) {
           // last block is incomplete, skip it

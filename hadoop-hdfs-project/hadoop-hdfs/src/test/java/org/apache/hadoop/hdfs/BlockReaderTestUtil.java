@@ -127,7 +127,7 @@ public class BlockReaderTestUtil {
     // Return the blocks we just wrote
     DFSClient dfsclient = getDFSClient();
     return dfsclient.getNamenode().getBlockLocations(
-      filepath.toString(), 0, sizeKB * 1024).getLocatedBlocks();
+      filepath.toString(), 0, sizeKB * 1024).getLocatedBlockList();
   }
 
   /**

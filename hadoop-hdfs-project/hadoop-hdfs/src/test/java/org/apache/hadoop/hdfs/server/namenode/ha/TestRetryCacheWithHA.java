@@ -720,7 +720,7 @@ public class TestRetryCacheWithHA {
       
       LocatedBlocks blks = dfs.getClient()
           .getLocatedBlocks(file, BlockSize + 1);
-      assertEquals(1, blks.getLocatedBlocks().size());
+      assertEquals(1, blks.getLocatedBlockList().size());
       nodes = blks.get(0).getLocations();
       oldBlock = blks.get(0).getBlock();
       

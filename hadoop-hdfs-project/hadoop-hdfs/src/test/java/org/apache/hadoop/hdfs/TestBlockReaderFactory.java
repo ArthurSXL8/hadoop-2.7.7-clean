@@ -247,7 +247,7 @@ public class TestBlockReaderFactory {
           // First time should fail.
           List<LocatedBlock> locatedBlocks = 
               cluster.getNameNode().getRpcServer().getBlockLocations(
-              TEST_FILE, 0, TEST_FILE_LEN).getLocatedBlocks();
+              TEST_FILE, 0, TEST_FILE_LEN).getLocatedBlockList();
           LocatedBlock lblock = locatedBlocks.get(0); // first block
           BlockReader blockReader = null;
           try {
@@ -465,7 +465,7 @@ public class TestBlockReaderFactory {
     final Semaphore sem = new Semaphore(0);
     final List<LocatedBlock> locatedBlocks =
         cluster.getNameNode().getRpcServer().getBlockLocations(
-            TEST_FILE, 0, TEST_FILE_LEN).getLocatedBlocks();
+            TEST_FILE, 0, TEST_FILE_LEN).getLocatedBlockList();
     final LocatedBlock lblock = locatedBlocks.get(0); // first block
     final byte[] buf = new byte[TEST_FILE_LEN];
     Runnable readerRunnable = new Runnable() {

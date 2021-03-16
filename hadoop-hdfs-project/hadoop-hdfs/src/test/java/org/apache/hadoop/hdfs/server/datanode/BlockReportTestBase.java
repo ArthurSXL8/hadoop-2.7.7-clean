@@ -285,7 +285,7 @@ public abstract class BlockReportTestBase {
     List<LocatedBlock> lBlocks =
       cluster.getNameNodeRpc().getBlockLocations(
           filePath.toString(), FILE_START,
-          FILE_SIZE).getLocatedBlocks();
+          FILE_SIZE).getLocatedBlockList();
 
     while (removedIndex.size() != 2) {
       int newRemoveIndex = rand.nextInt(lBlocks.size());
@@ -800,7 +800,7 @@ public abstract class BlockReportTestBase {
 
     return locatedToBlocks(cluster.getNameNodeRpc()
       .getBlockLocations(filePath.toString(), FILE_START,
-        fileSize).getLocatedBlocks(), null);
+        fileSize).getLocatedBlockList(), null);
   }
 
   private void printStats() {
@@ -872,7 +872,7 @@ public abstract class BlockReportTestBase {
       List<LocatedBlock> lbs =
         cluster.getNameNodeRpc()
         .getBlockLocations(path.toString(),
-          FILE_START, size).getLocatedBlocks();
+          FILE_START, size).getLocatedBlockList();
       LocatedBlock lb = lbs.get(lbs.size() - 1);
 
       // Get block from the first DN

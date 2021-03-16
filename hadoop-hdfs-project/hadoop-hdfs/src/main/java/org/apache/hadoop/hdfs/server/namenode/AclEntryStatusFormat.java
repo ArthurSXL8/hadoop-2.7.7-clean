@@ -55,22 +55,22 @@ public enum AclEntryStatusFormat {
     BITS = new LongBitFormat(name(), previous, length, 0);
   }
 
-  static AclEntryScope getScope(int aclEntry) {
+  public static AclEntryScope getScope(int aclEntry) {
     int ordinal = (int) SCOPE.BITS.retrieve(aclEntry);
     return AclEntryScope.values()[ordinal];
   }
 
-  static AclEntryType getType(int aclEntry) {
+  public static AclEntryType getType(int aclEntry) {
     int ordinal = (int) TYPE.BITS.retrieve(aclEntry);
     return AclEntryType.values()[ordinal];
   }
 
-  static FsAction getPermission(int aclEntry) {
+  public static FsAction getPermission(int aclEntry) {
     int ordinal = (int) PERMISSION.BITS.retrieve(aclEntry);
     return FsAction.values()[ordinal];
   }
 
-  static String getName(int aclEntry) {
+  public static String getName(int aclEntry) {
     int nameExists = (int) NAMED_ENTRY_CHECK.BITS.retrieve(aclEntry);
     if (nameExists == 0) {
       return null;

@@ -122,7 +122,7 @@ public class TestInterDatanodeProtocol {
       ClientProtocol namenode, String src) throws IOException {
     //get block info for the last block
     LocatedBlocks locations = namenode.getBlockLocations(src, 0, Long.MAX_VALUE);
-    List<LocatedBlock> blocks = locations.getLocatedBlocks();
+    List<LocatedBlock> blocks = locations.getLocatedBlockList();
     DataNode.LOG.info("blocks.size()=" + blocks.size());
     assertTrue(blocks.size() > 0);
 

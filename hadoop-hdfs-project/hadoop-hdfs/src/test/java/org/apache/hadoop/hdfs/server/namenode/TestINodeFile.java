@@ -687,8 +687,8 @@ public class TestINodeFile {
   }
   
   private static void checkEquals(LocatedBlocks l1, LocatedBlocks l2) {
-    List<LocatedBlock> list1 = l1.getLocatedBlocks();
-    List<LocatedBlock> list2 = l2.getLocatedBlocks();
+    List<LocatedBlock> list1 = l1.getLocatedBlockList();
+    List<LocatedBlock> list2 = l2.getLocatedBlockList();
     assertEquals(list1.size(), list2.size());
     
     for (int i = 0; i < list1.size(); i++) {

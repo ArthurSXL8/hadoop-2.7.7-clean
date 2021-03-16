@@ -1311,7 +1311,7 @@ public class PBHelper {
     }
     return builder.setFileLength(lb.getFileLength())
         .setUnderConstruction(lb.isUnderConstruction())
-        .addAllBlocks(PBHelper.convertLocatedBlock2(lb.getLocatedBlocks()))
+        .addAllBlocks(PBHelper.convertLocatedBlock2(lb.getLocatedBlockList()))
         .setIsLastBlockComplete(lb.isLastBlockComplete()).build();
   }
   

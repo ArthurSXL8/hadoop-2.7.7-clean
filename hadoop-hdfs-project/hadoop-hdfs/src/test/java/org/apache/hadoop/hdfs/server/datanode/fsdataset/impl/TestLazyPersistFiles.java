@@ -190,7 +190,7 @@ public class TestLazyPersistFiles extends LazyPersistTestCase {
     long fileLength = client.getFileInfo(path.toString()).getLen();
     LocatedBlocks locatedBlocks =
       client.getLocatedBlocks(path.toString(), 0, fileLength);
-    for (LocatedBlock locatedBlock : locatedBlocks.getLocatedBlocks()) {
+    for (LocatedBlock locatedBlock : locatedBlocks.getLocatedBlockList()) {
       if (locatedBlock.getStorageTypes()[0] == RAM_DISK) {
         numBlocksOnRamDisk++;
       } else if (locatedBlock.getStorageTypes()[0] == DEFAULT) {

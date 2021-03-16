@@ -168,7 +168,7 @@ public class TestBlockUnderConstruction {
     for(int i = 1; i < NUM_BLOCKS; ) {
       // verify consistency
       final LocatedBlocks lb = namenode.getBlockLocations(src, 0, len);
-      final List<LocatedBlock> blocks = lb.getLocatedBlocks();
+      final List<LocatedBlock> blocks = lb.getLocatedBlockList();
       assertEquals(i, blocks.size());
       final Block b = blocks.get(blocks.size() - 1).getBlock().getLocalBlock();
       assertTrue(b instanceof BlockNeighborInfoUnderConstruction);
@@ -202,7 +202,7 @@ public class TestBlockUnderConstruction {
 
     // make sure the block is readable
     LocatedBlocks lbs = namenode.getBlockLocations(src, 0, 256);
-    LocatedBlock lastLB = lbs.getLocatedBlocks().get(0);
+    LocatedBlock lastLB = lbs.getLocatedBlockList().get(0);
     final Block b = lastLB.getBlock().getLocalBlock();
 
     // fake a block recovery

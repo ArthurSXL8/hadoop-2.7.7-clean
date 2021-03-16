@@ -163,7 +163,7 @@ public class TestPersistBlocks {
       HdfsFileStatus fileStatus = dfsclient.getNamenode().getFileInfo(FILE_NAME);
       LocatedBlocks blocks = dfsclient.getNamenode().getBlockLocations(
           FILE_NAME, 0, BLOCK_SIZE * NUM_BLOCKS);
-      assertEquals(NUM_BLOCKS, blocks.getLocatedBlocks().size());
+      assertEquals(NUM_BLOCKS, blocks.getLocatedBlockList().size());
       LocatedBlock b = blocks.getLastLocatedBlock();
       dfsclient.getNamenode().abandonBlock(b.getBlock(), fileStatus.getFileId(),
           FILE_NAME, dfsclient.clientName);

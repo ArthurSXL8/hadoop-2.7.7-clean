@@ -501,7 +501,7 @@ public class JsonUtil {
     m.put("fileLength", locatedblocks.getFileLength());
     m.put("isUnderConstruction", locatedblocks.isUnderConstruction());
 
-    m.put("locatedBlocks", toJsonArray(locatedblocks.getLocatedBlocks()));
+    m.put("locatedBlocks", toJsonArray(locatedblocks.getLocatedBlockList()));
     m.put("lastLocatedBlock", toJsonMap(locatedblocks.getLastLocatedBlock()));
     m.put("isLastBlockComplete", locatedblocks.isLastBlockComplete());
     return toJsonString(LocatedBlocks.class, m);

@@ -262,7 +262,7 @@ public class TestBalancer {
       createFile(cluster , filePath, fileLen, replicationFactor, 0);
 
       List<LocatedBlock> locatedBlocks = client.
-      getBlockLocations(fileName, 0, fileLen).getLocatedBlocks();
+      getBlockLocations(fileName, 0, fileLen).getLocatedBlockList();
 
       int numOfBlocks = locatedBlocks.size();
       ExtendedBlock[] blocks = new ExtendedBlock[numOfBlocks];

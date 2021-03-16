@@ -150,7 +150,7 @@ public class TestFileAppend{
 
       LocatedBlocks locations = client.getNamenode().getBlockLocations(
                                   file1.toString(), 0, Long.MAX_VALUE);
-      List<LocatedBlock> blocks = locations.getLocatedBlocks();
+      List<LocatedBlock> blocks = locations.getLocatedBlockList();
 
       //
       // Create hard links for a few of the blocks
@@ -476,8 +476,8 @@ public class TestFileAppend{
       // make sure we now have 1 block since the first writer was revoked
       LocatedBlocks blks = fs.getClient().getLocatedBlocks(testPath.toString(),
           0L);
-      assertEquals(1, blks.getLocatedBlocks().size());
-      for (LocatedBlock blk : blks.getLocatedBlocks()) {
+      assertEquals(1, blks.getLocatedBlockList().size());
+      for (LocatedBlock blk : blks.getLocatedBlockList()) {
         assertEquals(fileContents.length, blk.getBlockSize());
       }
     } finally {
@@ -585,8 +585,8 @@ public class TestFileAppend{
       // check the block locations
       LocatedBlocks blocks = fs.getClient().getLocatedBlocks(path.toString(), 0L);
       // since we append the file 3 time, we should be 4 blocks
-      assertEquals(4, blocks.getLocatedBlocks().size());
-      for (LocatedBlock block : blocks.getLocatedBlocks()) {
+      assertEquals(4, blocks.getLocatedBlockList().size());
+      for (LocatedBlock block : blocks.getLocatedBlockList()) {
         assertEquals(hello.length(), block.getBlockSize());
       }
       StringBuilder sb = new StringBuilder();
@@ -604,8 +604,8 @@ public class TestFileAppend{
           "Read /test");
       blocks = fs.getClient().getLocatedBlocks(path.toString(), 0L);
       // since we append the file 3 time, we should be 4 blocks
-      assertEquals(4, blocks.getLocatedBlocks().size());
-      for (LocatedBlock block : blocks.getLocatedBlocks()) {
+      assertEquals(4, blocks.getLocatedBlockList().size());
+      for (LocatedBlock block : blocks.getLocatedBlockList()) {
         assertEquals(hello.length(), block.getBlockSize());
       }
     } finally {

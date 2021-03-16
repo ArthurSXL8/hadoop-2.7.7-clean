@@ -126,7 +126,7 @@ public abstract class LazyPersistTestCase {
     long fileLength = client.getFileInfo(path.toString()).getLen();
     LocatedBlocks locatedBlocks =
         client.getLocatedBlocks(path.toString(), 0, fileLength);
-    for (LocatedBlock locatedBlock : locatedBlocks.getLocatedBlocks()) {
+    for (LocatedBlock locatedBlock : locatedBlocks.getLocatedBlockList()) {
       assertThat(locatedBlock.getStorageTypes()[0], is(storageType));
     }
     return locatedBlocks;
@@ -145,11 +145,11 @@ public abstract class LazyPersistTestCase {
       cluster.getDataNodes().get(0).getFSDataset().getVolumes();
     final Set<Long> persistedBlockIds = new HashSet<Long>();
 
-    while (persistedBlockIds.size() < locatedBlocks.getLocatedBlocks().size()) {
+    while (persistedBlockIds.size() < locatedBlocks.getLocatedBlockList().size()) {
       // Take 1 second sleep before each verification iteration
       Thread.sleep(1000);
 
-      for (LocatedBlock lb : locatedBlocks.getLocatedBlocks()) {
+      for (LocatedBlock lb : locatedBlocks.getLocatedBlockList()) {
         for (FsVolumeSpi v : volumes) {
           if (v.isTransientStorage()) {
             continue;
@@ -171,7 +171,7 @@ public abstract class LazyPersistTestCase {
     }
 
     // We should have found a persisted copy for each located block.
-    assertThat(persistedBlockIds.size(), is(locatedBlocks.getLocatedBlocks().size()));
+    assertThat(persistedBlockIds.size(), is(locatedBlocks.getLocatedBlockList().size()));
   }
 
   protected final void makeRandomTestFile(Path path, long length,
@@ -348,7 +348,7 @@ public abstract class LazyPersistTestCase {
   protected final boolean verifyBlockDeletedFromDir(File dir,
       LocatedBlocks locatedBlocks) {
 
-    for (LocatedBlock lb : locatedBlocks.getLocatedBlocks()) {
+    for (LocatedBlock lb : locatedBlocks.getLocatedBlockList()) {
       File targetDir =
         DatanodeUtil.idToBlockDir(dir, lb.getBlock().getBlockId());
 

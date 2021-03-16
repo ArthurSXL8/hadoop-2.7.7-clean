@@ -201,7 +201,7 @@ public class TestFileAppend3  {
     // b. Reopen file and read 1.75 blocks of data. Close file.
     AppendTestUtil.check(fs, p, len1 + len2);
     List<LocatedBlock> blocks = fs.getClient().getLocatedBlocks(
-        p.toString(), 0L).getLocatedBlocks();
+        p.toString(), 0L).getLocatedBlockList();
     Assert.assertEquals(3, blocks.size());
     Assert.assertEquals(BLOCK_SIZE, blocks.get(0).getBlockSize());
     Assert.assertEquals(BLOCK_SIZE / 2, blocks.get(1).getBlockSize());
@@ -436,9 +436,9 @@ public class TestFileAppend3  {
     AppendTestUtil.check(fs, p, len1 + len2);
     if (appendToNewBlock) {
       LocatedBlocks blks = fs.dfs.getLocatedBlocks(p.toString(), 0);
-      Assert.assertEquals(2, blks.getLocatedBlocks().size());
-      Assert.assertEquals(len1, blks.getLocatedBlocks().get(0).getBlockSize());
-      Assert.assertEquals(len2, blks.getLocatedBlocks().get(1).getBlockSize());
+      Assert.assertEquals(2, blks.getLocatedBlockList().size());
+      Assert.assertEquals(len1, blks.getLocatedBlockList().get(0).getBlockSize());
+      Assert.assertEquals(len2, blks.getLocatedBlockList().get(1).getBlockSize());
       AppendTestUtil.check(fs, p, 0, len1);
       AppendTestUtil.check(fs, p, len1, len2);
     }

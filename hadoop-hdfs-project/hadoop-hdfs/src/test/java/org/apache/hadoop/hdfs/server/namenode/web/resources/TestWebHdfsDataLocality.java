@@ -102,7 +102,7 @@ public class TestWebHdfsDataLocality {
       //get replica location.
       final LocatedBlocks locatedblocks = NameNodeAdapter.getBlockLocations(
           namenode, f, 0, 1);
-      final List<LocatedBlock> lb = locatedblocks.getLocatedBlocks();
+      final List<LocatedBlock> lb = locatedblocks.getLocatedBlockList();
       Assert.assertEquals(1, lb.size());
       final DatanodeInfo[] locations = lb.get(0).getLocations();
       Assert.assertEquals(1, locations.length);
@@ -166,7 +166,7 @@ public class TestWebHdfsDataLocality {
       //get replica location.
       final LocatedBlocks locatedblocks = NameNodeAdapter.getBlockLocations(
           namenode, f, 0, 1);
-      final List<LocatedBlock> lb = locatedblocks.getLocatedBlocks();
+      final List<LocatedBlock> lb = locatedblocks.getLocatedBlockList();
       Assert.assertEquals(1, lb.size());
       final DatanodeInfo[] locations = lb.get(0).getLocations();
       Assert.assertEquals(3, locations.length);

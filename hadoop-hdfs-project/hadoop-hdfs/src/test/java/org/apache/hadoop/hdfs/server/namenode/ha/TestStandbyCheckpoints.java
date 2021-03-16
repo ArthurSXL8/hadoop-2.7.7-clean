@@ -469,7 +469,7 @@ public class TestStandbyCheckpoints {
     
     assertFalse(nn1.getNamesystem().getFsLockForTests().hasQueuedThreads());
     assertFalse(nn1.getNamesystem().getFsLockForTests().isWriteLocked());
-    assertTrue(nn1.getNamesystem().getCpLockForTests().hasQueuedThreads());
+    assertTrue(nn1.getNamesystem().getCheckpointLockForTests().hasQueuedThreads());
     
     // Get /jmx of the standby NN web UI, which will cause the FSNS read lock to
     // be taken.

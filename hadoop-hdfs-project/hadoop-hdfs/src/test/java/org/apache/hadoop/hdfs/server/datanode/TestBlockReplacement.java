@@ -120,7 +120,7 @@ public class TestBlockReplacement {
           cluster.getNameNodePort());
       DFSClient client = new DFSClient(addr, CONF);
       List<LocatedBlock> locatedBlocks = client.getNamenode().
-        getBlockLocations("/tmp.txt", 0, DEFAULT_BLOCK_SIZE).getLocatedBlocks();
+        getBlockLocations("/tmp.txt", 0, DEFAULT_BLOCK_SIZE).getLocatedBlockList();
       assertEquals(1, locatedBlocks.size());
       LocatedBlock block = locatedBlocks.get(0);
       DatanodeInfo[]  oldNodes = block.getLocations();
@@ -260,7 +260,7 @@ public class TestBlockReplacement {
       } catch(InterruptedException e) {
       }
       List<LocatedBlock> blocks = client.getNamenode().
-      getBlockLocations(fileName, 0, fileLen).getLocatedBlocks();
+      getBlockLocations(fileName, 0, fileLen).getLocatedBlockList();
       assertEquals(1, blocks.size());
       DatanodeInfo[] nodes = blocks.get(0).getLocations();
       notDone = (nodes.length != replFactor);
@@ -359,7 +359,7 @@ public class TestBlockReplacement {
 
       client = new DFSClient(cluster.getFileSystem(0).getUri(), conf);
       List<LocatedBlock> locatedBlocks = client.getNamenode().
-          getBlockLocations("/tmp.txt", 0, 10L).getLocatedBlocks();
+          getBlockLocations("/tmp.txt", 0, 10L).getLocatedBlockList();
       assertTrue(locatedBlocks.size() == 1);
       assertTrue(locatedBlocks.get(0).getLocations().length == 1);
 
@@ -389,7 +389,7 @@ public class TestBlockReplacement {
         DataNodeTestUtils.triggerDeletionReport(cluster.getDataNodes().get(0));
         locatedBlocks =
             client.getNamenode().getBlockLocations("/tmp.txt", 0, 10L)
-                .getLocatedBlocks();
+                .getLocatedBlockList();
         // If block was deleted and only on 1 datanode then break out
         if (locatedBlocks.get(0).getLocations().length == 1) {
           break;
@@ -408,7 +408,7 @@ public class TestBlockReplacement {
       // Opening a new client for new active  namenode
       client = new DFSClient(cluster.getFileSystem(1).getUri(), conf);
       List<LocatedBlock> locatedBlocks1 = client.getNamenode()
-          .getBlockLocations("/tmp.txt", 0, 10L).getLocatedBlocks();
+          .getBlockLocations("/tmp.txt", 0, 10L).getLocatedBlockList();
 
       assertEquals(1, locatedBlocks1.size());
       assertEquals("The block should be only on 1 datanode ", 1,

@@ -388,7 +388,7 @@ public class TestBlockTokenWithDFS {
         if (client != null) client.close();
       }
       List<LocatedBlock> locatedBlocks = nnProto.getBlockLocations(
-          FILE_TO_READ, 0, FILE_SIZE).getLocatedBlocks();
+          FILE_TO_READ, 0, FILE_SIZE).getLocatedBlockList();
       LocatedBlock lblock = locatedBlocks.get(0); // first block
       Token<BlockTokenIdentifier> myToken = lblock.getBlockToken();
       // verify token is not expired

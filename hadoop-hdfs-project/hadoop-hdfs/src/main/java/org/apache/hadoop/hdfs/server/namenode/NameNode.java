@@ -578,7 +578,7 @@ public class NameNode implements NameNodeStatusMXBean {
    */
   protected InetSocketAddress getHttpServerBindAddress(Configuration conf) {
     /*****************************************************************************************************
-     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     *
      * 注释： 设置httpserver端口，默认端口设置为50070
      */
     InetSocketAddress bindAddress = getHttpServerAddress(conf);
@@ -698,7 +698,7 @@ public class NameNode implements NameNodeStatusMXBean {
 
   /** Start the services common to active and standby states */
   private void startCommonServices(Configuration conf) throws IOException {
-    // TODO-ZH 元数据管理
+    //  元数据管理
     namesystem.startCommonServices(conf, haContext);
     registerNNSMXBean();
     if (NamenodeRole.NAMENODE != role) {
@@ -780,12 +780,12 @@ public class NameNode implements NameNodeStatusMXBean {
   
   private void startHttpServer(final Configuration conf) throws IOException {
     /*****************************************************************************************************
-     *TODO-ZH starzy https://www.cnblogs.com/starzy
-     * 注释： getHttpServerBindAddress 里设置主机名和端口号
+     *
+     *  getHttpServerBindAddress 里设置主机名和端口号
      */
     httpServer = new NameNodeHttpServer(conf, this, getHttpServerBindAddress(conf));
     /*****************************************************************************************************
-     *TODO-ZH starzy https://www.cnblogs.com/starzy
+     *
      * 注释： 启动HTTP服务
      */
     httpServer.start();

@@ -28,7 +28,6 @@ import java.net.InetSocketAddress;
 import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DFSClient;
@@ -155,7 +154,7 @@ public class TestIncrementalBrVariations {
 
       // Find the first block on this storage and mark it as deleted for the
       // report.
-      for (LocatedBlock block : blocks.getLocatedBlocks()) {
+      for (LocatedBlock block : blocks.getLocatedBlockList()) {
         if (block.getStorageIDs()[0].equals(volume.getStorageID())) {
           rdbi[0] = new ReceivedDeletedBlockInfo(block.getBlock().getLocalBlock(),
               ReceivedDeletedBlockInfo.BlockStatus.DELETED_BLOCK, null);
@@ -201,7 +200,7 @@ public class TestIncrementalBrVariations {
     assertThat(cluster.getDataNodes().size(), is(1));
 
     // Remove all blocks from the DataNode.
-    for (LocatedBlock block : blocks.getLocatedBlocks()) {
+    for (LocatedBlock block : blocks.getLocatedBlockList()) {
       dn0.notifyNamenodeDeletedBlock(
           block.getBlock(), block.getStorageIDs()[0]);
     }

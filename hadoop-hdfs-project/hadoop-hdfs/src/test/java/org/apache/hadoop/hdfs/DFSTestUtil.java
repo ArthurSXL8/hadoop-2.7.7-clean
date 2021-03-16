@@ -1538,7 +1538,7 @@ public class DFSTestUtil {
     long fileLength = client.getFileInfo(path.toString()).getLen();
     LocatedBlocks locatedBlocks =
       client.getLocatedBlocks(path.toString(), 0, fileLength);
-    for (LocatedBlock locatedBlock : locatedBlocks.getLocatedBlocks()) {
+    for (LocatedBlock locatedBlock : locatedBlocks.getLocatedBlockList()) {
       if (locatedBlock.getStorageTypes()[0] != storageType) {
         LOG.info("verifyFileReplicasOnStorageType: for file " + path +
             ". Expect blk" + locatedBlock +

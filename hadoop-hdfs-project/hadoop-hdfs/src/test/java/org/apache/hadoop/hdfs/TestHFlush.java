@@ -146,7 +146,7 @@ public class TestHFlush {
       long currentFileLength = fileSystem.getFileStatus(path).getLen();
       assertEquals(0L, currentFileLength);
       LocatedBlocks blocks = fileSystem.dfs.getLocatedBlocks(path.toString(), 0);
-      assertEquals(0, blocks.getLocatedBlocks().size());
+      assertEquals(0, blocks.getLocatedBlockList().size());
 
       // write a block and call hsync(end_block) at the block boundary
       stm.write(new byte[preferredBlockSize]);
@@ -155,7 +155,7 @@ public class TestHFlush {
       currentFileLength = fileSystem.getFileStatus(path).getLen();
       assertEquals(preferredBlockSize, currentFileLength);
       blocks = fileSystem.dfs.getLocatedBlocks(path.toString(), 0);
-      assertEquals(1, blocks.getLocatedBlocks().size());
+      assertEquals(1, blocks.getLocatedBlockList().size());
 
       // call hsync then call hsync(end_block) immediately
       stm.write(new byte[preferredBlockSize / 2]);
@@ -166,7 +166,7 @@ public class TestHFlush {
       assertEquals(preferredBlockSize + preferredBlockSize / 2,
           currentFileLength);
       blocks = fileSystem.dfs.getLocatedBlocks(path.toString(), 0);
-      assertEquals(2, blocks.getLocatedBlocks().size());
+      assertEquals(2, blocks.getLocatedBlockList().size());
 
       stm.write(new byte[preferredBlockSize / 4]);
       stm.hsync();
@@ -174,7 +174,7 @@ public class TestHFlush {
       assertEquals(preferredBlockSize + preferredBlockSize / 2
           + preferredBlockSize / 4, currentFileLength);
       blocks = fileSystem.dfs.getLocatedBlocks(path.toString(), 0);
-      assertEquals(3, blocks.getLocatedBlocks().size());
+      assertEquals(3, blocks.getLocatedBlockList().size());
     } finally {
       IOUtils.cleanup(null, stm, fileSystem);
       if (cluster != null) {
@@ -341,7 +341,7 @@ public class TestHFlush {
             tenth * (i + 1), currentFileLength);
         } else if (isSync && syncFlags.contains(SyncFlag.END_BLOCK)) {
           LocatedBlocks blocks = fileSystem.dfs.getLocatedBlocks(pathName, 0);
-          assertEquals(i + 1, blocks.getLocatedBlocks().size());
+          assertEquals(i + 1, blocks.getLocatedBlockList().size());
         }
 
         byte [] toRead = new byte[tenth];

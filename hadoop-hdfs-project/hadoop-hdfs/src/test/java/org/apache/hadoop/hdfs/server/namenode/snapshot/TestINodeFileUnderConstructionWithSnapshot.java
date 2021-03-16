@@ -219,7 +219,7 @@ public class TestINodeFileUnderConstructionWithSnapshot {
     // call DFSClient#callGetBlockLocations for the file in snapshot
     LocatedBlocks blocks = DFSClientAdapter.callGetBlockLocations(
         cluster.getNameNodeRpc(), fileInSnapshot.toString(), 0, Long.MAX_VALUE);
-    List<LocatedBlock> blockList = blocks.getLocatedBlocks();
+    List<LocatedBlock> blockList = blocks.getLocatedBlockList();
     
     // should be only one block
     assertEquals(BLOCKSIZE, blocks.getFileLength());
@@ -250,7 +250,7 @@ public class TestINodeFileUnderConstructionWithSnapshot {
         fileInSnapshot2.toString(), 0, Long.MAX_VALUE);
     assertFalse(blocks.isUnderConstruction());
     assertTrue(blocks.isLastBlockComplete());
-    blockList = blocks.getLocatedBlocks();
+    blockList = blocks.getLocatedBlockList();
     
     // should be 2 blocks
     assertEquals(BLOCKSIZE * 2 - 1, blocks.getFileLength());
@@ -263,13 +263,13 @@ public class TestINodeFileUnderConstructionWithSnapshot {
     
     blocks = DFSClientAdapter.callGetBlockLocations(cluster.getNameNodeRpc(),
         fileInSnapshot2.toString(), BLOCKSIZE, 0);
-    blockList = blocks.getLocatedBlocks();
+    blockList = blocks.getLocatedBlockList();
     assertEquals(1, blockList.size());
     
     // check blocks for file being written
     blocks = DFSClientAdapter.callGetBlockLocations(cluster.getNameNodeRpc(),
         file.toString(), 0, Long.MAX_VALUE);
-    blockList = blocks.getLocatedBlocks();
+    blockList = blocks.getLocatedBlockList();
     assertEquals(3, blockList.size());
     assertTrue(blocks.isUnderConstruction());
     assertFalse(blocks.isLastBlockComplete());

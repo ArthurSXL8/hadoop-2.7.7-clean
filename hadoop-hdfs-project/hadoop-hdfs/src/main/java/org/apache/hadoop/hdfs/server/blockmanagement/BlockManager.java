@@ -1274,7 +1274,7 @@ public class BlockManager {
     int additionalReplRequired;
 
     int scheduledWork = 0;
-    List<ReplicationWork> work = new LinkedList<ReplicationWork>();
+    List<ReplicationWork> replicationWorks = new LinkedList<ReplicationWork>();
 
     namesystem.writeLock();
     try {
@@ -1329,7 +1329,7 @@ public class BlockManager {
             } else {
               additionalReplRequired = 1; // Needed on a new rack
             }
-            work.add(new ReplicationWork(block, bc, srcNode,
+            replicationWorks.add(new ReplicationWork(block, bc, srcNode,
                 containingNodes, liveReplicaNodes, additionalReplRequired,
                 priority));
           }
@@ -1340,7 +1340,7 @@ public class BlockManager {
     }
 
     final Set<Node> excludedNodes = new HashSet<Node>();
-    for(ReplicationWork rw : work){
+    for(ReplicationWork rw : replicationWorks){
       // Exclude all of the containing nodes from being targets.
       // This list includes decommissioning or corrupt nodes.
       excludedNodes.clear();
@@ -1354,7 +1354,7 @@ public class BlockManager {
 
     namesystem.writeLock();
     try {
-      for(ReplicationWork rw : work){
+      for(ReplicationWork rw : replicationWorks){
         final DatanodeStorageInfo[] targets = rw.getTargets();
         if(targets == null || targets.length == 0){
           rw.setTargets(null);
@@ -1428,7 +1428,7 @@ public class BlockManager {
 
     if (blockLog.isInfoEnabled()) {
       // log which blocks have been scheduled for replication
-      for(ReplicationWork rw : work){
+      for(ReplicationWork rw : replicationWorks){
         DatanodeStorageInfo[] targets = rw.getTargets();
         if (targets != null && targets.length != 0) {
           StringBuilder targetList = new StringBuilder("datanode(s)");

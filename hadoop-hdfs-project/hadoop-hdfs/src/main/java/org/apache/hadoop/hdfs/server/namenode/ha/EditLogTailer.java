@@ -330,7 +330,7 @@ public class EditLogTailer {
           try {
             doTailEdits();
           } finally {
-            namesystem.cpUnlock();
+            namesystem.checkpointUnlock();
           }
         } catch (EditLogInputException elie) {
           LOG.warn("Error while reading edits from disk. Will try again.", elie);

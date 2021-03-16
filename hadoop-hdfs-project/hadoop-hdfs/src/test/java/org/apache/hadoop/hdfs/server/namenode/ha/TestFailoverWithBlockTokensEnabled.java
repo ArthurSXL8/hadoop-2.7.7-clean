@@ -122,7 +122,7 @@ public class TestFailoverWithBlockTokensEnabled {
           @Override
           public LocatedBlocks answer(InvocationOnMock arg0) throws Throwable {
             LocatedBlocks locatedBlocks = (LocatedBlocks)arg0.callRealMethod();
-            for (LocatedBlock lb : locatedBlocks.getLocatedBlocks()) {
+            for (LocatedBlock lb : locatedBlocks.getLocatedBlockList()) {
               Token<BlockTokenIdentifier> token = lb.getBlockToken();
               BlockTokenIdentifier id = lb.getBlockToken().decodeIdentifier();
               // This will make the token invalid, since the password

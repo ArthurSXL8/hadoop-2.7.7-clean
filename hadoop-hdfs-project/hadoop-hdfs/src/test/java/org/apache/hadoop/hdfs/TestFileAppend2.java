@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
-import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CreateFlag;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -280,7 +279,7 @@ public class TestFileAppend2 {
             fileContents, "Read 2");
         // also make sure there three different blocks for the file
         List<LocatedBlock> blocks = fs.getClient().getLocatedBlocks(
-            file1.toString(), 0L).getLocatedBlocks();
+            file1.toString(), 0L).getLocatedBlockList();
         assertEquals(12, blocks.size()); // the block size is 1024
         assertEquals(mid, blocks.get(0).getBlockSize());
         assertEquals(mid2 - mid, blocks.get(1).getBlockSize());

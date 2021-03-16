@@ -61,7 +61,7 @@ public class LocatedBlocks {
   /**
    * Get located blocks.
    */
-  public List<LocatedBlock> getLocatedBlocks() {
+  public List<LocatedBlock> getLocatedBlockList() {
     return locatedBlockList;
   }
   

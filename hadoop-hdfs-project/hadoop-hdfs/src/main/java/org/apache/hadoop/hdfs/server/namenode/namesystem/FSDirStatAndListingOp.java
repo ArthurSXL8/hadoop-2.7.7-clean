@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.hdfs.server.namenode;
+package org.apache.hadoop.hdfs.server.namenode.namesystem;
 
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.fs.ContentSummary;
@@ -35,6 +35,7 @@ import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.hdfs.protocol.LocatedBlocks;
 import org.apache.hadoop.hdfs.protocol.SnapshotException;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockStoragePolicySuite;
+import org.apache.hadoop.hdfs.server.namenode.*;
 import org.apache.hadoop.hdfs.server.namenode.snapshot.DirectorySnapshottableFeature;
 import org.apache.hadoop.hdfs.server.namenode.snapshot.Snapshot;
 import org.apache.hadoop.hdfs.util.ReadOnlyList;
@@ -43,8 +44,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 
-class FSDirStatAndListingOp {
-  static DirectoryListing getListingInt(FSVolatileNamespace fsd, final String srcArg,
+public class FSDirStatAndListingOp {
+  public static DirectoryListing getListingInt(FSVolatileNamespace fsd, final String srcArg,
                                         byte[] startAfter, boolean needLocation) throws IOException {
     FSPermissionChecker pc = fsd.getPermissionChecker();
     final String startAfterString = DFSUtil.bytes2String(startAfter);
@@ -86,7 +87,7 @@ class FSDirStatAndListingOp {
    * @return object containing information regarding the file
    *         or null if file not found
    */
-  static HdfsFileStatus getFileInfo(
+  public static HdfsFileStatus getFileInfo(
           FSVolatileNamespace fsd, String srcArg, boolean resolveLink)
       throws IOException {
     String src = srcArg;
@@ -108,7 +109,7 @@ class FSDirStatAndListingOp {
   /**
    * Returns true if the file is closed
    */
-  static boolean isFileClosed(FSVolatileNamespace fsd, String src) throws IOException {
+  public static boolean isFileClosed(FSVolatileNamespace fsd, String src) throws IOException {
     FSPermissionChecker pc = fsd.getPermissionChecker();
     final INodesInPath iip = fsd.resolvePath(pc, src);
     src = iip.getPath();
@@ -118,7 +119,7 @@ class FSDirStatAndListingOp {
     return !INodeFile.valueOf(iip.getLastINode(), src).isUnderConstruction();
   }
 
-  static ContentSummary getContentSummary(
+  public static ContentSummary getContentSummary(
           FSVolatileNamespace fsd, String src) throws IOException {
     FSPermissionChecker pc = fsd.getPermissionChecker();
     final INodesInPath iip = fsd.resolvePath(pc, src);
@@ -275,7 +276,7 @@ class FSDirStatAndListingOp {
    * @return object containing information regarding the file
    *         or null if file not found
    */
-  static HdfsFileStatus getFileInfo(
+  public static HdfsFileStatus getFileInfo(
           FSVolatileNamespace fsd, String path, INodesInPath src, boolean isRawPath,
           boolean includeStoragePolicy)
       throws IOException {
@@ -299,7 +300,7 @@ class FSDirStatAndListingOp {
     }
   }
 
-  static HdfsFileStatus getFileInfo(
+  public static HdfsFileStatus getFileInfo(
           FSVolatileNamespace fsd, String src, boolean resolveLink, boolean isRawPath)
       throws IOException {
     fsd.readLock();
@@ -353,7 +354,7 @@ class FSDirStatAndListingOp {
    * Create FileStatus for an given INodeFile.
    * @param iip The INodesInPath containing the INodeFile and its ancestors
    */
-  static HdfsFileStatus createFileStatusForEditLog(
+  public static HdfsFileStatus createFileStatusForEditLog(
           FSVolatileNamespace fsd, String fullPath, byte[] path,
           byte storagePolicy, int snapshot, boolean isRawPath,
           INodesInPath iip) throws IOException {
@@ -471,7 +472,7 @@ class FSDirStatAndListingOp {
     // Set caching information for the located blocks.
     if (loc != null) {
       CacheManager cacheManager = fsd.getFSNamesystem().getCacheManager();
-      for (LocatedBlock lb: loc.getLocatedBlocks()) {
+      for (LocatedBlock lb: loc.getLocatedBlockList()) {
         cacheManager.setCachedLocations(lb);
       }
     }

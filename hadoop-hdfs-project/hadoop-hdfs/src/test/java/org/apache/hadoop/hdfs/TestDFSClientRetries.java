@@ -433,7 +433,7 @@ public class TestDFSClientRetries {
         private int getBlockCount(LocatedBlock ret) throws IOException {
           LocatedBlocks lb = cluster.getNameNodeRpc().getBlockLocations(src, 0, Long.MAX_VALUE);
           assertEquals(lb.getLastLocatedBlock().getBlock(), ret.getBlock());
-          return lb.getLocatedBlocks().size();
+          return lb.getLocatedBlockList().size();
         }
 
         @Override
@@ -839,7 +839,7 @@ public class TestDFSClientRetries {
       //stop the first datanode
       final List<LocatedBlock> locatedblocks = DFSClient.callGetBlockLocations(
           cluster.getNameNodeRpc(), f, 0, Long.MAX_VALUE)
-            .getLocatedBlocks();
+            .getLocatedBlockList();
       final DatanodeInfo first = locatedblocks.get(0).getLocations()[0];
       cluster.stopDataNode(first.getDataTransferIpAndPort());
 

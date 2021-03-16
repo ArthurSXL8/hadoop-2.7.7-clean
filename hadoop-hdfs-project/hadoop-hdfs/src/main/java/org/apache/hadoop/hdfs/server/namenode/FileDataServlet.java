@@ -88,7 +88,7 @@ public class FileDataServlet extends DfsServlet {
    */
   private DatanodeID pickSrcDatanode(LocatedBlocks blks, HdfsFileStatus i,
       Configuration conf) throws IOException {
-    if (i.getLen() == 0 || blks.getLocatedBlocks().size() <= 0) {
+    if (i.getLen() == 0 || blks.getLocatedBlockList().size() <= 0) {
       // pick a random datanode
       NameNode nn = NameNodeHttpServer.getNameNodeFromContext(
           getServletContext());

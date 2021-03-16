@@ -198,7 +198,7 @@ public class StandbyCheckpointer {
         }
       }
     } finally {
-      namesystem.cpUnlock();
+      namesystem.checkpointUnlock();
     }
     
     // Upload the saved checkpoint back to the active
